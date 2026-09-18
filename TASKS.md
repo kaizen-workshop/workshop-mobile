@@ -24,7 +24,7 @@ A task só pode ser marcada como concluída quando atender à Definition of Done
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Definir explicitamente:
@@ -56,7 +56,7 @@ Critério de aceite:
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Critérios de aceite:
@@ -79,7 +79,7 @@ TASK-001
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Features iniciais:
@@ -110,7 +110,7 @@ core
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Criar suporte para:
@@ -132,7 +132,7 @@ Nenhum segredo deve estar no app.
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Implementar:
@@ -151,7 +151,7 @@ Implementar:
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Usar mecanismo seguro da plataforma para:
@@ -168,7 +168,7 @@ Nunca armazenar senha.
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Mapear:

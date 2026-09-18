@@ -1,5 +1,19 @@
 # workshop_mobile
 
+## Stack oficial
+
+Expo SDK 57, React Native 0.86, React 19 e TypeScript estrito. A navegação
+usa Expo Router; `fetch` encapsulado fornece HTTP; AsyncStorage é reservado
+para cache não sensível e Expo SecureStore é exclusivo para access/refresh
+token. WebSocket nativo e Expo Notifications serão integrados nas tasks de
+chat e notificações. Testes usam Jest/`jest-expo` e Testing Library; lint usa
+Expo ESLint e a formatação usa Prettier.
+
+Os ambientes aceitos são `development`, `staging` e `production`, definidos
+por `APP_VARIANT` e `EXPO_PUBLIC_API_URL`. Variáveis `EXPO_PUBLIC_*` nunca
+podem conter segredos. Sem o contrato OpenAPI no repositório, esta fundação
+não implementa endpoint, payload ou resposta de API.
+
 Aplicação mobile do sistema de workshops da ARWEG.
 
 O aplicativo será o principal cliente da `workshop_api` e permitirá descoberta de workshops, inscrições, acompanhamento de eventos, interação no feed, participação em grupos, chat, notificações e avaliações.
