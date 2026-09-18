@@ -8,6 +8,13 @@ use a hierarquia visual, o layout e os estados mostrados como referência de
 UI. Elas não substituem `TASKS.md`, requisitos funcionais ou o contrato
 OpenAPI; divergências intencionais devem ser registradas.
 
+## Comentários no código
+
+Todo código novo ou alterado deve ter um comentário imediatamente acima do
+bloco, função, componente, classe ou trecho lógico correspondente, explicando
+sua intenção e regra de negócio. O comentário não deve repetir o óbvio, conter
+segredos, senhas, tokens ou dados sensíveis.
+
 > Decisão de stack: Expo SDK 57, React Native 0.86, React 19 e TypeScript
 > estrito. Expo Router navega; `fetch` encapsulado atende HTTP; AsyncStorage
 > atende apenas cache não sensível; Expo SecureStore armazena somente
