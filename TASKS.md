@@ -192,7 +192,7 @@ Mapear:
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Campos:
@@ -217,7 +217,7 @@ Estados:
 Status:
 
 ```text
-[ ]
+[!]
 ```
 
 Critérios:
@@ -272,7 +272,7 @@ login
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Critérios:
@@ -288,7 +288,7 @@ Critérios:
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Critérios:
@@ -304,7 +304,7 @@ Critérios:
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Telas:
