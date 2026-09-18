@@ -24,22 +24,22 @@
 
 ## Estrutura de arquivos
 
-| Arquivo | Responsabilidade |
-| --- | --- |
-| `app/_layout.tsx` | Compor o `Stack` raiz do Expo Router. |
-| `app/index.tsx` | Tela técnica mínima que confirma que a fundação iniciou. |
-| `src/core/config/environment.ts` | Validar e expor o ambiente público. |
-| `src/core/errors/app-error.ts` | Representar falhas normalizadas, sem texto técnico para UI. |
-| `src/core/http/http-client.ts` | Construir chamadas JSON com timeout e converter falhas em `AppError`. |
-| `src/core/secure-storage/token-storage.ts` | Persistir e limpar somente tokens em SecureStore. |
-| `src/<feature>/index.ts` | Fronteira vazia e explícita de cada feature inicial. |
-| `tests/core/config/environment.test.ts` | Validar variáveis de ambiente. |
-| `tests/core/errors/app-error.test.ts` | Validar categorização de falhas. |
-| `tests/core/http/http-client.test.ts` | Validar URL, headers, serialização e timeout do HTTP. |
-| `tests/core/secure-storage/token-storage.test.ts` | Validar chaves e chamadas ao SecureStore. |
-| `.env.example` | Documentar as variáveis públicas, com valores seguros de exemplo. |
-| `jest.config.js` e `jest.setup.ts` | Configurar Jest Expo e mocks de módulos nativos. |
-| `.eslintrc.cjs`, `.prettierrc.json` | Tornar lint e formatação explícitos. |
+| Arquivo                                           | Responsabilidade                                                      |
+| ------------------------------------------------- | --------------------------------------------------------------------- |
+| `app/_layout.tsx`                                 | Compor o `Stack` raiz do Expo Router.                                 |
+| `app/index.tsx`                                   | Tela técnica mínima que confirma que a fundação iniciou.              |
+| `src/core/config/environment.ts`                  | Validar e expor o ambiente público.                                   |
+| `src/core/errors/app-error.ts`                    | Representar falhas normalizadas, sem texto técnico para UI.           |
+| `src/core/http/http-client.ts`                    | Construir chamadas JSON com timeout e converter falhas em `AppError`. |
+| `src/core/secure-storage/token-storage.ts`        | Persistir e limpar somente tokens em SecureStore.                     |
+| `src/<feature>/index.ts`                          | Fronteira vazia e explícita de cada feature inicial.                  |
+| `tests/core/config/environment.test.ts`           | Validar variáveis de ambiente.                                        |
+| `tests/core/errors/app-error.test.ts`             | Validar categorização de falhas.                                      |
+| `tests/core/http/http-client.test.ts`             | Validar URL, headers, serialização e timeout do HTTP.                 |
+| `tests/core/secure-storage/token-storage.test.ts` | Validar chaves e chamadas ao SecureStore.                             |
+| `.env.example`                                    | Documentar as variáveis públicas, com valores seguros de exemplo.     |
+| `jest.config.js` e `jest.setup.ts`                | Configurar Jest Expo e mocks de módulos nativos.                      |
+| `.eslintrc.cjs`, `.prettierrc.json`               | Tornar lint e formatação explícitos.                                  |
 
 ### Tarefa 1: Ferramentas, estrutura e inicialização (TASK-001, TASK-002 e TASK-003)
 
@@ -175,16 +175,27 @@ it('returns a normalized public API URL for an accepted variant', () => {
   });
 });
 
-it.each(['test', 'prod', ''])('rejects an unsupported APP_VARIANT %s', (variant) => {
-  expect(() =>
-    getEnvironment({ APP_VARIANT: variant, EXPO_PUBLIC_API_URL: 'https://api.example.test/api/v1' }),
-  ).toThrow('APP_VARIANT inválido');
-});
+it.each(['test', 'prod', ''])(
+  'rejects an unsupported APP_VARIANT %s',
+  (variant) => {
+    expect(() =>
+      getEnvironment({
+        APP_VARIANT: variant,
+        EXPO_PUBLIC_API_URL: 'https://api.example.test/api/v1',
+      }),
+    ).toThrow('APP_VARIANT inválido');
+  },
+);
 
 it('rejects a missing or non-HTTP public API URL', () => {
-  expect(() => getEnvironment({ APP_VARIANT: 'development' })).toThrow('EXPO_PUBLIC_API_URL inválida');
+  expect(() => getEnvironment({ APP_VARIANT: 'development' })).toThrow(
+    'EXPO_PUBLIC_API_URL inválida',
+  );
   expect(() =>
-    getEnvironment({ APP_VARIANT: 'development', EXPO_PUBLIC_API_URL: 'ftp://api.example.test' }),
+    getEnvironment({
+      APP_VARIANT: 'development',
+      EXPO_PUBLIC_API_URL: 'ftp://api.example.test',
+    }),
   ).toThrow('EXPO_PUBLIC_API_URL inválida');
 });
 ```
@@ -201,22 +212,33 @@ Esperado: falha porque `getEnvironment` ainda não existe.
 export const appVariants = ['development', 'staging', 'production'] as const;
 export type AppVariant = (typeof appVariants)[number];
 
-export type EnvironmentConfig = Readonly<{ variant: AppVariant; apiUrl: string }>;
+export type EnvironmentConfig = Readonly<{
+  variant: AppVariant;
+  apiUrl: string;
+}>;
 
 export function getEnvironment(
   input: Record<string, string | undefined> = process.env,
 ): EnvironmentConfig {
   const variant = input.APP_VARIANT;
   if (!appVariants.includes(variant as AppVariant)) {
-    throw new Error('APP_VARIANT inválido. Use development, staging ou production.');
+    throw new Error(
+      'APP_VARIANT inválido. Use development, staging ou production.',
+    );
   }
   const rawApiUrl = input.EXPO_PUBLIC_API_URL;
   try {
     const url = new URL(rawApiUrl ?? '');
-    if (url.protocol !== 'http:' && url.protocol !== 'https:') throw new Error();
-    return { variant: variant as AppVariant, apiUrl: url.toString().replace(/\/$/, '') };
+    if (url.protocol !== 'http:' && url.protocol !== 'https:')
+      throw new Error();
+    return {
+      variant: variant as AppVariant,
+      apiUrl: url.toString().replace(/\/$/, ''),
+    };
   } catch {
-    throw new Error('EXPO_PUBLIC_API_URL inválida. Informe uma URL HTTP(S) absoluta.');
+    throw new Error(
+      'EXPO_PUBLIC_API_URL inválida. Informe uma URL HTTP(S) absoluta.',
+    );
   }
 }
 ```
@@ -262,14 +284,27 @@ git commit -m "feat(config): add validated public environments [TASK-004]"
 import { AppError, toAppError } from '@/core/errors/app-error';
 
 it.each([
-  [400, 'bad_request'], [401, 'unauthorized'], [403, 'forbidden'],
-  [404, 'not_found'], [409, 'conflict'], [500, 'server'],
+  [400, 'bad_request'],
+  [401, 'unauthorized'],
+  [403, 'forbidden'],
+  [404, 'not_found'],
+  [409, 'conflict'],
+  [500, 'server'],
 ])('maps HTTP status %i to %s', (status, category) => {
-  expect(toAppError(new AppError({ category: 'unknown', status }))).toMatchObject({ category, status });
+  expect(
+    toAppError(new AppError({ category: 'unknown', status })),
+  ).toMatchObject({ category, status });
 });
 
 it('keeps a machine-readable business code without using API text as UI copy', () => {
-  const error = toAppError(new AppError({ category: 'bad_request', status: 400, code: 'WORKSHOP_FULL', technicalMessage: 'Full' }));
+  const error = toAppError(
+    new AppError({
+      category: 'bad_request',
+      status: 400,
+      code: 'WORKSHOP_FULL',
+      technicalMessage: 'Full',
+    }),
+  );
   expect(error.code).toBe('WORKSHOP_FULL');
   expect(error.userMessage).not.toContain('Full');
 });
@@ -279,18 +314,50 @@ it('keeps a machine-readable business code without using API text as UI copy', (
 import { createHttpClient } from '@/core/http/http-client';
 
 it('joins URL, sends JSON headers, and serializes a body', async () => {
-  const fetchImpl = jest.fn().mockResolvedValue(new Response(JSON.stringify({ id: '1' }), { status: 201 }));
-  const client = createHttpClient({ variant: 'development', apiUrl: 'https://api.example.test/api/v1' }, fetchImpl);
-  await expect(client.request<{ id: string }>({ path: '/sessions', method: 'POST', body: { login: 'user' } })).resolves.toEqual({ id: '1' });
-  expect(fetchImpl).toHaveBeenCalledWith('https://api.example.test/api/v1/sessions', expect.objectContaining({
-    method: 'POST', headers: expect.objectContaining({ Accept: 'application/json', 'Content-Type': 'application/json' }), body: '{"login":"user"}',
-  }));
+  const fetchImpl = jest
+    .fn()
+    .mockResolvedValue(
+      new Response(JSON.stringify({ id: '1' }), { status: 201 }),
+    );
+  const client = createHttpClient(
+    { variant: 'development', apiUrl: 'https://api.example.test/api/v1' },
+    fetchImpl,
+  );
+  await expect(
+    client.request<{ id: string }>({
+      path: '/sessions',
+      method: 'POST',
+      body: { login: 'user' },
+    }),
+  ).resolves.toEqual({ id: '1' });
+  expect(fetchImpl).toHaveBeenCalledWith(
+    'https://api.example.test/api/v1/sessions',
+    expect.objectContaining({
+      method: 'POST',
+      headers: expect.objectContaining({
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      }),
+      body: '{"login":"user"}',
+    }),
+  );
 });
 
 it('returns a timeout category when its abort signal fires', async () => {
   jest.useFakeTimers();
-  const fetchImpl = jest.fn((_url, init) => new Promise((_resolve, reject) => init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))));
-  const client = createHttpClient({ variant: 'development', apiUrl: 'https://api.example.test/api/v1' }, fetchImpl, 25);
+  const fetchImpl = jest.fn(
+    (_url, init) =>
+      new Promise((_resolve, reject) =>
+        init?.signal?.addEventListener('abort', () =>
+          reject(new DOMException('Aborted', 'AbortError')),
+        ),
+      ),
+  );
+  const client = createHttpClient(
+    { variant: 'development', apiUrl: 'https://api.example.test/api/v1' },
+    fetchImpl,
+    25,
+  );
   const request = client.request({ path: '/health' });
   await jest.advanceTimersByTimeAsync(25);
   await expect(request).rejects.toMatchObject({ category: 'timeout' });
@@ -306,7 +373,16 @@ Esperado: falha porque os módulos de erro e HTTP ainda não existem.
 - [ ] **Passo 3: Implementar contratos pequenos e explícitos**
 
 ```ts
-export type ErrorCategory = 'network' | 'timeout' | 'bad_request' | 'unauthorized' | 'forbidden' | 'not_found' | 'conflict' | 'server' | 'unknown';
+export type ErrorCategory =
+  | 'network'
+  | 'timeout'
+  | 'bad_request'
+  | 'unauthorized'
+  | 'forbidden'
+  | 'not_found'
+  | 'conflict'
+  | 'server'
+  | 'unknown';
 
 export class AppError extends Error {
   readonly category: ErrorCategory;
@@ -315,22 +391,38 @@ export class AppError extends Error {
   readonly technicalMessage?: string;
   readonly userMessage: string;
 
-  constructor(input: { category: ErrorCategory; status?: number; code?: string; technicalMessage?: string }) {
+  constructor(input: {
+    category: ErrorCategory;
+    status?: number;
+    code?: string;
+    technicalMessage?: string;
+  }) {
     super();
-    Object.assign(this, input, { userMessage: 'Não foi possível concluir esta ação. Tente novamente.' });
+    Object.assign(this, input, {
+      userMessage: 'Não foi possível concluir esta ação. Tente novamente.',
+    });
   }
 }
 ```
 
 ```ts
-export type HttpRequest = Readonly<{ path: string; method?: string; headers?: HeadersInit; body?: unknown }>;
-export type HttpClient = Readonly<{ request<T>(request: HttpRequest): Promise<T> }>;
+export type HttpRequest = Readonly<{
+  path: string;
+  method?: string;
+  headers?: HeadersInit;
+  body?: unknown;
+}>;
+export type HttpClient = Readonly<{
+  request<T>(request: HttpRequest): Promise<T>;
+}>;
 
 export function createHttpClient(
   config: EnvironmentConfig,
   fetchImpl: typeof fetch = fetch,
   timeoutMs = 15_000,
-): HttpClient { /* implementar somente os comportamentos dos testes */ }
+): HttpClient {
+  /* implementar somente os comportamentos dos testes */
+}
 ```
 
 O cliente deve aceitar somente `path` relativo, rejeitar URL absoluta, juntar a
@@ -373,19 +465,33 @@ git commit -m "feat(core): add HTTP client and normalized errors [TASK-005]"
 ```ts
 import { createTokenStorage } from '@/core/secure-storage/token-storage';
 
-const adapter = { getItemAsync: jest.fn(), setItemAsync: jest.fn(), deleteItemAsync: jest.fn() };
+const adapter = {
+  getItemAsync: jest.fn(),
+  setItemAsync: jest.fn(),
+  deleteItemAsync: jest.fn(),
+};
 
 beforeEach(() => jest.clearAllMocks());
 
 it('persists only access and refresh tokens in secure storage', async () => {
   const storage = createTokenStorage(adapter);
   await storage.save({ accessToken: 'access', refreshToken: 'refresh' });
-  expect(adapter.setItemAsync).toHaveBeenNthCalledWith(1, 'workshop.accessToken', 'access');
-  expect(adapter.setItemAsync).toHaveBeenNthCalledWith(2, 'workshop.refreshToken', 'refresh');
+  expect(adapter.setItemAsync).toHaveBeenNthCalledWith(
+    1,
+    'workshop.accessToken',
+    'access',
+  );
+  expect(adapter.setItemAsync).toHaveBeenNthCalledWith(
+    2,
+    'workshop.refreshToken',
+    'refresh',
+  );
 });
 
 it('returns null if either token is unavailable and clears both keys', async () => {
-  adapter.getItemAsync.mockResolvedValueOnce('access').mockResolvedValueOnce(null);
+  adapter.getItemAsync
+    .mockResolvedValueOnce('access')
+    .mockResolvedValueOnce(null);
   const storage = createTokenStorage(adapter);
   await expect(storage.read()).resolves.toBeNull();
   await storage.clear();
@@ -403,8 +509,14 @@ Esperado: falha porque `createTokenStorage` ainda não existe.
 - [ ] **Passo 3: Implementar o adaptador limitado a tokens**
 
 ```ts
-export type SessionTokens = Readonly<{ accessToken: string; refreshToken: string }>;
-export type SecureStoreAdapter = Pick<typeof SecureStore, 'getItemAsync' | 'setItemAsync' | 'deleteItemAsync'>;
+export type SessionTokens = Readonly<{
+  accessToken: string;
+  refreshToken: string;
+}>;
+export type SecureStoreAdapter = Pick<
+  typeof SecureStore,
+  'getItemAsync' | 'setItemAsync' | 'deleteItemAsync'
+>;
 export type TokenStorage = Readonly<{
   read(): Promise<SessionTokens | null>;
   save(tokens: SessionTokens): Promise<void>;
@@ -486,15 +598,15 @@ git commit -m "docs(foundation): record stack and milestone completion [TASK-007
 
 ### Cobertura da especificação
 
-| Requisito da especificação | Tarefa do plano |
-| --- | --- |
-| Stack Expo, Router, TypeScript, lint e testes | Tarefa 1 e Tarefa 5 |
-| Estrutura por feature e separação de `core` | Tarefa 1 |
-| Ambientes e URL externa sem segredo | Tarefa 2 |
-| HTTP com timeout, JSON e sem endpoints inventados | Tarefa 3 |
-| Mapeamento de erros de rede, timeout, 4xx, 5xx e códigos de negócio | Tarefa 3 |
-| Tokens exclusivamente em armazenamento seguro | Tarefa 4 |
-| Atualização dos documentos e Definition of Done | Tarefa 5 |
+| Requisito da especificação                                          | Tarefa do plano     |
+| ------------------------------------------------------------------- | ------------------- |
+| Stack Expo, Router, TypeScript, lint e testes                       | Tarefa 1 e Tarefa 5 |
+| Estrutura por feature e separação de `core`                         | Tarefa 1            |
+| Ambientes e URL externa sem segredo                                 | Tarefa 2            |
+| HTTP com timeout, JSON e sem endpoints inventados                   | Tarefa 3            |
+| Mapeamento de erros de rede, timeout, 4xx, 5xx e códigos de negócio | Tarefa 3            |
+| Tokens exclusivamente em armazenamento seguro                       | Tarefa 4            |
+| Atualização dos documentos e Definition of Done                     | Tarefa 5            |
 
 Não há lacunas de escopo, placeholders ou inconsistências de tipos entre as
 interfaces declaradas pelas tarefas.

@@ -1,5 +1,13 @@
 # AGENTS.md
 
+> Decisão de stack: Expo SDK 57, React Native 0.86, React 19 e TypeScript
+> estrito. Expo Router navega; `fetch` encapsulado atende HTTP; AsyncStorage
+> atende apenas cache não sensível; Expo SecureStore armazena somente
+> access/refresh token; WebSocket nativo e Expo Notifications serão usados
+> nas tasks correspondentes. Testes usam Jest/`jest-expo`, lint usa Expo
+> ESLint e a formatação usa Prettier. Sem o OpenAPI no repositório, não criar
+> endpoints, payloads nem respostas de API.
+
 ## Projeto
 
 Nome: `workshop_mobile`

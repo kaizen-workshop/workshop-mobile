@@ -14,17 +14,17 @@ The application uses the already-initialized Expo managed workflow, React
 Native, and TypeScript. Expo Router provides file-based navigation. The
 versions are pinned by `package.json` through the Expo SDK 57 dependency set.
 
-| Concern | Decision | Rationale |
-| --- | --- | --- |
-| Navigation | Expo Router | Already configured by the starter project and native to Expo. |
-| Shared state | React Context, only when a shared state first needs it | Avoids global-state dependencies before an actual shared flow exists. |
-| HTTP | Native `fetch` behind a small client | Supports the required timeout, headers, JSON serialization, and controlled error mapping without Axios. |
-| Non-sensitive persistence | `@react-native-async-storage/async-storage` | Common Expo-compatible storage for future cacheable data. |
-| Token storage | `expo-secure-store` | Uses the platform secure storage mechanism for access and refresh tokens. |
-| WebSocket | Native `WebSocket` | No chat implementation is in this milestone. |
-| Push notifications | `expo-notifications` | Expo-compatible push integration, configured only when the notification tasks begin. |
-| Tests | Jest with `jest-expo` | Unit-test support in the Expo environment. |
-| Lint / format | Expo ESLint and Prettier | Standard, explicit quality commands. |
+| Concern                   | Decision                                               | Rationale                                                                                               |
+| ------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| Navigation                | Expo Router                                            | Already configured by the starter project and native to Expo.                                           |
+| Shared state              | React Context, only when a shared state first needs it | Avoids global-state dependencies before an actual shared flow exists.                                   |
+| HTTP                      | Native `fetch` behind a small client                   | Supports the required timeout, headers, JSON serialization, and controlled error mapping without Axios. |
+| Non-sensitive persistence | `@react-native-async-storage/async-storage`            | Common Expo-compatible storage for future cacheable data.                                               |
+| Token storage             | `expo-secure-store`                                    | Uses the platform secure storage mechanism for access and refresh tokens.                               |
+| WebSocket                 | Native `WebSocket`                                     | No chat implementation is in this milestone.                                                            |
+| Push notifications        | `expo-notifications`                                   | Expo-compatible push integration, configured only when the notification tasks begin.                    |
+| Tests                     | Jest with `jest-expo`                                  | Unit-test support in the Expo environment.                                                              |
+| Lint / format             | Expo ESLint and Prettier                               | Standard, explicit quality commands.                                                                    |
 
 No password, backend secret, administrative token, payment data, or API
 contract fixture is stored in the application.
