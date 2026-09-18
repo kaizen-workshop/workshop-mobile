@@ -1,5 +1,13 @@
 # AGENTS.md
 
+## Referências visuais
+
+As imagens de referência de telas ficam em `assets/images/examples`.
+Antes de implementar ou alterar uma tela, inspecione as imagens aplicáveis e
+use a hierarquia visual, o layout e os estados mostrados como referência de
+UI. Elas não substituem `TASKS.md`, requisitos funcionais ou o contrato
+OpenAPI; divergências intencionais devem ser registradas.
+
 > Decisão de stack: Expo SDK 57, React Native 0.86, React 19 e TypeScript
 > estrito. Expo Router navega; `fetch` encapsulado atende HTTP; AsyncStorage
 > atende apenas cache não sensível; Expo SecureStore armazena somente

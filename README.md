@@ -1,5 +1,12 @@
 # workshop_mobile
 
+## Autenticação de demonstração
+
+Enquanto o OpenAPI não estiver disponível, `APP_AUTH_MODE=demo` permite testar
+os fluxos de autenticação apenas em desenvolvimento/testes. Login e senha não
+vazios são aceitos e o código de recuperação é `123456`. O modo demo é
+bloqueado em produção; senhas e códigos nunca são persistidos ou registrados.
+
 ## Stack oficial
 
 Expo SDK 57, React Native 0.86, React 19 e TypeScript estrito. A navegação
