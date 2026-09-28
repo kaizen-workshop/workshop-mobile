@@ -9,6 +9,7 @@ import type { WorkshopAttachment, WorkshopDetails } from '@/workshop/domain';
 type Props = Readonly<{
   status: 'loading' | 'error' | 'success';
   workshop?: WorkshopDetails;
+  source?: 'network' | 'cache';
   onRetry?: () => void;
   onOpenAttachment?: (attachment: WorkshopAttachment) => void;
 }>;
@@ -26,6 +27,7 @@ function Detail({ label, value }: Readonly<{ label: string; value?: string }>) {
 export function WorkshopDetailsScreen({
   onOpenAttachment,
   onRetry,
+  source = 'network',
   status,
   workshop,
 }: Props) {
@@ -35,7 +37,7 @@ export function WorkshopDetailsScreen({
 
   if (status === 'loading')
     return <LoadingState message="Carregando workshop" />;
-  if (status === 'error' || !workshop)
+  if (!workshop)
     return (
       <ErrorState
         message="Não foi possível carregar o workshop."
@@ -45,6 +47,11 @@ export function WorkshopDetailsScreen({
 
   return (
     <ScrollView contentContainerStyle={styles.content} style={styles.page}>
+      {source === 'cache' ? (
+        <Text accessibilityRole="alert" style={styles.cachedNotice}>
+          Sem conexão. Exibindo os detalhes salvos neste dispositivo.
+        </Text>
+      ) : null}
       {workshop.imageUrl ? (
         <View style={styles.imageContainer}>
           <Image
@@ -135,6 +142,12 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.md,
+  },
+  cachedNotice: {
+    color: colors.offline,
+    fontFamily: typography.familyRegular,
+    fontSize: typography.label,
+    marginBottom: spacing.md,
   },
   imageContainer: {
     alignItems: 'center',

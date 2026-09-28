@@ -9,10 +9,11 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { createAuthGateway } from '@/auth/data/auth-gateway-factory';
 import { AuthProvider, useAuth } from '@/auth/session';
+import { getAppVariant } from '@/core/config';
 import { createTokenStorage } from '@/core/secure-storage';
 import { colors } from '@/shared/theme';
 
-const variant = __DEV__ ? 'development' : 'production';
+const variant = getAppVariant();
 const gateway = createAuthGateway(
   process.env.APP_AUTH_MODE === 'demo' ? 'demo' : 'api',
   variant,

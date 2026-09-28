@@ -1,6 +1,11 @@
-import { getEnvironment } from '@/core/config/environment';
+import { getAppVariant, getEnvironment } from '@/core/config/environment';
 
 describe('getEnvironment', () => {
+  it('resolves the build variant independently from the bundle mode', () => {
+    expect(getAppVariant({ APP_VARIANT: 'staging' })).toBe('staging');
+    expect(getAppVariant({ APP_VARIANT: 'production' })).toBe('production');
+  });
+
   it('normalizes a valid public API URL', () => {
     expect(
       getEnvironment({

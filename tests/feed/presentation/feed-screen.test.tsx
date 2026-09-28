@@ -74,3 +74,12 @@ it('connects refresh and incremental loading callbacks', () => {
   expect(onRefresh).toHaveBeenCalledTimes(1);
   expect(onLoadMore).toHaveBeenCalledTimes(1);
 });
+
+it('identifies content loaded from the offline cache', () => {
+  render(<FeedScreen {...baseProps} source="cache" status="error" />);
+
+  expect(
+    screen.getByText('Sem conexão. Exibindo conteúdo salvo neste dispositivo.'),
+  ).toBeTruthy();
+  expect(screen.getByText('Lean Manufacturing')).toBeTruthy();
+});

@@ -21,6 +21,31 @@ por `APP_VARIANT` e `EXPO_PUBLIC_API_URL`. Variáveis `EXPO_PUBLIC_*` nunca
 podem conter segredos. Sem o contrato OpenAPI no repositório, esta fundação
 não implementa endpoint, payload ou resposta de API.
 
+## Builds EAS
+
+Os perfis ficam em `eas.json`:
+
+- `development`: development client para distribuição interna;
+- `staging`: binário interno de homologação (`preview` no ambiente EAS e APK
+  no Android);
+- `production`: binário destinado às lojas.
+
+Antes do primeiro build, vincule o projeto à conta EAS, confirme com o time de
+produto os identificadores oficiais `android.package` e
+`ios.bundleIdentifier` e cadastre `EXPO_PUBLIC_API_URL` nos ambientes
+`development`, `preview` e `production` do EAS. URLs e credenciais não devem
+ser adicionadas ao `eas.json`.
+
+Comandos de build:
+
+```text
+npx eas-cli build --profile development --platform android
+npx eas-cli build --profile staging --platform android
+npx eas-cli build --profile production --platform android
+```
+
+Para iOS, troque a plataforma por `ios` após configurar as credenciais Apple.
+
 Aplicação mobile do sistema de workshops da ARWEG.
 
 O aplicativo será o principal cliente da `workshop_api` e permitirá descoberta de workshops, inscrições, acompanhamento de eventos, interação no feed, participação em grupos, chat, notificações e avaliações.

@@ -77,3 +77,16 @@ it('opens an available attachment through the injected action', () => {
 
   expect(onOpenAttachment).toHaveBeenCalledWith(workshop.attachments[0]);
 });
+
+it('keeps saved details visible after a network error', () => {
+  render(
+    <WorkshopDetailsScreen source="cache" status="error" workshop={workshop} />,
+  );
+
+  expect(
+    screen.getByText(
+      'Sem conexão. Exibindo os detalhes salvos neste dispositivo.',
+    ),
+  ).toBeTruthy();
+  expect(screen.getByText('Lean Manufacturing')).toBeTruthy();
+});
