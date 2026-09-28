@@ -24,17 +24,17 @@
 
 ## Estrutura de arquivos
 
-| Arquivo | Responsabilidade |
-| --- | --- |
-| `src/auth/domain/session.ts` | Estados e tipos de sessão. |
-| `src/auth/domain/auth-gateway.ts` | Contrato independente de HTTP. |
-| `src/auth/data/demo-auth-gateway.ts` | Fake permitido somente em demo/testes. |
-| `src/auth/data/unavailable-auth-gateway.ts` | Falha segura sem OpenAPI. |
-| `src/auth/session/auth-provider.tsx` | Restauração, login, refresh compartilhado e logout. |
-| `src/auth/presentation/*` | Telas e componentes dos fluxos de autenticação. |
-| `app/(auth)/*` | Rotas públicas. |
-| `app/_layout.tsx` | Guarda de rotas conforme sessão. |
-| `tests/auth/**/*` | Cobertura de gateway, sessão, navegação e telas. |
+| Arquivo                                     | Responsabilidade                                    |
+| ------------------------------------------- | --------------------------------------------------- |
+| `src/auth/domain/session.ts`                | Estados e tipos de sessão.                          |
+| `src/auth/domain/auth-gateway.ts`           | Contrato independente de HTTP.                      |
+| `src/auth/data/demo-auth-gateway.ts`        | Fake permitido somente em demo/testes.              |
+| `src/auth/data/unavailable-auth-gateway.ts` | Falha segura sem OpenAPI.                           |
+| `src/auth/session/auth-provider.tsx`        | Restauração, login, refresh compartilhado e logout. |
+| `src/auth/presentation/*`                   | Telas e componentes dos fluxos de autenticação.     |
+| `app/(auth)/*`                              | Rotas públicas.                                     |
+| `app/_layout.tsx`                           | Guarda de rotas conforme sessão.                    |
+| `tests/auth/**/*`                           | Cobertura de gateway, sessão, navegação e telas.    |
 
 ### Tarefa 1: Contratos de domínio e gateways (TASK-009)
 
@@ -51,11 +51,15 @@
 
 ```ts
 it('authenticates non-empty credentials in demo mode', async () => {
-  await expect(new DemoAuthGateway().login({ login: 'ana', password: 'senha' })).resolves.toMatchObject({ mustChangePassword: false });
+  await expect(
+    new DemoAuthGateway().login({ login: 'ana', password: 'senha' }),
+  ).resolves.toMatchObject({ mustChangePassword: false });
 });
 
 it('rejects an invalid demo recovery code', async () => {
-  await expect(new DemoAuthGateway().resetPassword({ code: '000000', password: 'nova' })).rejects.toMatchObject({ code: 'AUTH_INVALID_RECOVERY_CODE' });
+  await expect(
+    new DemoAuthGateway().resetPassword({ code: '000000', password: 'nova' }),
+  ).rejects.toMatchObject({ code: 'AUTH_INVALID_RECOVERY_CODE' });
 });
 ```
 
@@ -68,12 +72,24 @@ Esperado: falha por ausência dos módulos de autenticação.
 - [ ] **Passo 3: Implementar os contratos mínimos**
 
 ```ts
-export type AuthState = 'UNAUTHENTICATED' | 'REQUIRES_PASSWORD_CHANGE' | 'REQUIRES_ONBOARDING' | 'AUTHENTICATED';
-export type AuthSession = Readonly<{ accessToken: string; refreshToken: string; mustChangePassword: boolean; requiresOnboarding: boolean }>;
+export type AuthState =
+  | 'UNAUTHENTICATED'
+  | 'REQUIRES_PASSWORD_CHANGE'
+  | 'REQUIRES_ONBOARDING'
+  | 'AUTHENTICATED';
+export type AuthSession = Readonly<{
+  accessToken: string;
+  refreshToken: string;
+  mustChangePassword: boolean;
+  requiresOnboarding: boolean;
+}>;
 export type AuthGateway = Readonly<{
   login(input: { login: string; password: string }): Promise<AuthSession>;
   refresh(refreshToken: string): Promise<AuthSession>;
-  changePassword(input: { currentPassword: string; newPassword: string }): Promise<void>;
+  changePassword(input: {
+    currentPassword: string;
+    newPassword: string;
+  }): Promise<void>;
   requestPasswordRecovery(login: string): Promise<void>;
   resetPassword(input: { code: string; password: string }): Promise<void>;
   logout(refreshToken: string): Promise<void>;
@@ -113,14 +129,24 @@ git commit -m "feat(auth): add gateway contracts and demo mode [TASK-009]"
 
 ```tsx
 it('shares one refresh request across concurrent calls', async () => {
-  const gateway = { refresh: jest.fn().mockResolvedValue(session), login: jest.fn(), changePassword: jest.fn(), requestPasswordRecovery: jest.fn(), resetPassword: jest.fn(), logout: jest.fn() };
+  const gateway = {
+    refresh: jest.fn().mockResolvedValue(session),
+    login: jest.fn(),
+    changePassword: jest.fn(),
+    requestPasswordRecovery: jest.fn(),
+    resetPassword: jest.fn(),
+    logout: jest.fn(),
+  };
   const { result } = renderAuthProvider({ gateway, tokenStorage });
   await Promise.all([result.current.refresh(), result.current.refresh()]);
   expect(gateway.refresh).toHaveBeenCalledTimes(1);
 });
 
 it('clears tokens and returns to login when refresh fails', async () => {
-  const { result } = renderAuthProvider({ gateway: failingGateway, tokenStorage });
+  const { result } = renderAuthProvider({
+    gateway: failingGateway,
+    tokenStorage,
+  });
   await expect(result.current.refresh()).rejects.toBeDefined();
   expect(result.current.state).toBe('UNAUTHENTICATED');
   expect(tokenStorage.clear).toHaveBeenCalled();
@@ -226,8 +252,12 @@ git commit -m "feat(auth): add login and first access screens [TASK-008]"
 it('shows a safe error for a code other than 123456', async () => {
   render(<ResetPasswordScreen auth={demoAuth} />);
   await fillResetForm({ code: '000000', password: 'nova' });
-  await userEvent.press(screen.getByRole('button', { name: 'Redefinir senha' }));
-  expect(await screen.findByText('Não foi possível redefinir a senha.')).toBeTruthy();
+  await userEvent.press(
+    screen.getByRole('button', { name: 'Redefinir senha' }),
+  );
+  expect(
+    await screen.findByText('Não foi possível redefinir a senha.'),
+  ).toBeTruthy();
 });
 ```
 
@@ -300,13 +330,13 @@ git commit -m "docs(auth): record milestone one completion [TASK-014]"
 
 ## Auto-revisão
 
-| Requisito | Tarefa |
-| --- | --- |
-| Demo restrito e integração futura | 1 |
-| Sessão, rotas, refresh e logout | 2 e 3 |
-| Login e primeiro acesso visual | 3 |
-| Recuperação e redefinição | 4 |
-| Documentação, referências e status | 5 |
+| Requisito                          | Tarefa |
+| ---------------------------------- | ------ |
+| Demo restrito e integração futura  | 1      |
+| Sessão, rotas, refresh e logout    | 2 e 3  |
+| Login e primeiro acesso visual     | 3      |
+| Recuperação e redefinição          | 4      |
+| Documentação, referências e status | 5      |
 
 O plano não depende de endpoint inventado, não persiste senha e usa as mesmas
 interfaces (`AuthGateway`, `AuthSession`, `useAuth`) em todas as tarefas.

@@ -11,7 +11,12 @@ type TokenStorage = Readonly<{
 }>;
 type AuthContextValue = Readonly<{
   state: AuthState;
+  isRestoring: boolean;
   login(input: { login: string; password: string }): Promise<void>;
+  changePassword(input: {
+    currentPassword: string;
+    newPassword: string;
+  }): Promise<void>;
   refresh(): Promise<void>;
   logout(): Promise<void>;
 }>;
@@ -31,18 +36,35 @@ export function AuthProvider({
     [gateway, tokenStorage],
   );
   const [state, setState] = useState<AuthState>('UNAUTHENTICATED');
+  const [isRestoring, setIsRestoring] = useState(true);
   useEffect(() => {
-    void controller.restore().then(() => setState(controller.getState()));
+    let mounted = true;
+    void controller
+      .restore()
+      .catch(() => undefined)
+      .finally(() => {
+        if (!mounted) return;
+        setState(controller.getState());
+        setIsRestoring(false);
+      });
+    return () => {
+      mounted = false;
+    };
   }, [controller]);
   const sync = async (operation: () => Promise<void>) => {
-    await operation();
-    setState(controller.getState());
+    try {
+      await operation();
+    } finally {
+      setState(controller.getState());
+    }
   };
   return (
     <AuthContext.Provider
       value={{
         state,
+        isRestoring,
         login: (input) => sync(() => controller.login(input)),
+        changePassword: (input) => sync(() => controller.changePassword(input)),
         refresh: () => sync(() => controller.refresh()),
         logout: () => sync(() => controller.logout()),
       }}

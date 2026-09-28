@@ -234,7 +234,7 @@ Critérios:
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Estados:
@@ -253,7 +253,7 @@ AUTHENTICATED
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Fluxo:
@@ -321,12 +321,16 @@ Telas:
 Status:
 
 ```text
-[ ]
+[~]
 ```
 
 Exibir temas retornados pela API.
 
 Permitir múltipla seleção.
+
+Progresso: a seleção múltipla e os estados visuais estão implementados. A carga
+real permanece bloqueada porque os DTOs e endpoints existem apenas como tasks
+pendentes da `workshop_api`, sem implementação/OpenAPI publicado.
 
 ---
 
@@ -335,7 +339,7 @@ Permitir múltipla seleção.
 Status:
 
 ```text
-[ ]
+[!]
 ```
 
 Critérios:
@@ -345,6 +349,8 @@ Critérios:
 - retry;
 - sucesso leva ao feed.
 
+Bloqueio: depende do contrato OpenAPI de preferências e da TASK-015.
+
 ---
 
 ## TASK-017 — Editar preferências posteriormente
@@ -352,10 +358,12 @@ Critérios:
 Status:
 
 ```text
-[ ]
+[!]
 ```
 
 Disponível nas configurações/perfil.
+
+Bloqueio: depende do contrato OpenAPI de preferências e da TASK-015.
 
 ---
 
@@ -366,7 +374,7 @@ Disponível nas configurações/perfil.
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Áreas esperadas:
@@ -387,7 +395,7 @@ A composição final pode mudar conforme UX.
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Centralizar:
@@ -407,7 +415,7 @@ Não criar design system gigantesco nesta fase.
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Criar:
@@ -440,7 +448,7 @@ Consumir endpoint da API.
 Status:
 
 ```text
-[ ]
+[~]
 ```
 
 Exibir:
@@ -448,6 +456,10 @@ Exibir:
 - workshops;
 - posts;
 - destaques.
+
+Progresso: apresentação e estados visuais usam modelos locais de UI. A origem
+real dos itens permanece bloqueada pela TASK-021 e pelo endpoint ainda não
+implementado na `workshop_api`.
 
 ---
 
@@ -468,8 +480,11 @@ Preferir cursor quando fornecido pela API.
 Status:
 
 ```text
-[ ]
+[~]
 ```
+
+Progresso: o gesto e o estado visual estão ligados a callback injetado; falta a
+integração real do feed.
 
 ---
 
@@ -529,8 +544,11 @@ Criar:
 Status:
 
 ```text
-[ ]
+[~]
 ```
+
+Progresso: listagem, estados visuais, refresh e abertura de item estão
+implementados com modelo local de UI. A integração aguarda o endpoint real.
 
 ---
 
@@ -551,10 +569,13 @@ Cobrir filtros suportados pela API.
 Status:
 
 ```text
-[ ]
+[~]
 ```
 
 Exibir dados disponíveis sem assumir preenchimento obrigatório de campos opcionais.
+
+Progresso: tela e tratamento de campos opcionais implementados com modelo local
+de UI. A carga por id aguarda o endpoint real.
 
 ---
 
@@ -563,10 +584,13 @@ Exibir dados disponíveis sem assumir preenchimento obrigatório de campos opcio
 Status:
 
 ```text
-[ ]
+[~]
 ```
 
 Visualizar/abrir anexos suportados.
+
+Progresso: anexos disponíveis são listados e expostos por callback acessível; a
+abertura/download real depende do contrato de arquivos.
 
 ---
 
@@ -1022,7 +1046,7 @@ Tratar elegibilidade retornada pela API.
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Classificar operações em:
@@ -1040,7 +1064,7 @@ WRITE-ONLINE-ONLY
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 A tecnologia depende da stack escolhida.
@@ -1052,7 +1076,7 @@ A tecnologia depende da stack escolhida.
 Status:
 
 ```text
-[ ]
+[!]
 ```
 
 Utilizar suporte da API como:
@@ -1064,6 +1088,9 @@ updatedAfter
 
 quando disponível.
 
+Bloqueio: o OpenAPI ainda não define suporte a `updatedAt`, `updatedAfter`,
+`ETag` ou cursores de sincronização.
+
 ---
 
 ## TASK-066 — Criar fila controlada de operações retryable
@@ -1071,10 +1098,13 @@ quando disponível.
 Status:
 
 ```text
-[ ]
+[!]
 ```
 
 Não incluir automaticamente pagamentos.
+
+Bloqueio: a fila só pode incluir operações cuja identidade, idempotência e
+regras de retry estejam definidas pelo contrato da API.
 
 ---
 
@@ -1083,12 +1113,15 @@ Não incluir automaticamente pagamentos.
 Status:
 
 ```text
-[ ]
+[!]
 ```
 
 Definir regra por domínio.
 
 Não usar "última escrita vence" universalmente sem avaliação.
+
+Bloqueio: depende das regras de conflito por domínio e das respostas definidas
+no OpenAPI.
 
 ---
 
@@ -1099,7 +1132,7 @@ Não usar "última escrita vence" universalmente sem avaliação.
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 ---
@@ -1109,7 +1142,7 @@ Status:
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 ---
@@ -1119,7 +1152,7 @@ Status:
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 ---
@@ -1129,7 +1162,7 @@ Status:
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 ---
@@ -1211,7 +1244,7 @@ Status:
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 ---
@@ -1265,6 +1298,27 @@ Critérios:
 - validar estados de loading, erro e vazio;
 - registrar divergências intencionais;
 - atualizar Figma ou implementação quando necessário.
+
+---
+
+# TASK-084 — Adotar WEG Design System
+
+Status:
+
+```text
+[x]
+```
+
+- registrar a documentação oficial no `AGENTS.md`;
+- usar cores semânticas oficiais;
+- usar Roboto;
+- alinhar espaçamentos e radius;
+- adaptar componentes para React Native sem dependência web;
+- validar testes, lint, tipos, formatação e build.
+
+Implementado com tokens semânticos consultados na documentação oficial,
+tipografia Roboto empacotada no aplicativo e adaptação dos componentes nativos
+existentes. Validado com testes, TypeScript, lint, Prettier e export web.
 
 ---
 

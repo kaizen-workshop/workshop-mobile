@@ -18,6 +18,7 @@ export function createSessionController(
 ) {
   let tokens: Tokens | null = null;
   let state: AuthState = 'UNAUTHENTICATED';
+  let stateAfterPasswordChange: AuthState = 'AUTHENTICATED';
   let refreshPromise: Promise<void> | null = null;
   const apply = async (session: AuthSession) => {
     tokens = {
@@ -25,11 +26,12 @@ export function createSessionController(
       refreshToken: session.refreshToken,
     };
     await tokenStorage.save(tokens);
+    stateAfterPasswordChange = session.requiresOnboarding
+      ? 'REQUIRES_ONBOARDING'
+      : 'AUTHENTICATED';
     state = session.mustChangePassword
       ? 'REQUIRES_PASSWORD_CHANGE'
-      : session.requiresOnboarding
-        ? 'REQUIRES_ONBOARDING'
-        : 'AUTHENTICATED';
+      : stateAfterPasswordChange;
   };
   return {
     getState: () => state,
@@ -39,6 +41,13 @@ export function createSessionController(
     },
     async login(input: { login: string; password: string }) {
       await apply(await gateway.login(input));
+    },
+    async changePassword(input: {
+      currentPassword: string;
+      newPassword: string;
+    }) {
+      await gateway.changePassword(input);
+      state = stateAfterPasswordChange;
     },
     refresh() {
       if (!refreshPromise)
@@ -63,6 +72,7 @@ export function createSessionController(
       } finally {
         tokens = null;
         state = 'UNAUTHENTICATED';
+        stateAfterPasswordChange = 'AUTHENTICATED';
         await tokenStorage.clear();
       }
     },
