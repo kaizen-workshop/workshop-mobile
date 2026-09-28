@@ -1,0 +1,8 @@
+export type FeedCard = Readonly<{
+  id: string;
+  kind: 'workshop' | 'post';
+  title: string;
+  summary?: string;
+  context?: string;
+  highlighted?: boolean;
+}>;

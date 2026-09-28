@@ -587,6 +587,32 @@ Quando a identidade visual for definida, centralizar:
 
 Não espalhar valores visuais arbitrários por dezenas de arquivos.
 
+## Referência visual oficial da WEG
+
+O aplicativo deve seguir o WEG Design System publicado em:
+
+```text
+https://design-system.weg.net/?path=/docs/about-introduction--documentation
+```
+
+Regras obrigatórias:
+
+- usar os tokens semânticos do WEG Design System como fonte para cores;
+- usar Roboto como tipografia principal;
+- respeitar a escala oficial de espaçamento, radius, tipografia e estados;
+- adaptar os padrões visuais para componentes nativos do React Native;
+- não instalar ou reutilizar diretamente componentes React destinados à web;
+- manter acessibilidade e tamanho mínimo de toque durante a adaptação mobile;
+- centralizar a adaptação em `src/shared/theme` e nos componentes básicos;
+- não copiar valores da paleta base quando existir token semântico equivalente;
+- consultar novamente a documentação oficial antes de criar um novo padrão
+  visual que ainda não esteja representado no aplicativo.
+
+As imagens em `assets/images/examples` continuam sendo referência de composição
+e hierarquia das telas. Em caso de diferença visual, o WEG Design System define
+os fundamentos e os requisitos funcionais continuam tendo prioridade sobre a
+aparência.
+
 ---
 
 # 26. Acessibilidade

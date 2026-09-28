@@ -1,9 +1,10 @@
-import { render, screen } from '@testing-library/react-native';
+import { getRouteForAuthState } from '@/auth/session';
 
-import Index from '../../app/index';
-
-it('renders the technical foundation screen', () => {
-  render(<Index />);
-
-  expect(screen.getByText('Fundação pronta')).toBeTruthy();
+it.each([
+  ['UNAUTHENTICATED', '/(auth)/login'],
+  ['REQUIRES_PASSWORD_CHANGE', '/(password-change)/change-password'],
+  ['REQUIRES_ONBOARDING', '/(onboarding)/preferences'],
+  ['AUTHENTICATED', '/(authenticated)/(tabs)/feed'],
+] as const)('routes %s sessions to %s', (state, route) => {
+  expect(getRouteForAuthState(state)).toBe(route);
 });

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { colors, radii, spacing, typography } from '@/shared/theme';
+
 export function FirstAccessScreen({
   onSubmit,
 }: {
@@ -33,8 +35,13 @@ export function FirstAccessScreen({
         keyboardType="number-pad"
         style={styles.input}
         placeholder="123456"
+        placeholderTextColor={colors.placeholder}
       />
-      {error ? <Text accessibilityRole="alert">{error}</Text> : null}
+      {error ? (
+        <Text accessibilityRole="alert" style={styles.error}>
+          {error}
+        </Text>
+      ) : null}
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Enviar"
@@ -52,26 +59,53 @@ export function FirstAccessScreen({
 const styles = StyleSheet.create({
   page: {
     flex: 1,
-    padding: 40,
+    padding: spacing.xxl,
     justifyContent: 'center',
-    backgroundColor: '#0963A8',
+    backgroundColor: colors.brand,
   },
-  logo: { color: '#fff', fontSize: 34, fontWeight: '800', textAlign: 'center' },
-  title: {
-    color: '#fff',
-    fontSize: 30,
-    fontWeight: '700',
+  logo: {
+    color: colors.onBrand,
+    fontFamily: typography.familyBold,
+    fontSize: typography.logo,
+    fontWeight: typography.heavy,
     textAlign: 'center',
-    marginVertical: 42,
   },
-  label: { color: '#fff', fontWeight: '600', marginBottom: 8 },
-  input: { backgroundColor: '#fff', borderRadius: 12, padding: 14 },
+  title: {
+    color: colors.onBrand,
+    fontFamily: typography.familyBold,
+    fontSize: typography.title,
+    fontWeight: typography.bold,
+    textAlign: 'center',
+    marginVertical: spacing.xxl,
+  },
+  label: {
+    color: colors.onBrand,
+    fontFamily: typography.familyMedium,
+    fontWeight: typography.medium,
+    marginBottom: spacing.xs,
+  },
+  input: {
+    backgroundColor: colors.background,
+    borderRadius: radii.md,
+    color: colors.text,
+    fontFamily: typography.familyRegular,
+    padding: spacing.md,
+  },
   button: {
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 14,
-    marginTop: 24,
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+    borderRadius: radii.lg,
+    marginTop: spacing.lg,
     alignItems: 'center',
   },
-  buttonText: { color: '#0963A8', fontWeight: '700' },
+  buttonText: {
+    color: colors.brand,
+    fontFamily: typography.familyBold,
+    fontWeight: typography.bold,
+  },
+  error: {
+    color: colors.onBrand,
+    fontFamily: typography.familyRegular,
+    marginTop: spacing.sm,
+  },
 });

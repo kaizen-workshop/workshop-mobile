@@ -1,11 +1,19 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { colors, radii, spacing, typography } from '@/shared/theme';
+
 type Props = Readonly<{
   onSubmit(input: { login: string; password: string }): Promise<void> | void;
+  onFirstAccess?: () => void;
+  onForgotPassword?: () => void;
 }>;
 
-export function LoginScreen({ onSubmit }: Props) {
+export function LoginScreen({
+  onFirstAccess,
+  onForgotPassword,
+  onSubmit,
+}: Props) {
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
   const [visible, setVisible] = useState(false);
@@ -35,6 +43,7 @@ export function LoginScreen({ onSubmit }: Props) {
           autoCapitalize="none"
           style={styles.input}
           placeholder="email@gmail.com"
+          placeholderTextColor={colors.placeholder}
         />
         <Text style={styles.label}>Senha</Text>
         <View style={styles.password}>
@@ -45,11 +54,13 @@ export function LoginScreen({ onSubmit }: Props) {
             secureTextEntry={!visible}
             style={styles.passwordInput}
             placeholder="******"
+            placeholderTextColor={colors.placeholder}
           />
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={visible ? 'Ocultar senha' : 'Mostrar senha'}
             onPress={() => setVisible(!visible)}
+            style={styles.visibilityButton}
           >
             <Text>◉</Text>
           </Pressable>
@@ -58,6 +69,24 @@ export function LoginScreen({ onSubmit }: Props) {
           <Text accessibilityRole="alert" style={styles.error}>
             {error}
           </Text>
+        ) : null}
+        {onFirstAccess ? (
+          <Pressable
+            accessibilityRole="link"
+            onPress={onFirstAccess}
+            style={styles.link}
+          >
+            <Text style={styles.linkText}>Primeiro acesso</Text>
+          </Pressable>
+        ) : null}
+        {onForgotPassword ? (
+          <Pressable
+            accessibilityRole="link"
+            onPress={onForgotPassword}
+            style={styles.link}
+          >
+            <Text style={styles.linkText}>Esqueci minha senha</Text>
+          </Pressable>
         ) : null}
         <Pressable
           accessibilityRole="button"
@@ -78,39 +107,85 @@ const styles = StyleSheet.create({
   page: {
     flex: 1,
     justifyContent: 'center',
-    padding: 28,
-    backgroundColor: '#0963A8',
+    padding: spacing.xl,
+    backgroundColor: colors.brand,
   },
-  card: { padding: 20, borderRadius: 20, backgroundColor: '#fff' },
+  card: {
+    padding: spacing.lg,
+    borderRadius: radii.xl,
+    backgroundColor: colors.surface,
+  },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
+    color: colors.text,
+    fontFamily: typography.familyBold,
+    fontSize: typography.title,
+    fontWeight: typography.bold,
     textAlign: 'center',
-    marginBottom: 28,
+    marginBottom: spacing.xl,
   },
-  label: { fontWeight: '600', marginTop: 12, marginBottom: 6 },
+  label: {
+    color: colors.text,
+    fontFamily: typography.familyMedium,
+    fontWeight: typography.medium,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
+  },
   input: {
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 12,
-    padding: 14,
+    borderColor: colors.border,
+    borderRadius: radii.md,
+    color: colors.text,
+    fontFamily: typography.familyRegular,
+    padding: spacing.md,
   },
   password: {
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
-    borderRadius: 12,
-    paddingHorizontal: 14,
+    borderColor: colors.border,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
   },
-  passwordInput: { flex: 1, paddingVertical: 14 },
+  passwordInput: {
+    color: colors.text,
+    flex: 1,
+    fontFamily: typography.familyRegular,
+    paddingVertical: spacing.md,
+  },
+  visibilityButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
+    minWidth: 44,
+  },
   button: {
-    marginTop: 24,
-    padding: 16,
-    borderRadius: 14,
-    backgroundColor: '#0963A8',
+    marginTop: spacing.lg,
+    padding: spacing.md,
+    borderRadius: radii.lg,
+    backgroundColor: colors.brand,
     alignItems: 'center',
   },
-  buttonText: { color: '#fff', fontWeight: '700' },
-  error: { color: '#B91C1C', marginTop: 12 },
+  buttonText: {
+    color: colors.onBrand,
+    fontFamily: typography.familyBold,
+    fontWeight: typography.bold,
+  },
+  error: {
+    color: colors.danger,
+    fontFamily: typography.familyRegular,
+    marginTop: spacing.sm,
+  },
+  link: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
+    paddingHorizontal: spacing.sm,
+  },
+  linkText: {
+    color: colors.brand,
+    fontFamily: typography.familyMedium,
+    fontWeight: typography.medium,
+  },
 });
