@@ -1,12 +1,13 @@
 import { useRouter } from 'expo-router';
 import { createAuthGateway } from '@/auth/data/auth-gateway-factory';
 import { ResetPasswordScreen } from '@/auth/presentation/reset-password-screen';
+import { getAppVariant } from '@/core/config';
 
 export default function ResetPasswordRoute() {
   const router = useRouter();
   const gateway = createAuthGateway(
     process.env.APP_AUTH_MODE === 'demo' ? 'demo' : 'api',
-    __DEV__ ? 'development' : 'production',
+    getAppVariant(),
   );
   return (
     <ResetPasswordScreen

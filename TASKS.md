@@ -493,7 +493,7 @@ integração real do feed.
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Critérios:
@@ -501,6 +501,11 @@ Critérios:
 - conteúdo anterior pode aparecer offline;
 - sincronização posterior atualiza cache;
 - cache não substitui refresh.
+
+Implementado com snapshot expirável e isolado por usuário. Toda carga tenta a
+origem remota primeiro, atualiza o cache após sucesso e recorre ao conteúdo
+salvo somente quando a leitura remota falha. A tela identifica o conteúdo
+offline sem impedir refresh ou paginação posteriores.
 
 ---
 
@@ -599,10 +604,15 @@ abertura/download real depende do contrato de arquivos.
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Permitir consulta básica offline de dados previamente carregados.
+
+Implementado com cache expirável de lista e detalhes, isolado por usuário,
+fallback para a última leitura válida quando a rede falha e identificação
+acessível do conteúdo salvo nas telas. Falhas do cache não ocultam dados novos
+nem substituem o erro original quando não existe conteúdo local.
 
 ---
 
@@ -1214,8 +1224,12 @@ Status:
 Status:
 
 ```text
-[ ]
+[~]
 ```
+
+Progresso: perfil EAS interno com development client e ambiente de
+desenvolvimento configurado. A validação nativa aguarda os identificadores
+oficiais do aplicativo, vínculo do projeto EAS e credenciais das plataformas.
 
 ---
 
@@ -1224,8 +1238,13 @@ Status:
 Status:
 
 ```text
-[ ]
+[~]
 ```
+
+Progresso: perfil EAS de distribuição interna configurado, usando o ambiente
+`preview` do EAS, `APP_VARIANT=staging` e APK para validação Android. A URL de
+staging deve ser cadastrada externamente e o build nativo ainda precisa ser
+executado.
 
 ---
 
@@ -1234,8 +1253,12 @@ Status:
 Status:
 
 ```text
-[ ]
+[~]
 ```
+
+Progresso: perfil EAS para distribuição em loja configurado, sem URL ou segredo
+embutido. A conclusão depende dos identificadores oficiais, credenciais de loja,
+URL de produção no ambiente EAS e validação do binário assinado.
 
 ---
 

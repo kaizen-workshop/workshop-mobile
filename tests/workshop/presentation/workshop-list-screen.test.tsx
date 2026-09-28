@@ -82,3 +82,21 @@ it('opens workshops and connects pull-to-refresh', () => {
   expect(onOpen).toHaveBeenCalledWith(workshops[0]);
   expect(onRefresh).toHaveBeenCalledTimes(1);
 });
+
+it('identifies workshops loaded from the offline cache', () => {
+  render(
+    <WorkshopListScreen
+      onRefresh={jest.fn()}
+      source="cache"
+      status="error"
+      workshops={workshops}
+    />,
+  );
+
+  expect(
+    screen.getByText(
+      'Sem conexão. Exibindo workshops salvos neste dispositivo.',
+    ),
+  ).toBeTruthy();
+  expect(screen.getByText('Lean Manufacturing')).toBeTruthy();
+});

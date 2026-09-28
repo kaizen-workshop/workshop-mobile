@@ -1,4 +1,4 @@
-import { FlatList, RefreshControl, StyleSheet, Text } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import { EmptyState, ErrorState, LoadingState } from '@/shared/presentation';
 import { colors, spacing, typography } from '@/shared/theme';
@@ -9,6 +9,7 @@ type Props = Readonly<{
   status: 'loading' | 'error' | 'success';
   workshops: readonly WorkshopSummary[];
   refreshing?: boolean;
+  source?: 'network' | 'cache';
   onRefresh(): void;
   onRetry?: () => void;
   onOpen?: (workshop: WorkshopSummary) => void;
@@ -19,6 +20,7 @@ export function WorkshopListScreen({
   onRefresh,
   onRetry,
   refreshing = false,
+  source = 'network',
   status,
   workshops,
 }: Props) {
@@ -45,9 +47,16 @@ export function WorkshopListScreen({
       data={[...workshops]}
       keyExtractor={(workshop) => workshop.id}
       ListHeaderComponent={
-        <Text accessibilityRole="header" style={styles.heading}>
-          Workshops
-        </Text>
+        <View>
+          <Text accessibilityRole="header" style={styles.heading}>
+            Workshops
+          </Text>
+          {source === 'cache' ? (
+            <Text accessibilityRole="alert" style={styles.cachedNotice}>
+              Sem conexão. Exibindo workshops salvos neste dispositivo.
+            </Text>
+          ) : null}
+        </View>
       }
       refreshControl={
         <RefreshControl
@@ -81,6 +90,12 @@ const styles = StyleSheet.create({
     fontFamily: typography.familyBold,
     fontSize: typography.title,
     fontWeight: typography.bold,
+    marginBottom: spacing.md,
+  },
+  cachedNotice: {
+    color: colors.offline,
+    fontFamily: typography.familyRegular,
+    fontSize: typography.label,
     marginBottom: spacing.md,
   },
 });

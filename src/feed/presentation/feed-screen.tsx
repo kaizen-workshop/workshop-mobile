@@ -17,6 +17,7 @@ type Props = Readonly<{
   items: readonly FeedCard[];
   refreshing?: boolean;
   loadingMore?: boolean;
+  source?: 'network' | 'cache';
   onRefresh(): void;
   onRetry?: () => void;
   onLoadMore?: () => void;
@@ -72,6 +73,7 @@ export function FeedScreen({
   onRefresh,
   onRetry,
   refreshing = false,
+  source = 'network',
   status,
 }: Props) {
   if (status === 'loading' && items.length === 0)
@@ -98,9 +100,16 @@ export function FeedScreen({
       data={[...items]}
       keyExtractor={(item) => `${item.kind}:${item.id}`}
       ListHeaderComponent={
-        <Text accessibilityRole="header" style={styles.title}>
-          Feed
-        </Text>
+        <View>
+          <Text accessibilityRole="header" style={styles.title}>
+            Feed
+          </Text>
+          {source === 'cache' ? (
+            <Text accessibilityRole="alert" style={styles.cachedNotice}>
+              Sem conexão. Exibindo conteúdo salvo neste dispositivo.
+            </Text>
+          ) : null}
+        </View>
       }
       ListFooterComponent={
         loadingMore ? (
@@ -144,6 +153,12 @@ const styles = StyleSheet.create({
     fontFamily: typography.familyBold,
     fontSize: typography.title,
     fontWeight: typography.bold,
+    marginBottom: spacing.md,
+  },
+  cachedNotice: {
+    color: colors.offline,
+    fontFamily: typography.familyRegular,
+    fontSize: typography.label,
     marginBottom: spacing.md,
   },
   card: {

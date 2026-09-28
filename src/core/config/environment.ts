@@ -5,19 +5,26 @@ export type EnvironmentConfig = Readonly<{
   apiUrl: string;
 }>;
 
-export function getEnvironment(
+export function getAppVariant(
   input: Record<string, string | undefined> = process.env,
-): EnvironmentConfig {
-  const variant = input.APP_VARIANT;
+): AppVariant {
+  const variant = input.APP_VARIANT ?? (__DEV__ ? 'development' : 'production');
   if (!appVariants.includes(variant as AppVariant))
     throw new Error(
       'APP_VARIANT inválido. Use development, staging ou production.',
     );
+  return variant as AppVariant;
+}
+
+export function getEnvironment(
+  input: Record<string, string | undefined> = process.env,
+): EnvironmentConfig {
+  const variant = getAppVariant(input);
   try {
     const url = new URL(input.EXPO_PUBLIC_API_URL ?? '');
     if (!['http:', 'https:'].includes(url.protocol)) throw new Error();
     return {
-      variant: variant as AppVariant,
+      variant,
       apiUrl: url.toString().replace(/\/$/, ''),
     };
   } catch {
