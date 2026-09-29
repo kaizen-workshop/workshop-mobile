@@ -33,6 +33,17 @@ export function createApiPreferencesGateway(
 
       return response.map(toThemeOption);
     },
+    async replaceThemes(themeIds) {
+      const tokens = await tokenStorage.read();
+      if (!tokens) throw new AppError({ category: 'unauthorized' });
+
+      await http.request<void>({
+        path: '/users/me/themes',
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${tokens.accessToken}` },
+        body: { themeIds },
+      });
+    },
   };
 }
 

@@ -57,3 +57,20 @@ it('rejects a response that does not match the API contract', async () => {
     expect.objectContaining({ category: 'unknown' }),
   );
 });
+
+it('replaces the selected themes with the stored access token', async () => {
+  const request = jest.fn().mockResolvedValue(undefined);
+  const gateway = createApiPreferencesGateway(
+    { request } as HttpClient,
+    tokenStorage,
+  );
+
+  await gateway.replaceThemes(['theme-one', 'theme-two']);
+
+  expect(request).toHaveBeenCalledWith({
+    path: '/users/me/themes',
+    method: 'PUT',
+    headers: { Authorization: 'Bearer access-token' },
+    body: { themeIds: ['theme-one', 'theme-two'] },
+  });
+});

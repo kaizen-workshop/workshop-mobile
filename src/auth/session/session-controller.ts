@@ -49,6 +49,9 @@ export function createSessionController(
       await gateway.changePassword(input);
       state = stateAfterPasswordChange;
     },
+    completeOnboarding() {
+      if (state === 'REQUIRES_ONBOARDING') state = 'AUTHENTICATED';
+    },
     refresh() {
       if (!refreshPromise)
         refreshPromise = (async () => {

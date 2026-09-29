@@ -35,6 +35,20 @@ it('rejects absolute paths before any request', async () => {
   expect(fetchImpl).not.toHaveBeenCalled();
 });
 
+it('accepts a successful response without JSON content', async () => {
+  const fetchImpl = jest
+    .fn()
+    .mockResolvedValue(new Response(null, { status: 204 }));
+  const client = createHttpClient(
+    { variant: 'development', apiUrl: 'https://api.example.test/api/v1' },
+    fetchImpl,
+  );
+
+  await expect(
+    client.request<void>({ path: '/users/me/themes', method: 'PUT' }),
+  ).resolves.toBeUndefined();
+});
+
 it('maps a transport failure to a network error', async () => {
   const fetchImpl = jest.fn().mockRejectedValue(new Error('offline'));
   const client = createHttpClient(

@@ -338,7 +338,7 @@ do contrato, seleção múltipla e estados de loading, erro, retry e vazio.
 Status:
 
 ```text
-[!]
+[x]
 ```
 
 Critérios:
@@ -348,7 +348,8 @@ Critérios:
 - retry;
 - sucesso leva ao feed.
 
-Bloqueio: depende do contrato OpenAPI de preferências e da TASK-015.
+Implementado com `PUT /api/v1/users/me/themes`, estado de salvamento, erro com
+retry manual e avanço para o feed somente após confirmação da API.
 
 ---
 

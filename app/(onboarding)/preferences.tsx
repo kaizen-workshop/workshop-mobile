@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { useAuth } from '@/auth/session';
 import { getEnvironment } from '@/core/config';
 import { createHttpClient } from '@/core/http';
 import { createTokenStorage } from '@/core/secure-storage';
@@ -8,6 +9,7 @@ import type { ThemeOption } from '@/preferences/domain';
 import { PreferencesScreen } from '@/preferences/presentation';
 
 export default function OnboardingPreferencesRoute() {
+  const { completeOnboarding } = useAuth();
   const gateway = useMemo(
     () =>
       createApiPreferencesGateway(
@@ -52,8 +54,9 @@ export default function OnboardingPreferencesRoute() {
 
   return (
     <PreferencesScreen
-      onSubmit={async () => {
-        throw new Error('Preferences integration unavailable');
+      onSubmit={async (themeIds) => {
+        await gateway.replaceThemes(themeIds);
+        completeOnboarding();
       }}
       onRetry={loadThemes}
       onToggle={(themeId) => {

@@ -26,6 +26,7 @@ type AuthContextValue = Readonly<{
   }): Promise<void>;
   refresh(): Promise<void>;
   logout(): Promise<void>;
+  completeOnboarding(): void;
 }>;
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -86,6 +87,10 @@ export function AuthProvider({
     () => sync(() => controller.logout()),
     [controller, sync],
   );
+  const completeOnboarding = useCallback(() => {
+    controller.completeOnboarding();
+    setState(controller.getState());
+  }, [controller]);
   const contextValue = useMemo<AuthContextValue>(
     () => ({
       state,
@@ -94,8 +99,17 @@ export function AuthProvider({
       changePassword,
       refresh,
       logout,
+      completeOnboarding,
     }),
-    [changePassword, isRestoring, login, logout, refresh, state],
+    [
+      changePassword,
+      completeOnboarding,
+      isRestoring,
+      login,
+      logout,
+      refresh,
+      state,
+    ],
   );
 
   return (
