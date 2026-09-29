@@ -17,6 +17,7 @@ type Props = Readonly<{
   items: readonly FeedCard[];
   refreshing?: boolean;
   loadingMore?: boolean;
+  loadMoreError?: boolean;
   source?: 'network' | 'cache';
   onRefresh(): void;
   onRetry?: () => void;
@@ -68,6 +69,7 @@ function FeedItem({
 export function FeedScreen({
   items,
   loadingMore = false,
+  loadMoreError = false,
   onItemPress,
   onLoadMore,
   onRefresh,
@@ -120,6 +122,16 @@ export function FeedScreen({
             color={colors.brand}
             style={styles.loadingMore}
           />
+        ) : loadMoreError && onLoadMore ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={onLoadMore}
+            style={styles.paginationRetry}
+          >
+            <Text style={styles.paginationRetryText}>
+              Não foi possível carregar mais. Tentar novamente
+            </Text>
+          </Pressable>
         ) : null
       }
       onEndReached={loadingMore ? undefined : onLoadMore}
@@ -216,5 +228,15 @@ const styles = StyleSheet.create({
   },
   loadingMore: {
     marginVertical: spacing.md,
+  },
+  paginationRetry: {
+    alignItems: 'center',
+    minHeight: sizes.touchTarget,
+    padding: spacing.sm,
+  },
+  paginationRetryText: {
+    color: colors.brand,
+    fontFamily: typography.familyMedium,
+    fontWeight: typography.medium,
   },
 });

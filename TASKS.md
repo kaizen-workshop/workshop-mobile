@@ -472,10 +472,15 @@ mistura outra listagem e não recalcula a ordenação autoritativa.
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Preferir cursor quando fornecido pela API.
+
+Implementada com a paginação por página fornecida pelo Spring Page atual,
+bloqueio de requests concorrentes, deduplicação defensiva e preservação da
+ordem retornada pela API. O carregamento incremental é desabilitado no fallback
+offline, pois o cache representa um snapshot.
 
 ---
 

@@ -84,3 +84,16 @@ it('identifies content loaded from the offline cache', () => {
   ).toBeTruthy();
   expect(screen.getByText('Lean Manufacturing')).toBeTruthy();
 });
+
+it('offers retry when incremental loading fails', () => {
+  const onLoadMore = jest.fn();
+  render(<FeedScreen {...baseProps} loadMoreError onLoadMore={onLoadMore} />);
+
+  fireEvent.press(
+    screen.getByRole('button', {
+      name: 'Não foi possível carregar mais. Tentar novamente',
+    }),
+  );
+
+  expect(onLoadMore).toHaveBeenCalledTimes(1);
+});

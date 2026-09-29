@@ -1,10 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { getEnvironment } from '@/core/config';
 import { createHttpClient } from '@/core/http';
 import { createTokenStorage } from '@/core/secure-storage';
-import { createApiFeedGateway, createFeedCache, loadFeed } from '@/feed/data';
-import type { FeedCard } from '@/feed/domain';
+import {
+  createApiFeedGateway,
+  createFeedCache,
+  loadFeed,
+  mergeFeedItems,
+} from '@/feed/data';
+import type { FeedCard, FeedPage } from '@/feed/domain';
 import { FeedScreen } from '@/feed/presentation';
 
 export default function FeedRoute() {
@@ -21,6 +26,12 @@ export default function FeedRoute() {
   );
   const [items, setItems] = useState<readonly FeedCard[]>([]);
   const [source, setSource] = useState<'network' | 'cache'>('network');
+  const [nextPage, setNextPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [cacheUserId, setCacheUserId] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState(false);
+  const loadingMoreRef = useRef(false);
 
   const load = useCallback(async () => {
     setStatus('loading');
@@ -28,11 +39,37 @@ export default function FeedRoute() {
       const result = await loadInitialFeed(gateway);
       setItems(result.items);
       setSource(result.source);
+      setNextPage(result.nextPage);
+      setHasMore(result.hasMore);
+      setCacheUserId(result.userId);
       setStatus('success');
     } catch {
       setStatus('error');
     }
   }, [gateway]);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMoreRef.current || !hasMore || source === 'cache') return;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    setLoadMoreError(false);
+    try {
+      const page = await gateway.loadPage(nextPage);
+      setItems((current) => {
+        const merged = mergeFeedItems(current, page.items);
+        if (cacheUserId)
+          void createFeedCache({ userId: cacheUserId }).save(merged);
+        return merged;
+      });
+      setNextPage(page.page + 1);
+      setHasMore(page.hasMore);
+    } catch {
+      setLoadMoreError(true);
+    } finally {
+      loadingMoreRef.current = false;
+      setLoadingMore(false);
+    }
+  }, [cacheUserId, gateway, hasMore, nextPage, source]);
 
   useEffect(() => {
     let active = true;
@@ -41,6 +78,9 @@ export default function FeedRoute() {
         if (!active) return;
         setItems(result.items);
         setSource(result.source);
+        setNextPage(result.nextPage);
+        setHasMore(result.hasMore);
+        setCacheUserId(result.userId);
         setStatus('success');
       })
       .catch(() => {
@@ -54,6 +94,9 @@ export default function FeedRoute() {
   return (
     <FeedScreen
       items={items}
+      loadingMore={loadingMore}
+      loadMoreError={loadMoreError}
+      onLoadMore={hasMore ? loadMore : undefined}
       onRefresh={load}
       onRetry={load}
       source={source}
@@ -66,8 +109,18 @@ async function loadInitialFeed(
   gateway: ReturnType<typeof createApiFeedGateway>,
 ) {
   const userId = await gateway.getCurrentUserId();
-  return loadFeed({
+  const remote: { page: FeedPage | null } = { page: null };
+  const result = await loadFeed({
     cache: createFeedCache({ userId }),
-    loadRemote: async () => (await gateway.loadPage(0)).items,
+    loadRemote: async () => {
+      remote.page = await gateway.loadPage(0);
+      return remote.page.items;
+    },
   });
+  return {
+    ...result,
+    userId,
+    nextPage: remote.page ? remote.page.page + 1 : 1,
+    hasMore: remote.page?.hasMore ?? false,
+  };
 }
