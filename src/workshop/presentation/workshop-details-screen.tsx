@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Image } from 'expo-image';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -26,6 +27,9 @@ type Props = Readonly<{
   registrationError?: 'conflict' | 'error';
   registering?: boolean;
   onRegister?: () => void;
+  onCancelRegistration?: () => void;
+  cancellingRegistration?: boolean;
+  cancellationError?: 'conflict' | 'error';
 }>;
 
 function Detail({ label, value }: Readonly<{ label: string; value?: string }>) {
@@ -40,6 +44,9 @@ function Detail({ label, value }: Readonly<{ label: string; value?: string }>) {
 
 export function WorkshopDetailsScreen({
   attachmentError = false,
+  cancellationError,
+  cancellingRegistration = false,
+  onCancelRegistration,
   onOpenAttachment,
   onRetry,
   openingAttachmentId,
@@ -117,19 +124,63 @@ export function WorkshopDetailsScreen({
           style={styles.registrationResult}
         >
           <Text accessibilityRole="header" style={styles.registrationTitle}>
-            {registration.status === 'WAITING_LIST'
-              ? 'Você entrou na lista de espera'
-              : 'Inscrição realizada'}
+            {registrationTitle(registration)}
           </Text>
           <Text style={styles.registrationMessage}>
-            {registration.status === 'CONFIRMED'
-              ? 'Sua participação está confirmada.'
-              : registration.status === 'WAITING_LIST'
-                ? 'O workshop está cheio. Você será avisado se surgir uma vaga.'
-                : 'Sua inscrição está pendente de confirmação.'}
+            {registrationMessage(registration)}
           </Text>
+          {cancellationError ? (
+            <Text accessibilityRole="alert" style={styles.registrationError}>
+              {cancellationError === 'conflict'
+                ? 'O cancelamento não é permitido no estado atual da inscrição.'
+                : 'Não foi possível cancelar a inscrição. Tente novamente.'}
+            </Text>
+          ) : null}
+          {onCancelRegistration &&
+          ['PENDING', 'CONFIRMED', 'WAITING_LIST'].includes(
+            registration.status,
+          ) ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{
+                busy: cancellingRegistration,
+                disabled: cancellingRegistration,
+              }}
+              disabled={cancellingRegistration}
+              onPress={() =>
+                Alert.alert(
+                  'Cancelar inscrição',
+                  'Tem certeza de que deseja cancelar esta inscrição?',
+                  [
+                    { text: 'Manter inscrição', style: 'cancel' },
+                    {
+                      text: 'Cancelar inscrição',
+                      style: 'destructive',
+                      onPress: onCancelRegistration,
+                    },
+                  ],
+                )
+              }
+              style={styles.cancellationButton}
+            >
+              {cancellingRegistration ? (
+                <ActivityIndicator
+                  accessibilityLabel="Cancelando inscrição"
+                  color={colors.danger}
+                />
+              ) : (
+                <Text style={styles.cancellationButtonText}>
+                  Cancelar inscrição
+                </Text>
+              )}
+            </Pressable>
+          ) : null}
         </View>
-      ) : onRegister ? (
+      ) : null}
+
+      {onRegister &&
+      (!registration ||
+        ['CANCELLED', 'REFUNDED'].includes(registration.status)) ? (
         <View style={styles.registrationAction}>
           {registrationError ? (
             <Text accessibilityRole="alert" style={styles.registrationError}>
@@ -151,7 +202,9 @@ export function WorkshopDetailsScreen({
                 color={colors.onBrand}
               />
             ) : (
-              <Text style={styles.registrationButtonText}>Inscrever-se</Text>
+              <Text style={styles.registrationButtonText}>
+                {registration ? 'Inscrever-se novamente' : 'Inscrever-se'}
+              </Text>
             )}
           </Pressable>
         </View>
@@ -229,6 +282,33 @@ export function WorkshopDetailsScreen({
       ) : null}
     </ScrollView>
   );
+}
+
+function registrationTitle(registration: RegistrationResult) {
+  return {
+    PENDING: 'Inscrição pendente',
+    CONFIRMED: 'Inscrição confirmada',
+    WAITING_LIST: 'Você entrou na lista de espera',
+    CANCELLED: 'Inscrição cancelada',
+    REFUNDED: 'Inscrição reembolsada',
+  }[registration.status];
+}
+
+function registrationMessage(registration: RegistrationResult) {
+  if (registration.status === 'CONFIRMED')
+    return 'Sua participação está confirmada.';
+  if (registration.status === 'WAITING_LIST')
+    return 'O workshop está cheio. Você será avisado se surgir uma vaga.';
+  if (
+    registration.status === 'CANCELLED' &&
+    registration.paymentStatus === 'PAID'
+  )
+    return 'A inscrição foi cancelada, mas o pagamento não foi reembolsado conforme a regra de prazo.';
+  if (registration.status === 'CANCELLED')
+    return 'A inscrição foi cancelada com sucesso.';
+  if (registration.status === 'REFUNDED')
+    return 'A inscrição foi cancelada e o reembolso foi processado.';
+  return 'Sua inscrição está pendente de confirmação.';
 }
 
 const styles = StyleSheet.create({
@@ -379,5 +459,20 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontFamily: typography.familyRegular,
     marginTop: spacing.xs,
+  },
+  cancellationButton: {
+    alignItems: 'center',
+    borderColor: colors.danger,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    justifyContent: 'center',
+    marginTop: spacing.md,
+    minHeight: sizes.touchTarget,
+    paddingHorizontal: spacing.md,
+  },
+  cancellationButtonText: {
+    color: colors.danger,
+    fontFamily: typography.familyBold,
+    fontWeight: typography.bold,
   },
 });

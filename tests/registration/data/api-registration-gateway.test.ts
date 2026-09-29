@@ -93,3 +93,49 @@ it('reuses the caller-provided key when the same operation is retried', async ()
     }),
   );
 });
+
+it('loads the current registration and treats not found as no registration', async () => {
+  const request = jest
+    .fn()
+    .mockResolvedValueOnce(response)
+    .mockRejectedValueOnce(
+      new AppError({ category: 'not_found', status: 404 }),
+    );
+  const gateway = createApiRegistrationGateway(
+    { request } as HttpClient,
+    tokens,
+  );
+
+  await expect(gateway.loadCurrent('workshop-1')).resolves.toMatchObject({
+    id: 'registration-1',
+    status: 'WAITING_LIST',
+  });
+  await expect(gateway.loadCurrent('workshop-2')).resolves.toBeNull();
+  expect(request).toHaveBeenNthCalledWith(1, {
+    path: '/workshops/workshop-1/registrations/me',
+    headers: { Authorization: 'Bearer access' },
+  });
+});
+
+it('cancels the owners registration through the API', async () => {
+  const cancelled = {
+    ...response,
+    status: 'CANCELLED',
+    paymentStatus: 'PAID',
+  };
+  const request = jest.fn().mockResolvedValue(cancelled);
+  const gateway = createApiRegistrationGateway(
+    { request } as HttpClient,
+    tokens,
+  );
+
+  await expect(gateway.cancel('registration/1')).resolves.toMatchObject({
+    status: 'CANCELLED',
+    paymentStatus: 'PAID',
+  });
+  expect(request).toHaveBeenCalledWith({
+    path: '/registrations/registration%2F1/cancel',
+    method: 'PATCH',
+    headers: { Authorization: 'Bearer access' },
+  });
+});

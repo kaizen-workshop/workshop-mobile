@@ -8,38 +8,78 @@ import {
 } from '@/registration/domain';
 
 export type RegistrationGateway = Readonly<{
+  loadCurrent(workshopId: string): Promise<RegistrationResult | null>;
   register(
     workshopId: string,
     idempotencyKey: string,
   ): Promise<RegistrationResult>;
+  cancel(registrationId: string): Promise<RegistrationResult>;
 }>;
 
 export function createApiRegistrationGateway(
   http: HttpClient,
   tokenStorage: TokenStorage,
 ): RegistrationGateway {
+  const authenticated = async (
+    path: string,
+    method = 'GET',
+    headers: Record<string, string> = {},
+  ) => {
+    const tokens = await tokenStorage.read();
+    if (!tokens) throw new AppError({ category: 'unauthorized' });
+    return http.request<unknown>({
+      path,
+      ...(method === 'GET' ? {} : { method }),
+      headers: {
+        Authorization: `Bearer ${tokens.accessToken}`,
+        ...headers,
+      },
+    });
+  };
+
   return {
+    async loadCurrent(workshopId) {
+      if (!workshopId.trim()) throw new AppError({ category: 'bad_request' });
+      try {
+        const response = await authenticated(
+          `/workshops/${encodeURIComponent(workshopId)}/registrations/me`,
+        );
+        return mapRegistration(response);
+      } catch (error) {
+        if (error instanceof AppError && error.category === 'not_found')
+          return null;
+        throw error;
+      }
+    },
     async register(workshopId, idempotencyKey) {
       if (!workshopId.trim() || !idempotencyKey.trim())
         throw new AppError({ category: 'bad_request' });
-      const tokens = await tokenStorage.read();
-      if (!tokens) throw new AppError({ category: 'unauthorized' });
-      const response = await http.request<unknown>({
-        path: `/workshops/${encodeURIComponent(workshopId)}/registrations`,
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${tokens.accessToken}`,
-          'Idempotency-Key': idempotencyKey,
-        },
-      });
-      if (!isRegistrationResponse(response)) throw invalidResponse();
-      return {
-        id: response.id,
-        workshopId: response.workshopId,
-        status: response.status,
-        paymentStatus: response.paymentStatus,
-      };
+      const response = await authenticated(
+        `/workshops/${encodeURIComponent(workshopId)}/registrations`,
+        'POST',
+        { 'Idempotency-Key': idempotencyKey },
+      );
+      return mapRegistration(response);
     },
+    async cancel(registrationId) {
+      if (!registrationId.trim())
+        throw new AppError({ category: 'bad_request' });
+      const response = await authenticated(
+        `/registrations/${encodeURIComponent(registrationId)}/cancel`,
+        'PATCH',
+      );
+      return mapRegistration(response);
+    },
+  };
+}
+
+function mapRegistration(value: unknown): RegistrationResult {
+  if (!isRegistrationResponse(value)) throw invalidResponse();
+  return {
+    id: value.id,
+    workshopId: value.workshopId,
+    status: value.status,
+    paymentStatus: value.paymentStatus,
   };
 }
 
@@ -49,8 +89,10 @@ function isRegistrationResponse(value: unknown): value is RegistrationResult {
   return (
     typeof registration.id === 'string' &&
     typeof registration.workshopId === 'string' &&
-    registrationStatuses.includes(registration.status as never) &&
-    paymentStatuses.includes(registration.paymentStatus as never)
+    registration.status !== undefined &&
+    registrationStatuses.includes(registration.status) &&
+    registration.paymentStatus !== undefined &&
+    paymentStatuses.includes(registration.paymentStatus)
   );
 }
 

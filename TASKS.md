@@ -707,7 +707,7 @@ sem antecipar posição da lista de espera ou ações ainda dependentes da API.
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Critérios:
@@ -715,6 +715,10 @@ Critérios:
 - confirmação do usuário;
 - tratamento de regra de prazo;
 - atualização de estado.
+
+A tela reconcilia a inscrição mais recente do usuário, exige confirmação antes
+do cancelamento, bloqueia envios concorrentes e atualiza o estado retornado pela
+API, distinguindo reembolso processado de cancelamento sem reembolso por prazo.
 
 ---
 

@@ -53,8 +53,15 @@ export default function WorkshopDetailsRoute() {
     'conflict' | 'error'
   >();
   const [registering, setRegistering] = useState(false);
-  const [registrationKey] = useState(() => Crypto.randomUUID());
+  const [registrationKey, setRegistrationKey] = useState(() =>
+    Crypto.randomUUID(),
+  );
+  const [cancellingRegistration, setCancellingRegistration] = useState(false);
+  const [cancellationError, setCancellationError] = useState<
+    'conflict' | 'error'
+  >();
   const registeringRef = useRef(false);
+  const cancellingRef = useRef(false);
 
   const load = useCallback(async () => {
     if (!id) {
@@ -89,7 +96,12 @@ export default function WorkshopDetailsRoute() {
   );
 
   const register = useCallback(async () => {
-    if (!id || registeringRef.current || registration) return;
+    if (
+      !id ||
+      registeringRef.current ||
+      (registration && !['CANCELLED', 'REFUNDED'].includes(registration.status))
+    )
+      return;
     registeringRef.current = true;
     setRegistering(true);
     setRegistrationError(undefined);
@@ -106,6 +118,26 @@ export default function WorkshopDetailsRoute() {
       setRegistering(false);
     }
   }, [id, registration, registrationGateway, registrationKey]);
+
+  const cancelRegistration = useCallback(async () => {
+    if (!registration || cancellingRef.current) return;
+    cancellingRef.current = true;
+    setCancellingRegistration(true);
+    setCancellationError(undefined);
+    try {
+      setRegistration(await registrationGateway.cancel(registration.id));
+      setRegistrationKey(Crypto.randomUUID());
+    } catch (error) {
+      setCancellationError(
+        error instanceof AppError && error.category === 'conflict'
+          ? 'conflict'
+          : 'error',
+      );
+    } finally {
+      cancellingRef.current = false;
+      setCancellingRegistration(false);
+    }
+  }, [registration, registrationGateway]);
 
   useEffect(() => {
     if (!id) return;
@@ -125,11 +157,28 @@ export default function WorkshopDetailsRoute() {
     };
   }, [gateway, id]);
 
+  useEffect(() => {
+    if (!id) return;
+    let active = true;
+    void registrationGateway
+      .loadCurrent(id)
+      .then((current) => {
+        if (active && current) setRegistration(current);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [id, registrationGateway]);
+
   return (
     <WorkshopDetailsScreen
       attachmentError={attachmentError}
+      cancellationError={cancellationError}
+      cancellingRegistration={cancellingRegistration}
       openingAttachmentId={openingAttachmentId}
       onOpenAttachment={openAttachment}
+      onCancelRegistration={cancelRegistration}
       onRegister={register}
       onRetry={load}
       registration={registration}

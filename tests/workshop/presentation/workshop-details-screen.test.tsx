@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { Alert } from 'react-native';
 
 import { WorkshopDetailsScreen } from '@/workshop/presentation';
 
@@ -167,7 +168,7 @@ it('shows registration success, waiting list and conflict outcomes', () => {
       workshop={workshop}
     />,
   );
-  expect(screen.getByText('Inscrição realizada')).toBeTruthy();
+  expect(screen.getByText('Inscrição confirmada')).toBeTruthy();
   expect(screen.getByText('Sua participação está confirmada.')).toBeTruthy();
 
   rerender(
@@ -201,5 +202,77 @@ it('shows registration success, waiting list and conflict outcomes', () => {
     screen.getByText(
       'Você já possui uma inscrição válida ou este workshop não aceita novas inscrições.',
     ),
+  ).toBeTruthy();
+});
+
+it('confirms cancellation before invoking the action', () => {
+  const onCancelRegistration = jest.fn();
+  const alert = jest.spyOn(Alert, 'alert').mockImplementation(jest.fn());
+  render(
+    <WorkshopDetailsScreen
+      onCancelRegistration={onCancelRegistration}
+      registration={{
+        id: 'registration-1',
+        workshopId: workshop.id,
+        status: 'CONFIRMED',
+        paymentStatus: 'PAID',
+      }}
+      status="success"
+      workshop={workshop}
+    />,
+  );
+
+  fireEvent.press(screen.getByRole('button', { name: 'Cancelar inscrição' }));
+  expect(onCancelRegistration).not.toHaveBeenCalled();
+  expect(alert).toHaveBeenCalledWith(
+    'Cancelar inscrição',
+    'Tem certeza de que deseja cancelar esta inscrição?',
+    expect.any(Array),
+  );
+  const actions = alert.mock.calls[0][2];
+  actions?.[1]?.onPress?.();
+  expect(onCancelRegistration).toHaveBeenCalledTimes(1);
+  alert.mockRestore();
+});
+
+it('explains cancellation refund outcomes and allows a new registration', () => {
+  const onRegister = jest.fn();
+  const { rerender } = render(
+    <WorkshopDetailsScreen
+      onRegister={onRegister}
+      registration={{
+        id: 'registration-1',
+        workshopId: workshop.id,
+        status: 'CANCELLED',
+        paymentStatus: 'PAID',
+      }}
+      status="success"
+      workshop={workshop}
+    />,
+  );
+  expect(
+    screen.getByText(
+      'A inscrição foi cancelada, mas o pagamento não foi reembolsado conforme a regra de prazo.',
+    ),
+  ).toBeTruthy();
+  fireEvent.press(
+    screen.getByRole('button', { name: 'Inscrever-se novamente' }),
+  );
+  expect(onRegister).toHaveBeenCalledTimes(1);
+
+  rerender(
+    <WorkshopDetailsScreen
+      registration={{
+        id: 'registration-1',
+        workshopId: workshop.id,
+        status: 'REFUNDED',
+        paymentStatus: 'REFUNDED',
+      }}
+      status="success"
+      workshop={workshop}
+    />,
+  );
+  expect(
+    screen.getByText('A inscrição foi cancelada e o reembolso foi processado.'),
   ).toBeTruthy();
 });
