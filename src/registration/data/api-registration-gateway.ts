@@ -8,7 +8,10 @@ import {
 } from '@/registration/domain';
 
 export type RegistrationGateway = Readonly<{
-  register(workshopId: string): Promise<RegistrationResult>;
+  register(
+    workshopId: string,
+    idempotencyKey: string,
+  ): Promise<RegistrationResult>;
 }>;
 
 export function createApiRegistrationGateway(
@@ -16,14 +19,18 @@ export function createApiRegistrationGateway(
   tokenStorage: TokenStorage,
 ): RegistrationGateway {
   return {
-    async register(workshopId) {
-      if (!workshopId.trim()) throw new AppError({ category: 'bad_request' });
+    async register(workshopId, idempotencyKey) {
+      if (!workshopId.trim() || !idempotencyKey.trim())
+        throw new AppError({ category: 'bad_request' });
       const tokens = await tokenStorage.read();
       if (!tokens) throw new AppError({ category: 'unauthorized' });
       const response = await http.request<unknown>({
         path: `/workshops/${encodeURIComponent(workshopId)}/registrations`,
         method: 'POST',
-        headers: { Authorization: `Bearer ${tokens.accessToken}` },
+        headers: {
+          Authorization: `Bearer ${tokens.accessToken}`,
+          'Idempotency-Key': idempotencyKey,
+        },
       });
       if (!isRegistrationResponse(response)) throw invalidResponse();
       return {

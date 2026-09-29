@@ -664,12 +664,15 @@ pendência ou entrada na lista de espera conforme a resposta da API.
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Para retries da mesma inscrição.
 
 A mesma operação deve reutilizar a mesma chave.
+
+Cada abertura do fluxo gera uma UUID, enviada no cabeçalho `Idempotency-Key` e
+mantida estável em todas as tentativas até a inscrição concluir.
 
 ---
 

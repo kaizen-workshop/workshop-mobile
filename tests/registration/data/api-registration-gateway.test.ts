@@ -27,7 +27,9 @@ it('registers once through the authenticated workshop endpoint', async () => {
     tokens,
   );
 
-  await expect(gateway.register('workshop/1')).resolves.toEqual({
+  await expect(
+    gateway.register('workshop/1', 'operation-key'),
+  ).resolves.toEqual({
     id: 'registration-1',
     workshopId: 'workshop-1',
     status: 'WAITING_LIST',
@@ -36,7 +38,10 @@ it('registers once through the authenticated workshop endpoint', async () => {
   expect(request).toHaveBeenCalledWith({
     path: '/workshops/workshop%2F1/registrations',
     method: 'POST',
-    headers: { Authorization: 'Bearer access' },
+    headers: {
+      Authorization: 'Bearer access',
+      'Idempotency-Key': 'operation-key',
+    },
   });
 });
 
@@ -46,7 +51,9 @@ it('rejects malformed registration responses', async () => {
     tokens,
   );
 
-  await expect(gateway.register('workshop-1')).rejects.toMatchObject({
+  await expect(
+    gateway.register('workshop-1', 'operation-key'),
+  ).rejects.toMatchObject({
     category: 'unknown',
   });
 });
@@ -58,5 +65,31 @@ it('preserves API conflicts for an existing or closed registration', async () =>
     tokens,
   );
 
-  await expect(gateway.register('workshop-1')).rejects.toBe(conflict);
+  await expect(gateway.register('workshop-1', 'operation-key')).rejects.toBe(
+    conflict,
+  );
+});
+
+it('reuses the caller-provided key when the same operation is retried', async () => {
+  const request = jest.fn().mockResolvedValue(response);
+  const gateway = createApiRegistrationGateway(
+    { request } as HttpClient,
+    tokens,
+  );
+
+  await gateway.register('workshop-1', 'stable-key');
+  await gateway.register('workshop-1', 'stable-key');
+
+  expect(request).toHaveBeenNthCalledWith(
+    1,
+    expect.objectContaining({
+      headers: expect.objectContaining({ 'Idempotency-Key': 'stable-key' }),
+    }),
+  );
+  expect(request).toHaveBeenNthCalledWith(
+    2,
+    expect.objectContaining({
+      headers: expect.objectContaining({ 'Idempotency-Key': 'stable-key' }),
+    }),
+  );
 });

@@ -1,4 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
+import * as Crypto from 'expo-crypto';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { getEnvironment } from '@/core/config';
@@ -52,6 +53,7 @@ export default function WorkshopDetailsRoute() {
     'conflict' | 'error'
   >();
   const [registering, setRegistering] = useState(false);
+  const [registrationKey] = useState(() => Crypto.randomUUID());
   const registeringRef = useRef(false);
 
   const load = useCallback(async () => {
@@ -92,7 +94,7 @@ export default function WorkshopDetailsRoute() {
     setRegistering(true);
     setRegistrationError(undefined);
     try {
-      setRegistration(await registrationGateway.register(id));
+      setRegistration(await registrationGateway.register(id, registrationKey));
     } catch (error) {
       setRegistrationError(
         error instanceof AppError && error.category === 'conflict'
@@ -103,7 +105,7 @@ export default function WorkshopDetailsRoute() {
       registeringRef.current = false;
       setRegistering(false);
     }
-  }, [id, registration, registrationGateway]);
+  }, [id, registration, registrationGateway, registrationKey]);
 
   useEffect(() => {
     if (!id) return;
