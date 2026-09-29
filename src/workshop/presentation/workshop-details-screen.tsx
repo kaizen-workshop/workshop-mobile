@@ -1,6 +1,13 @@
 import { useState } from 'react';
 import { Image } from 'expo-image';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 import { ErrorState, LoadingState } from '@/shared/presentation';
 import { colors, radii, sizes, spacing, typography } from '@/shared/theme';
@@ -12,6 +19,8 @@ type Props = Readonly<{
   source?: 'network' | 'cache';
   onRetry?: () => void;
   onOpenAttachment?: (attachment: WorkshopAttachment) => void;
+  openingAttachmentId?: string;
+  attachmentError?: boolean;
 }>;
 
 function Detail({ label, value }: Readonly<{ label: string; value?: string }>) {
@@ -25,8 +34,10 @@ function Detail({ label, value }: Readonly<{ label: string; value?: string }>) {
 }
 
 export function WorkshopDetailsScreen({
+  attachmentError = false,
   onOpenAttachment,
   onRetry,
+  openingAttachmentId,
   source = 'network',
   status,
   workshop,
@@ -109,9 +120,23 @@ export function WorkshopDetailsScreen({
           <Text accessibilityRole="header" style={styles.sectionTitle}>
             Anexos
           </Text>
+          {attachmentError ? (
+            <Text accessibilityRole="alert" style={styles.attachmentError}>
+              Não foi possível abrir o anexo. Tente novamente.
+            </Text>
+          ) : null}
           {workshop.attachments.map((attachment) => {
+            const opening = openingAttachmentId === attachment.id;
             const label = (
-              <Text style={styles.attachmentText}>{attachment.name}</Text>
+              <View style={styles.attachmentContent}>
+                <Text style={styles.attachmentText}>{attachment.name}</Text>
+                {opening ? (
+                  <ActivityIndicator
+                    accessibilityLabel={`Abrindo anexo ${attachment.name}`}
+                    color={colors.brand}
+                  />
+                ) : null}
+              </View>
             );
 
             if (!onOpenAttachment) {
@@ -126,6 +151,8 @@ export function WorkshopDetailsScreen({
               <Pressable
                 accessibilityLabel={`Abrir anexo ${attachment.name}`}
                 accessibilityRole="button"
+                accessibilityState={{ busy: opening, disabled: opening }}
+                disabled={opening}
                 key={attachment.id}
                 onPress={() => onOpenAttachment(attachment)}
                 style={styles.attachment}
@@ -247,5 +274,15 @@ const styles = StyleSheet.create({
     color: colors.brand,
     fontFamily: typography.familyMedium,
     fontWeight: typography.medium,
+  },
+  attachmentContent: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  attachmentError: {
+    color: colors.danger,
+    fontFamily: typography.familyRegular,
+    marginBottom: spacing.sm,
   },
 });

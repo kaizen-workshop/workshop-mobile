@@ -91,3 +91,34 @@ it('keeps saved details visible after a network error', () => {
   ).toBeTruthy();
   expect(screen.getByText('Lean Manufacturing')).toBeTruthy();
 });
+
+it('shows attachment progress and opening errors', () => {
+  const { rerender } = render(
+    <WorkshopDetailsScreen
+      onOpenAttachment={jest.fn()}
+      openingAttachmentId="attachment-1"
+      status="success"
+      workshop={workshop}
+    />,
+  );
+
+  expect(
+    screen.getByLabelText('Abrindo anexo Material de apoio.pdf'),
+  ).toBeTruthy();
+  expect(
+    screen.getByRole('button', { name: 'Abrir anexo Material de apoio.pdf' })
+      .props.accessibilityState,
+  ).toMatchObject({ busy: true, disabled: true });
+
+  rerender(
+    <WorkshopDetailsScreen
+      attachmentError
+      onOpenAttachment={jest.fn()}
+      status="success"
+      workshop={workshop}
+    />,
+  );
+  expect(
+    screen.getByText('Não foi possível abrir o anexo. Tente novamente.'),
+  ).toBeTruthy();
+});

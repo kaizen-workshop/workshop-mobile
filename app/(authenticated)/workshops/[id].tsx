@@ -6,10 +6,11 @@ import { createHttpClient } from '@/core/http';
 import { createTokenStorage } from '@/core/secure-storage';
 import {
   createApiWorkshopGateway,
+  createWorkshopAttachmentOpener,
   createWorkshopCache,
   loadWorkshopDetails,
 } from '@/workshop/data';
-import type { WorkshopDetails } from '@/workshop/domain';
+import type { WorkshopAttachment, WorkshopDetails } from '@/workshop/domain';
 import { WorkshopDetailsScreen } from '@/workshop/presentation';
 
 export default function WorkshopDetailsRoute() {
@@ -23,11 +24,18 @@ export default function WorkshopDetailsRoute() {
       ),
     [],
   );
+  const attachmentOpener = useMemo(
+    () =>
+      createWorkshopAttachmentOpener(getEnvironment(), createTokenStorage()),
+    [],
+  );
   const [status, setStatus] = useState<'loading' | 'error' | 'success'>(
     'loading',
   );
   const [workshop, setWorkshop] = useState<WorkshopDetails>();
   const [source, setSource] = useState<'network' | 'cache'>('network');
+  const [openingAttachmentId, setOpeningAttachmentId] = useState<string>();
+  const [attachmentError, setAttachmentError] = useState(false);
 
   const load = useCallback(async () => {
     if (!id) {
@@ -44,6 +52,22 @@ export default function WorkshopDetailsRoute() {
       setStatus('error');
     }
   }, [gateway, id]);
+
+  const openAttachment = useCallback(
+    async (attachment: WorkshopAttachment) => {
+      if (!id || openingAttachmentId) return;
+      setOpeningAttachmentId(attachment.id);
+      setAttachmentError(false);
+      try {
+        await attachmentOpener.open(id, attachment);
+      } catch {
+        setAttachmentError(true);
+      } finally {
+        setOpeningAttachmentId(undefined);
+      }
+    },
+    [attachmentOpener, id, openingAttachmentId],
+  );
 
   useEffect(() => {
     if (!id) return;
@@ -65,6 +89,9 @@ export default function WorkshopDetailsRoute() {
 
   return (
     <WorkshopDetailsScreen
+      attachmentError={attachmentError}
+      openingAttachmentId={openingAttachmentId}
+      onOpenAttachment={openAttachment}
       onRetry={load}
       source={source}
       status={id ? status : 'error'}

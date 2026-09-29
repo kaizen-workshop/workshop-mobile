@@ -197,7 +197,13 @@ it('loads workshop details with taxonomy names and attachments', async () => {
     priceLabel: 'Gratuito',
     registrationPeriodLabel: '01/09/2026 a 08/10/2026',
     capacityLabel: '20 vagas',
-    attachments: [{ id: 'attachment-1', name: 'material.png' }],
+    attachments: [
+      {
+        id: 'attachment-1',
+        name: 'material.png',
+        contentType: 'image/png',
+      },
+    ],
   });
   expect(request).toHaveBeenCalledWith({
     path: '/workshops/workshop%2F1',

@@ -606,13 +606,14 @@ inscrições, capacidade, anexos disponíveis, cache por usuário e retry.
 Status:
 
 ```text
-[~]
+[x]
 ```
 
 Visualizar/abrir anexos suportados.
 
-Progresso: anexos disponíveis são listados e expostos por callback acessível; a
-abertura/download real depende do contrato de arquivos.
+Os anexos são listados com metadados reais, baixados do endpoint autenticado
+para o cache temporário e abertos pelo compartilhamento nativo, com feedback de
+progresso e erro.
 
 ---
 

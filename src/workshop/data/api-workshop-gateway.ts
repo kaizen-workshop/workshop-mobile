@@ -239,6 +239,7 @@ function toDetails(
     attachments: attachments.map((attachment) => ({
       id: attachment.id,
       name: attachment.filename,
+      contentType: attachment.contentType,
     })),
     ...(workshop.additionalInformation
       ? { additionalInformation: workshop.additionalInformation }
