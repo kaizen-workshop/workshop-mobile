@@ -562,11 +562,12 @@ Criar:
 Status:
 
 ```text
-[~]
+[x]
 ```
 
-Progresso: listagem, estados visuais, refresh e abertura de item estão
-implementados com modelo local de UI. A integração aguarda o endpoint real.
+Implementada com a API autenticada, paginação completa do catálogo publicado,
+nomes de temas/categorias, cache por usuário, pull-to-refresh e navegação para
+os detalhes.
 
 ---
 
