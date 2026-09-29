@@ -321,16 +321,15 @@ Telas:
 Status:
 
 ```text
-[~]
+[x]
 ```
 
 Exibir temas retornados pela API.
 
 Permitir múltipla seleção.
 
-Progresso: a seleção múltipla e os estados visuais estão implementados. A carga
-real permanece bloqueada porque os DTOs e endpoints existem apenas como tasks
-pendentes da `workshop_api`, sem implementação/OpenAPI publicado.
+Implementado com carga autenticada de `GET /api/v1/themes`, validação defensiva
+do contrato, seleção múltipla e estados de loading, erro, retry e vazio.
 
 ---
 
