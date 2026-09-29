@@ -1,0 +1,62 @@
+import { AppError } from '@/core/errors';
+import type { HttpClient } from '@/core/http';
+import type { TokenStorage } from '@/core/secure-storage';
+import { createApiRegistrationGateway } from '@/registration/data';
+
+const tokens: TokenStorage = {
+  read: jest
+    .fn()
+    .mockResolvedValue({ accessToken: 'access', refreshToken: 'refresh' }),
+  save: jest.fn(),
+  clear: jest.fn(),
+};
+
+const response = {
+  id: 'registration-1',
+  workshopId: 'workshop-1',
+  status: 'WAITING_LIST',
+  paymentStatus: 'EXEMPT',
+  userId: 'user-1',
+  registeredAt: '2026-09-29T12:00:00Z',
+};
+
+it('registers once through the authenticated workshop endpoint', async () => {
+  const request = jest.fn().mockResolvedValue(response);
+  const gateway = createApiRegistrationGateway(
+    { request } as HttpClient,
+    tokens,
+  );
+
+  await expect(gateway.register('workshop/1')).resolves.toEqual({
+    id: 'registration-1',
+    workshopId: 'workshop-1',
+    status: 'WAITING_LIST',
+    paymentStatus: 'EXEMPT',
+  });
+  expect(request).toHaveBeenCalledWith({
+    path: '/workshops/workshop%2F1/registrations',
+    method: 'POST',
+    headers: { Authorization: 'Bearer access' },
+  });
+});
+
+it('rejects malformed registration responses', async () => {
+  const gateway = createApiRegistrationGateway(
+    { request: jest.fn().mockResolvedValue({ id: 'incomplete' }) },
+    tokens,
+  );
+
+  await expect(gateway.register('workshop-1')).rejects.toMatchObject({
+    category: 'unknown',
+  });
+});
+
+it('preserves API conflicts for an existing or closed registration', async () => {
+  const conflict = new AppError({ category: 'conflict', status: 409 });
+  const gateway = createApiRegistrationGateway(
+    { request: jest.fn().mockRejectedValue(conflict) },
+    tokens,
+  );
+
+  await expect(gateway.register('workshop-1')).rejects.toBe(conflict);
+});

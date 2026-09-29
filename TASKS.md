@@ -641,7 +641,7 @@ nem substituem o erro original quando não existe conteúdo local.
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Critérios:
@@ -652,6 +652,10 @@ Critérios:
 - erro;
 - conflito;
 - workshop cheio.
+
+A ação usa o endpoint autenticado do workshop, bloqueia envios concorrentes,
+mostra progresso, diferencia conflito de erro genérico e apresenta confirmação,
+pendência ou entrada na lista de espera conforme a resposta da API.
 
 ---
 

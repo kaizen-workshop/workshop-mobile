@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 
 import { ErrorState, LoadingState } from '@/shared/presentation';
+import type { RegistrationResult } from '@/registration/domain';
 import { colors, radii, sizes, spacing, typography } from '@/shared/theme';
 import type { WorkshopAttachment, WorkshopDetails } from '@/workshop/domain';
 
@@ -21,6 +22,10 @@ type Props = Readonly<{
   onOpenAttachment?: (attachment: WorkshopAttachment) => void;
   openingAttachmentId?: string;
   attachmentError?: boolean;
+  registration?: RegistrationResult;
+  registrationError?: 'conflict' | 'error';
+  registering?: boolean;
+  onRegister?: () => void;
 }>;
 
 function Detail({ label, value }: Readonly<{ label: string; value?: string }>) {
@@ -38,6 +43,10 @@ export function WorkshopDetailsScreen({
   onOpenAttachment,
   onRetry,
   openingAttachmentId,
+  onRegister,
+  registration,
+  registrationError,
+  registering = false,
   source = 'network',
   status,
   workshop,
@@ -101,6 +110,52 @@ export function WorkshopDetailsScreen({
         <Detail label="Inscrições" value={workshop.registrationPeriodLabel} />
         <Detail label="Vagas" value={workshop.capacityLabel} />
       </View>
+
+      {registration ? (
+        <View
+          accessibilityLiveRegion="polite"
+          style={styles.registrationResult}
+        >
+          <Text accessibilityRole="header" style={styles.registrationTitle}>
+            {registration.status === 'WAITING_LIST'
+              ? 'Você entrou na lista de espera'
+              : 'Inscrição realizada'}
+          </Text>
+          <Text style={styles.registrationMessage}>
+            {registration.status === 'CONFIRMED'
+              ? 'Sua participação está confirmada.'
+              : registration.status === 'WAITING_LIST'
+                ? 'O workshop está cheio. Você será avisado se surgir uma vaga.'
+                : 'Sua inscrição está pendente de confirmação.'}
+          </Text>
+        </View>
+      ) : onRegister ? (
+        <View style={styles.registrationAction}>
+          {registrationError ? (
+            <Text accessibilityRole="alert" style={styles.registrationError}>
+              {registrationError === 'conflict'
+                ? 'Você já possui uma inscrição válida ou este workshop não aceita novas inscrições.'
+                : 'Não foi possível realizar a inscrição. Tente novamente.'}
+            </Text>
+          ) : null}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ busy: registering, disabled: registering }}
+            disabled={registering}
+            onPress={onRegister}
+            style={styles.registrationButton}
+          >
+            {registering ? (
+              <ActivityIndicator
+                accessibilityLabel="Realizando inscrição"
+                color={colors.onBrand}
+              />
+            ) : (
+              <Text style={styles.registrationButtonText}>Inscrever-se</Text>
+            )}
+          </Pressable>
+        </View>
+      ) : null}
 
       {workshop.responsibleNames?.length ? (
         <View style={styles.section}>
@@ -284,5 +339,45 @@ const styles = StyleSheet.create({
     color: colors.danger,
     fontFamily: typography.familyRegular,
     marginBottom: spacing.sm,
+  },
+  registrationAction: {
+    marginTop: spacing.lg,
+  },
+  registrationButton: {
+    alignItems: 'center',
+    backgroundColor: colors.brand,
+    borderRadius: radii.md,
+    justifyContent: 'center',
+    minHeight: sizes.touchTarget,
+    paddingHorizontal: spacing.md,
+  },
+  registrationButtonText: {
+    color: colors.onBrand,
+    fontFamily: typography.familyBold,
+    fontWeight: typography.bold,
+  },
+  registrationError: {
+    color: colors.danger,
+    fontFamily: typography.familyRegular,
+    marginBottom: spacing.sm,
+  },
+  registrationResult: {
+    backgroundColor: colors.surface,
+    borderColor: colors.brand,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    marginTop: spacing.lg,
+    padding: spacing.md,
+  },
+  registrationTitle: {
+    color: colors.text,
+    fontFamily: typography.familyBold,
+    fontSize: 18,
+    fontWeight: typography.bold,
+  },
+  registrationMessage: {
+    color: colors.textMuted,
+    fontFamily: typography.familyRegular,
+    marginTop: spacing.xs,
   },
 });

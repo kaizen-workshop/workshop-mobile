@@ -1,9 +1,12 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { getEnvironment } from '@/core/config';
+import { AppError } from '@/core/errors';
 import { createHttpClient } from '@/core/http';
 import { createTokenStorage } from '@/core/secure-storage';
+import { createApiRegistrationGateway } from '@/registration/data';
+import type { RegistrationResult } from '@/registration/domain';
 import {
   createApiWorkshopGateway,
   createWorkshopAttachmentOpener,
@@ -29,6 +32,14 @@ export default function WorkshopDetailsRoute() {
       createWorkshopAttachmentOpener(getEnvironment(), createTokenStorage()),
     [],
   );
+  const registrationGateway = useMemo(
+    () =>
+      createApiRegistrationGateway(
+        createHttpClient(getEnvironment()),
+        createTokenStorage(),
+      ),
+    [],
+  );
   const [status, setStatus] = useState<'loading' | 'error' | 'success'>(
     'loading',
   );
@@ -36,6 +47,12 @@ export default function WorkshopDetailsRoute() {
   const [source, setSource] = useState<'network' | 'cache'>('network');
   const [openingAttachmentId, setOpeningAttachmentId] = useState<string>();
   const [attachmentError, setAttachmentError] = useState(false);
+  const [registration, setRegistration] = useState<RegistrationResult>();
+  const [registrationError, setRegistrationError] = useState<
+    'conflict' | 'error'
+  >();
+  const [registering, setRegistering] = useState(false);
+  const registeringRef = useRef(false);
 
   const load = useCallback(async () => {
     if (!id) {
@@ -69,6 +86,25 @@ export default function WorkshopDetailsRoute() {
     [attachmentOpener, id, openingAttachmentId],
   );
 
+  const register = useCallback(async () => {
+    if (!id || registeringRef.current || registration) return;
+    registeringRef.current = true;
+    setRegistering(true);
+    setRegistrationError(undefined);
+    try {
+      setRegistration(await registrationGateway.register(id));
+    } catch (error) {
+      setRegistrationError(
+        error instanceof AppError && error.category === 'conflict'
+          ? 'conflict'
+          : 'error',
+      );
+    } finally {
+      registeringRef.current = false;
+      setRegistering(false);
+    }
+  }, [id, registration, registrationGateway]);
+
   useEffect(() => {
     if (!id) return;
     let active = true;
@@ -92,7 +128,11 @@ export default function WorkshopDetailsRoute() {
       attachmentError={attachmentError}
       openingAttachmentId={openingAttachmentId}
       onOpenAttachment={openAttachment}
+      onRegister={register}
       onRetry={load}
+      registration={registration}
+      registrationError={registrationError}
+      registering={registering}
       source={source}
       status={id ? status : 'error'}
       workshop={workshop}
