@@ -1202,8 +1202,13 @@ Status:
 Status:
 
 ```text
-[ ]
+[x]
 ```
+
+Cobertos cache expirado/inválido, fallback de feed e workshops, fluxo integrado
+online para offline, recuperação por retry explícito, erros HTTP de rede e
+timeout, ação visual de retry e refresh concorrente de sessão. Escritas ainda
+condicionais não receberam retry automático sem contrato OpenAPI.
 
 ---
 
