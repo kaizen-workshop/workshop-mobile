@@ -51,6 +51,7 @@ it('preserves workshop order and tolerates optional fields', () => {
     />,
   );
 
+  expect(screen.getByTestId('workshop-list').props.data).toBe(workshops);
   const headers = screen
     .getAllByRole('header')
     .map((node) => node.props.children);

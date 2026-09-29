@@ -44,7 +44,7 @@ export function WorkshopListScreen({
   return (
     <FlatList
       contentContainerStyle={styles.content}
-      data={[...workshops]}
+      data={workshops}
       keyExtractor={(workshop) => workshop.id}
       ListHeaderComponent={
         <View>

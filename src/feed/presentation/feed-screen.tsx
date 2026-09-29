@@ -97,7 +97,7 @@ export function FeedScreen({
     <FlatList
       testID="feed-list"
       contentContainerStyle={styles.list}
-      data={[...items]}
+      data={items}
       keyExtractor={(item) => `${item.kind}:${item.id}`}
       ListHeaderComponent={
         <View>

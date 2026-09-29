@@ -83,6 +83,12 @@ it('allows multiple selection and submits only selected theme ids', async () => 
   expect(onSubmit).toHaveBeenCalledWith(['lean', 'quality']);
 });
 
+it('passes the source collection directly to the virtualized list', () => {
+  render(<SelectionHarness />);
+
+  expect(screen.getByTestId('preferences-list').props.data).toBe(themes);
+});
+
 it('shows a safe save error and leaves retry available', async () => {
   render(
     <SelectionHarness

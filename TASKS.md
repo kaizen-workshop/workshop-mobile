@@ -1292,8 +1292,13 @@ para binários Android/iOS está registrado em `docs/accessibility-review.md`.
 Status:
 
 ```text
-[ ]
+[x]
 ```
+
+Revisados renders do contexto de autenticação, identidade dos dados das listas,
+virtualização, imagens, cache, timers, listeners, requests concorrentes e bundle.
+As correções mensuráveis receberam testes de regressão; medições com dados reais
+estão registradas em `docs/performance-review.md`.
 
 ---
 

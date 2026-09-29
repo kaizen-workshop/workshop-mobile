@@ -38,6 +38,7 @@ it('renders loading, error and empty states', () => {
 it('preserves item order and identifies highlighted content', () => {
   render(<FeedScreen {...baseProps} />);
 
+  expect(screen.getByTestId('feed-list').props.data).toBe(items);
   const headers = screen
     .getAllByRole('header')
     .map((node) => node.props.children);

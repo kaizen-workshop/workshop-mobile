@@ -1,4 +1,11 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import type { ReactNode } from 'react';
 import type { AuthGateway } from '../domain/auth-gateway';
 import { createSessionController, type AuthState } from './session-controller';
@@ -51,26 +58,48 @@ export function AuthProvider({
       mounted = false;
     };
   }, [controller]);
-  const sync = async (operation: () => Promise<void>) => {
-    try {
-      await operation();
-    } finally {
-      setState(controller.getState());
-    }
-  };
+  const sync = useCallback(
+    async (operation: () => Promise<void>) => {
+      try {
+        await operation();
+      } finally {
+        setState(controller.getState());
+      }
+    },
+    [controller],
+  );
+  const login = useCallback(
+    (input: { login: string; password: string }) =>
+      sync(() => controller.login(input)),
+    [controller, sync],
+  );
+  const changePassword = useCallback(
+    (input: { currentPassword: string; newPassword: string }) =>
+      sync(() => controller.changePassword(input)),
+    [controller, sync],
+  );
+  const refresh = useCallback(
+    () => sync(() => controller.refresh()),
+    [controller, sync],
+  );
+  const logout = useCallback(
+    () => sync(() => controller.logout()),
+    [controller, sync],
+  );
+  const contextValue = useMemo<AuthContextValue>(
+    () => ({
+      state,
+      isRestoring,
+      login,
+      changePassword,
+      refresh,
+      logout,
+    }),
+    [changePassword, isRestoring, login, logout, refresh, state],
+  );
+
   return (
-    <AuthContext.Provider
-      value={{
-        state,
-        isRestoring,
-        login: (input) => sync(() => controller.login(input)),
-        changePassword: (input) => sync(() => controller.changePassword(input)),
-        refresh: () => sync(() => controller.refresh()),
-        logout: () => sync(() => controller.logout()),
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   );
 }
 export function useAuth() {

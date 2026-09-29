@@ -57,8 +57,9 @@ export function PreferencesScreen({
   return (
     <View style={styles.page}>
       <FlatList
+        testID="preferences-list"
         contentContainerStyle={styles.content}
-        data={[...themes]}
+        data={themes}
         keyExtractor={(theme) => theme.id}
         ListHeaderComponent={
           <View style={styles.header}>
