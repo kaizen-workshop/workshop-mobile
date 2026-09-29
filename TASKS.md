@@ -358,12 +358,13 @@ retry manual e avanço para o feed somente após confirmação da API.
 Status:
 
 ```text
-[!]
+[x]
 ```
 
 Disponível nas configurações/perfil.
 
-Bloqueio: depende do contrato OpenAPI de preferências e da TASK-015.
+Disponível pelo perfil, carregando a seleção atual de `GET /api/v1/users/me` e
+salvando a substituição confirmada em `PUT /api/v1/users/me/themes`.
 
 ---
 

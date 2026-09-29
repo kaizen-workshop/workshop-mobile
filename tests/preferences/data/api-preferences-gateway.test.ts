@@ -74,3 +74,29 @@ it('replaces the selected themes with the stored access token', async () => {
     body: { themeIds: ['theme-one', 'theme-two'] },
   });
 });
+
+it('loads the selected theme ids from the profile contract', async () => {
+  const request = jest.fn().mockResolvedValue({
+    id: 'user-id',
+    themes: [
+      {
+        id: 'theme-id',
+        name: 'Qualidade',
+        description: null,
+        active: true,
+      },
+    ],
+  });
+  const gateway = createApiPreferencesGateway(
+    { request } as HttpClient,
+    tokenStorage,
+  );
+
+  await expect(gateway.getSelectedThemeIds()).resolves.toEqual(
+    new Set(['theme-id']),
+  );
+  expect(request).toHaveBeenCalledWith({
+    path: '/users/me',
+    headers: { Authorization: 'Bearer access-token' },
+  });
+});

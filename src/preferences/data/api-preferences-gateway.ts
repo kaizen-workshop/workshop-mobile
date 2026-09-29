@@ -10,6 +10,10 @@ type ThemeResponse = Readonly<{
   active: boolean;
 }>;
 
+type ProfileResponse = Readonly<{
+  themes: readonly ThemeResponse[];
+}>;
+
 export function createApiPreferencesGateway(
   http: HttpClient,
   tokenStorage: TokenStorage,
@@ -33,6 +37,22 @@ export function createApiPreferencesGateway(
 
       return response.map(toThemeOption);
     },
+    async getSelectedThemeIds() {
+      const tokens = await tokenStorage.read();
+      if (!tokens) throw new AppError({ category: 'unauthorized' });
+
+      const response = await http.request<unknown>({
+        path: '/users/me',
+        headers: { Authorization: `Bearer ${tokens.accessToken}` },
+      });
+      if (!isProfileResponse(response)) {
+        throw new AppError({
+          category: 'unknown',
+          technicalMessage: 'Invalid profile response.',
+        });
+      }
+      return new Set(response.themes.map((theme) => theme.id));
+    },
     async replaceThemes(themeIds) {
       const tokens = await tokenStorage.read();
       if (!tokens) throw new AppError({ category: 'unauthorized' });
@@ -45,6 +65,11 @@ export function createApiPreferencesGateway(
       });
     },
   };
+}
+
+function isProfileResponse(value: unknown): value is ProfileResponse {
+  if (!value || typeof value !== 'object' || !('themes' in value)) return false;
+  return Array.isArray(value.themes) && value.themes.every(isThemeResponse);
 }
 
 function isThemeResponse(value: unknown): value is ThemeResponse {

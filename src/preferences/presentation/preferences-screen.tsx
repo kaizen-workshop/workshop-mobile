@@ -12,6 +12,9 @@ type Props = Readonly<{
   onToggle(themeId: string): void;
   onRetry?: () => void;
   onSubmit(themeIds: readonly string[]): Promise<void> | void;
+  title?: string;
+  subtitle?: string;
+  submitLabel?: string;
 }>;
 
 export function PreferencesScreen({
@@ -20,7 +23,10 @@ export function PreferencesScreen({
   onToggle,
   selectedIds,
   status,
+  submitLabel = 'Continuar',
+  subtitle = 'Selecione um ou mais temas para personalizar seu feed.',
   themes,
+  title = 'Escolha seus interesses',
 }: Props) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -64,11 +70,9 @@ export function PreferencesScreen({
         ListHeaderComponent={
           <View style={styles.header}>
             <Text accessibilityRole="header" style={styles.title}>
-              Escolha seus interesses
+              {title}
             </Text>
-            <Text style={styles.subtitle}>
-              Selecione um ou mais temas para personalizar seu feed.
-            </Text>
+            <Text style={styles.subtitle}>{subtitle}</Text>
           </View>
         }
         renderItem={({ item }) => {
@@ -107,7 +111,7 @@ export function PreferencesScreen({
           </Text>
         ) : null}
         <Pressable
-          accessibilityLabel="Continuar"
+          accessibilityLabel={submitLabel}
           accessibilityRole="button"
           accessibilityState={{ busy: saving, disabled: saving }}
           disabled={saving}
@@ -115,7 +119,7 @@ export function PreferencesScreen({
           style={[styles.button, saving && styles.buttonDisabled]}
         >
           <Text style={styles.buttonText}>
-            {saving ? 'Salvando...' : 'Continuar'}
+            {saving ? 'Salvando...' : submitLabel}
           </Text>
         </Pressable>
       </View>
