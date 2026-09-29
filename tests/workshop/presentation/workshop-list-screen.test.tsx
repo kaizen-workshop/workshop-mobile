@@ -102,3 +102,66 @@ it('identifies workshops loaded from the offline cache', () => {
   ).toBeTruthy();
   expect(screen.getByText('Lean Manufacturing')).toBeTruthy();
 });
+
+it('applies status, theme and category filters', () => {
+  const onFiltersChange = jest.fn();
+  const props = {
+    filters: { status: 'PUBLISHED' as const },
+    filterOptions: {
+      themes: [{ id: 'theme-1', name: 'Lean' }],
+      categories: [{ id: 'category-1', name: 'Indústria' }],
+    },
+    onFiltersChange,
+    onRefresh: jest.fn(),
+    status: 'success' as const,
+    workshops,
+  };
+  const { rerender } = render(<WorkshopListScreen {...props} />);
+
+  fireEvent.press(screen.getByRole('button', { name: 'Filtrar por Lean' }));
+  expect(onFiltersChange).toHaveBeenLastCalledWith({
+    status: 'PUBLISHED',
+    themeId: 'theme-1',
+  });
+
+  rerender(
+    <WorkshopListScreen
+      {...props}
+      filters={{ status: 'PUBLISHED', themeId: 'theme-1' }}
+    />,
+  );
+  fireEvent.press(
+    screen.getByRole('button', { name: 'Filtrar por Indústria' }),
+  );
+  expect(onFiltersChange).toHaveBeenLastCalledWith({
+    status: 'PUBLISHED',
+    themeId: 'theme-1',
+    categoryId: 'category-1',
+  });
+
+  fireEvent.press(
+    screen.getByRole('button', { name: 'Filtrar por Encerrado' }),
+  );
+  expect(onFiltersChange).toHaveBeenLastCalledWith({
+    status: 'CLOSED',
+    themeId: 'theme-1',
+  });
+});
+
+it('keeps filters available when no workshop matches', () => {
+  render(
+    <WorkshopListScreen
+      filterOptions={{ themes: [], categories: [] }}
+      filters={{ status: 'CLOSED' }}
+      onFiltersChange={jest.fn()}
+      onRefresh={jest.fn()}
+      status="success"
+      workshops={[]}
+    />,
+  );
+
+  expect(screen.getByText('Nenhum workshop encontrado')).toBeTruthy();
+  expect(
+    screen.getByRole('button', { name: 'Filtrar por Publicado' }),
+  ).toBeTruthy();
+});

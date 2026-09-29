@@ -576,10 +576,13 @@ os detalhes.
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Cobrir filtros suportados pela API.
+
+Implementados filtros combináveis de status, tema e categoria, com opções
+ativas da API, feedback de carregamento e consulta remota parametrizada.
 
 ---
 

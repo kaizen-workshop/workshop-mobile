@@ -1,7 +1,13 @@
 import { AppError } from '@/core/errors';
 import type { HttpClient } from '@/core/http';
 import type { TokenStorage } from '@/core/secure-storage';
-import type { WorkshopDetails, WorkshopSummary } from '@/workshop/domain';
+import {
+  workshopStatuses,
+  type WorkshopDetails,
+  type WorkshopFilterOptions,
+  type WorkshopFilters,
+  type WorkshopSummary,
+} from '@/workshop/domain';
 
 type TaxonomyResponse = Readonly<{
   id: string;
@@ -53,7 +59,8 @@ type AttachmentResponse = Readonly<{
 
 export type WorkshopGateway = Readonly<{
   getCurrentUserId(): Promise<string>;
-  loadList(): Promise<readonly WorkshopSummary[]>;
+  loadFilterOptions(): Promise<WorkshopFilterOptions>;
+  loadList(filters?: WorkshopFilters): Promise<readonly WorkshopSummary[]>;
   loadDetails(id: string): Promise<WorkshopDetails>;
 }>;
 
@@ -83,12 +90,23 @@ export function createApiWorkshopGateway(
       }
       return profile.id;
     },
-    async loadList() {
+    async loadFilterOptions() {
       const [themes, categories] = await Promise.all([
         loadTaxonomies(authenticated, '/themes'),
         loadTaxonomies(authenticated, '/categories'),
       ]);
-      const workshops = await loadAllWorkshops(authenticated);
+      return {
+        themes: themes.map(({ id, name }) => ({ id, name })),
+        categories: categories.map(({ id, name }) => ({ id, name })),
+      };
+    },
+    async loadList(filters = { status: 'PUBLISHED' }) {
+      validateFilters(filters);
+      const [themes, categories] = await Promise.all([
+        loadTaxonomies(authenticated, '/themes'),
+        loadTaxonomies(authenticated, '/categories'),
+      ]);
+      const workshops = await loadAllWorkshops(authenticated, filters);
       const themeNames = new Map(themes.map((theme) => [theme.id, theme.name]));
       const categoryNames = new Map(
         categories.map((category) => [category.id, category.name]),
@@ -132,17 +150,35 @@ async function loadTaxonomies(
   return response;
 }
 
-async function loadAllWorkshops(request: <T>(path: string) => Promise<T>) {
+async function loadAllWorkshops(
+  request: <T>(path: string) => Promise<T>,
+  filters: WorkshopFilters,
+) {
   const workshops: WorkshopResponse[] = [];
   let page = 0;
   while (true) {
-    const response = await request<unknown>(
-      `/workshops?status=PUBLISHED&page=${page}&size=100`,
-    );
+    const query = new URLSearchParams({
+      ...(filters.status ? { status: filters.status } : {}),
+      ...(filters.themeId ? { themeId: filters.themeId } : {}),
+      ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
+      page: String(page),
+      size: '100',
+    });
+    const response = await request<unknown>(`/workshops?${query}`);
     if (!isPageResponse(response)) throw invalidResponse('workshops');
     workshops.push(...response.content);
     if (response.last) return workshops;
     page = response.number + 1;
+  }
+}
+
+function validateFilters(filters: WorkshopFilters) {
+  if (
+    (filters.status && !workshopStatuses.includes(filters.status)) ||
+    (filters.themeId !== undefined && !filters.themeId.trim()) ||
+    (filters.categoryId !== undefined && !filters.categoryId.trim())
+  ) {
+    throw new AppError({ category: 'bad_request' });
   }
 }
 

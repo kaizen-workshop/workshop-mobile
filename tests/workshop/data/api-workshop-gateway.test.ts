@@ -101,6 +101,42 @@ it('loads all API pages without changing their order', async () => {
   ]);
 });
 
+it('sends status, theme and category filters supported by the API', async () => {
+  const request = jest.fn(async ({ path }: { path: string }) => {
+    if (path === '/themes' || path === '/categories') return [];
+    return { content: [], number: 0, last: true };
+  });
+  const gateway = createApiWorkshopGateway({ request } as HttpClient, tokens);
+
+  await gateway.loadList({
+    status: 'CLOSED',
+    themeId: 'theme/1',
+    categoryId: 'category 1',
+  });
+
+  expect(request).toHaveBeenCalledWith({
+    path: '/workshops?status=CLOSED&themeId=theme%2F1&categoryId=category+1&page=0&size=100',
+    headers: { Authorization: 'Bearer access' },
+  });
+});
+
+it('loads active theme and category filter options', async () => {
+  const request = jest.fn(async ({ path }: { path: string }) => [
+    {
+      id: path === '/themes' ? 'theme-1' : 'category-1',
+      name: path === '/themes' ? 'Lean' : 'Indústria',
+      description: null,
+      active: true,
+    },
+  ]);
+  const gateway = createApiWorkshopGateway({ request } as HttpClient, tokens);
+
+  await expect(gateway.loadFilterOptions()).resolves.toEqual({
+    themes: [{ id: 'theme-1', name: 'Lean' }],
+    categories: [{ id: 'category-1', name: 'Indústria' }],
+  });
+});
+
 it('rejects malformed workshop pages', async () => {
   const request = jest.fn(async ({ path }: { path: string }) => {
     if (path === '/themes' || path === '/categories') return [];

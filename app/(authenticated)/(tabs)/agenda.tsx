@@ -9,7 +9,11 @@ import {
   createWorkshopCache,
   loadWorkshopList,
 } from '@/workshop/data';
-import type { WorkshopSummary } from '@/workshop/domain';
+import type {
+  WorkshopFilterOptions,
+  WorkshopFilters,
+  WorkshopSummary,
+} from '@/workshop/domain';
 import { WorkshopListScreen } from '@/workshop/presentation';
 
 export default function AgendaRoute() {
@@ -25,6 +29,13 @@ export default function AgendaRoute() {
     'loading',
   );
   const [workshops, setWorkshops] = useState<readonly WorkshopSummary[]>([]);
+  const [filters, setFilters] = useState<WorkshopFilters>({
+    status: 'PUBLISHED',
+  });
+  const [filterOptions, setFilterOptions] = useState<WorkshopFilterOptions>({
+    themes: [],
+    categories: [],
+  });
   const [source, setSource] = useState<'network' | 'cache'>('network');
   const [refreshing, setRefreshing] = useState(false);
   const refreshingRef = useRef(false);
@@ -32,21 +43,21 @@ export default function AgendaRoute() {
   const load = useCallback(async () => {
     setStatus('loading');
     try {
-      const result = await loadInitialWorkshops(gateway);
+      const result = await loadInitialWorkshops(gateway, filters);
       setWorkshops(result.data);
       setSource(result.source);
       setStatus('success');
     } catch {
       setStatus('error');
     }
-  }, [gateway]);
+  }, [filters, gateway]);
 
   const refresh = useCallback(async () => {
     if (refreshingRef.current) return;
     refreshingRef.current = true;
     setRefreshing(true);
     try {
-      const result = await loadInitialWorkshops(gateway);
+      const result = await loadInitialWorkshops(gateway, filters);
       setWorkshops(result.data);
       setSource(result.source);
       setStatus('success');
@@ -56,11 +67,21 @@ export default function AgendaRoute() {
       refreshingRef.current = false;
       setRefreshing(false);
     }
-  }, [gateway, workshops.length]);
+  }, [filters, gateway, workshops.length]);
 
   useEffect(() => {
     let active = true;
-    void loadInitialWorkshops(gateway)
+    void gateway.loadFilterOptions().then((options) => {
+      if (active) setFilterOptions(options);
+    });
+    return () => {
+      active = false;
+    };
+  }, [gateway]);
+
+  useEffect(() => {
+    let active = true;
+    void loadInitialWorkshops(gateway, filters)
       .then((result) => {
         if (!active) return;
         setWorkshops(result.data);
@@ -73,10 +94,17 @@ export default function AgendaRoute() {
     return () => {
       active = false;
     };
-  }, [gateway]);
+  }, [filters, gateway]);
 
   return (
     <WorkshopListScreen
+      filtering={status === 'loading' && workshops.length > 0}
+      filterOptions={filterOptions}
+      filters={filters}
+      onFiltersChange={(nextFilters) => {
+        setStatus('loading');
+        setFilters(nextFilters);
+      }}
       onOpen={(workshop) =>
         router.push({
           pathname: '/(authenticated)/workshops/[id]',
@@ -95,10 +123,23 @@ export default function AgendaRoute() {
 
 async function loadInitialWorkshops(
   gateway: ReturnType<typeof createApiWorkshopGateway>,
+  filters: WorkshopFilters,
 ) {
+  if (!isDefaultFilter(filters)) {
+    const data = await gateway.loadList(filters);
+    return { data, source: 'network' as const, updatedAt: Date.now() };
+  }
   const userId = await gateway.getCurrentUserId();
   return loadWorkshopList({
     cache: createWorkshopCache({ userId }),
-    loadRemote: gateway.loadList,
+    loadRemote: () => gateway.loadList(filters),
   });
+}
+
+function isDefaultFilter(filters: WorkshopFilters) {
+  return (
+    filters.status === 'PUBLISHED' &&
+    filters.themeId === undefined &&
+    filters.categoryId === undefined
+  );
 }
