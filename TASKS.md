@@ -656,7 +656,7 @@ A mesma operação deve reutilizar a mesma chave.
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Exibir:
@@ -670,6 +670,10 @@ REFUNDED
 ```
 
 conforme contrato da API.
+
+Implementada como tela de apresentação tipada para `PENDING`, `CONFIRMED`,
+`WAITING_LIST`, `CANCELLED` e `REFUNDED`. Os estados possuem descrição textual,
+sem antecipar posição da lista de espera ou ações ainda dependentes da API.
 
 ---
 
