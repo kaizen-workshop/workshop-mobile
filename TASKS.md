@@ -1227,8 +1227,13 @@ Status:
 Status:
 
 ```text
-[ ]
+[x]
 ```
+
+Cobertos criação autenticada, reutilização da `Idempotency-Key`, respostas
+inválidas e conflitos, consulta da inscrição atual, cancelamento, posição e
+promoção na lista de espera, além do início do pagamento e dos estados exibidos
+durante todo o fluxo.
 
 ---
 
