@@ -437,10 +437,13 @@ OfflineState
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Consumir endpoint da API.
+
+Implementado com `GET /api/v1/posts/feed`, autenticação, validação defensiva do
+Spring Page, mapeamento para o modelo local e fallback para o cache por usuário.
 
 ---
 
@@ -458,9 +461,9 @@ Exibir:
 - posts;
 - destaques.
 
-Progresso: apresentação e estados visuais usam modelos locais de UI. A origem
-real dos itens permanece bloqueada pela TASK-021 e pelo endpoint ainda não
-implementado na `workshop_api`.
+Progresso: posts e destaques já usam a origem real da API. Workshops permanecem
+ausentes porque o endpoint atual entrega somente `PostResponse`; o mobile não
+mistura outra listagem e não recalcula a ordenação autoritativa.
 
 ---
 

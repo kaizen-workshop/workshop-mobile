@@ -5,4 +5,7 @@ export type FeedCard = Readonly<{
   summary?: string;
   context?: string;
   highlighted?: boolean;
+  relatedWorkshopId?: string;
+  likeCount?: number;
+  likedByMe?: boolean;
 }>;
