@@ -6,6 +6,7 @@ import { createTokenStorage } from '@/core/secure-storage';
 import {
   createApiNotificationGateway,
   mergeNotifications,
+  updateNotificationRead,
 } from '@/notification/data';
 import type { NotificationItem } from '@/notification/domain';
 import { NotificationCentreScreen } from '@/notification/presentation';
@@ -27,6 +28,7 @@ export default function NotificationsRoute() {
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const loadingMoreRef = useRef(false);
+  const markingRead = useRef(new Set<string>());
 
   const load = useCallback(async () => {
     setStatus('loading');
@@ -56,6 +58,22 @@ export default function NotificationsRoute() {
     }
   }, [gateway, hasMore, nextPage]);
 
+  const markRead = useCallback(
+    async (item: NotificationItem) => {
+      if (item.read || markingRead.current.has(item.id)) return;
+      markingRead.current.add(item.id);
+      setItems((current) => updateNotificationRead(current, item.id, true));
+      try {
+        await gateway.markRead(item.id);
+      } catch {
+        setItems((current) => updateNotificationRead(current, item.id, false));
+      } finally {
+        markingRead.current.delete(item.id);
+      }
+    },
+    [gateway],
+  );
+
   useEffect(() => {
     let active = true;
     void gateway
@@ -80,6 +98,7 @@ export default function NotificationsRoute() {
       items={items}
       loadingMore={loadingMore}
       onLoadMore={hasMore ? loadMore : undefined}
+      onPress={markRead}
       onRetry={load}
       status={status}
     />

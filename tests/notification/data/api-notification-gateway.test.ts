@@ -3,6 +3,7 @@ import type { TokenStorage } from '@/core/secure-storage';
 import {
   createApiNotificationGateway,
   mergeNotifications,
+  updateNotificationRead,
 } from '@/notification/data';
 
 const tokens: TokenStorage = {
@@ -60,4 +61,30 @@ it('rejects malformed notification pages', async () => {
   await expect(gateway.loadPage(0)).rejects.toMatchObject({
     category: 'unknown',
   });
+});
+
+it('marks a notification as read through the authenticated endpoint', async () => {
+  const request = jest.fn().mockResolvedValue({ ...item, read: true });
+  const gateway = createApiNotificationGateway(
+    { request } as HttpClient,
+    tokens,
+  );
+
+  await expect(gateway.markRead('notification/1')).resolves.toMatchObject({
+    id: 'notification-1',
+    read: true,
+  });
+  expect(request).toHaveBeenCalledWith({
+    path: '/notifications/notification%2F1/read',
+    method: 'PATCH',
+    headers: { Authorization: 'Bearer access' },
+  });
+});
+
+it('supports optimistic read state and rollback', () => {
+  const optimistic = updateNotificationRead([item], item.id, true);
+  const rolledBack = updateNotificationRead(optimistic, item.id, false);
+
+  expect(optimistic[0].read).toBe(true);
+  expect(rolledBack).toEqual([item]);
 });

@@ -54,6 +54,14 @@ export function mergeNotifications(
   return [...current, ...incoming.filter((item) => !known.has(item.id))];
 }
 
+export function updateNotificationRead(
+  items: readonly NotificationItem[],
+  id: string,
+  read: boolean,
+) {
+  return items.map((item) => (item.id === id ? { ...item, read } : item));
+}
+
 function isPage(
   value: unknown,
 ): value is { content: NotificationItem[]; number: number; last: boolean } {
