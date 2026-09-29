@@ -944,7 +944,7 @@ Refletir permissões retornadas pela API.
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 ---
