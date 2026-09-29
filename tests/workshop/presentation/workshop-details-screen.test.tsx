@@ -276,3 +276,55 @@ it('explains cancellation refund outcomes and allows a new registration', () => 
     screen.getByText('A inscrição foi cancelada e o reembolso foi processado.'),
   ).toBeTruthy();
 });
+
+it('starts payment only for a pending paid registration and shows its state', () => {
+  const onCreatePayment = jest.fn();
+  const pendingRegistration = {
+    id: 'registration-1',
+    workshopId: workshop.id,
+    status: 'PENDING' as const,
+    paymentStatus: 'PENDING' as const,
+  };
+  const { rerender } = render(
+    <WorkshopDetailsScreen
+      onCreatePayment={onCreatePayment}
+      registration={pendingRegistration}
+      status="success"
+      workshop={workshop}
+    />,
+  );
+
+  fireEvent.press(screen.getByRole('button', { name: 'Iniciar pagamento' }));
+  expect(onCreatePayment).toHaveBeenCalledTimes(1);
+
+  rerender(
+    <WorkshopDetailsScreen
+      onCreatePayment={onCreatePayment}
+      paying
+      registration={pendingRegistration}
+      status="success"
+      workshop={workshop}
+    />,
+  );
+  expect(screen.getByLabelText('Iniciando pagamento')).toBeTruthy();
+
+  rerender(
+    <WorkshopDetailsScreen
+      payment={{
+        id: 'payment-1',
+        registrationId: 'registration-1',
+        amount: 150,
+        status: 'PENDING',
+        method: 'PIX',
+      }}
+      registration={pendingRegistration}
+      status="success"
+      workshop={workshop}
+    />,
+  );
+  expect(screen.getByText('Pagamento pendente')).toBeTruthy();
+  expect(
+    screen.getByText('A solicitação foi criada e aguarda confirmação.'),
+  ).toBeTruthy();
+  expect(screen.queryByText('simulated-reference')).toBeNull();
+});

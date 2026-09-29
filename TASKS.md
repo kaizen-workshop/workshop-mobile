@@ -761,12 +761,16 @@ de gateway. Todos os estados possuem descrição textual e cobertura de teste.
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Implementação depende da definição do gateway.
 
 Não incluir dados sensíveis desnecessários no app.
+
+Integrado ao gateway simulado da API com `Idempotency-Key` estável por tentativa.
+O app envia apenas os identificadores necessários, bloqueia duplicidade, apresenta
+progresso/erro e exibe o estado retornado sem expor referência externa sensível.
 
 ---
 

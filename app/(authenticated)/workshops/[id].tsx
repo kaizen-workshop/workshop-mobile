@@ -6,6 +6,8 @@ import { getEnvironment } from '@/core/config';
 import { AppError } from '@/core/errors';
 import { createHttpClient } from '@/core/http';
 import { createTokenStorage } from '@/core/secure-storage';
+import { createApiPaymentGateway } from '@/payment/data';
+import type { PaymentResult } from '@/payment/domain';
 import { createApiRegistrationGateway } from '@/registration/data';
 import type { RegistrationResult } from '@/registration/domain';
 import {
@@ -41,6 +43,14 @@ export default function WorkshopDetailsRoute() {
       ),
     [],
   );
+  const paymentGateway = useMemo(
+    () =>
+      createApiPaymentGateway(
+        createHttpClient(getEnvironment()),
+        createTokenStorage(),
+      ),
+    [],
+  );
   const [status, setStatus] = useState<'loading' | 'error' | 'success'>(
     'loading',
   );
@@ -62,6 +72,11 @@ export default function WorkshopDetailsRoute() {
   >();
   const registeringRef = useRef(false);
   const cancellingRef = useRef(false);
+  const [payment, setPayment] = useState<PaymentResult>();
+  const [paymentKey, setPaymentKey] = useState(() => Crypto.randomUUID());
+  const [paying, setPaying] = useState(false);
+  const [paymentError, setPaymentError] = useState(false);
+  const payingRef = useRef(false);
 
   const load = useCallback(async () => {
     if (!id) {
@@ -106,7 +121,10 @@ export default function WorkshopDetailsRoute() {
     setRegistering(true);
     setRegistrationError(undefined);
     try {
-      setRegistration(await registrationGateway.register(id, registrationKey));
+      const created = await registrationGateway.register(id, registrationKey);
+      setRegistration(created);
+      setPayment(undefined);
+      setPaymentKey(Crypto.randomUUID());
     } catch (error) {
       setRegistrationError(
         error instanceof AppError && error.category === 'conflict'
@@ -127,6 +145,8 @@ export default function WorkshopDetailsRoute() {
     try {
       setRegistration(await registrationGateway.cancel(registration.id));
       setRegistrationKey(Crypto.randomUUID());
+      setPayment(undefined);
+      setPaymentKey(Crypto.randomUUID());
     } catch (error) {
       setCancellationError(
         error instanceof AppError && error.category === 'conflict'
@@ -138,6 +158,21 @@ export default function WorkshopDetailsRoute() {
       setCancellingRegistration(false);
     }
   }, [registration, registrationGateway]);
+
+  const createPayment = useCallback(async () => {
+    if (!registration || payingRef.current || payment) return;
+    payingRef.current = true;
+    setPaying(true);
+    setPaymentError(false);
+    try {
+      setPayment(await paymentGateway.create(registration.id, paymentKey));
+    } catch {
+      setPaymentError(true);
+    } finally {
+      payingRef.current = false;
+      setPaying(false);
+    }
+  }, [payment, paymentGateway, paymentKey, registration]);
 
   useEffect(() => {
     if (!id) return;
@@ -179,11 +214,15 @@ export default function WorkshopDetailsRoute() {
       openingAttachmentId={openingAttachmentId}
       onOpenAttachment={openAttachment}
       onCancelRegistration={cancelRegistration}
+      onCreatePayment={createPayment}
       onRegister={register}
       onRetry={load}
       registration={registration}
       registrationError={registrationError}
       registering={registering}
+      payment={payment}
+      paymentError={paymentError}
+      paying={paying}
       source={source}
       status={id ? status : 'error'}
       workshop={workshop}

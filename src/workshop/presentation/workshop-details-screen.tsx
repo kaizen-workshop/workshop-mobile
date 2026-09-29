@@ -12,6 +12,7 @@ import {
 
 import { ErrorState, LoadingState } from '@/shared/presentation';
 import type { RegistrationResult } from '@/registration/domain';
+import type { PaymentResult } from '@/payment/domain';
 import { colors, radii, sizes, spacing, typography } from '@/shared/theme';
 import type { WorkshopAttachment, WorkshopDetails } from '@/workshop/domain';
 
@@ -30,6 +31,10 @@ type Props = Readonly<{
   onCancelRegistration?: () => void;
   cancellingRegistration?: boolean;
   cancellationError?: 'conflict' | 'error';
+  payment?: PaymentResult;
+  paymentError?: boolean;
+  paying?: boolean;
+  onCreatePayment?: () => void;
 }>;
 
 function Detail({ label, value }: Readonly<{ label: string; value?: string }>) {
@@ -47,6 +52,7 @@ export function WorkshopDetailsScreen({
   cancellationError,
   cancellingRegistration = false,
   onCancelRegistration,
+  onCreatePayment,
   onOpenAttachment,
   onRetry,
   openingAttachmentId,
@@ -54,6 +60,9 @@ export function WorkshopDetailsScreen({
   registration,
   registrationError,
   registering = false,
+  payment,
+  paymentError = false,
+  paying = false,
   source = 'network',
   status,
   workshop,
@@ -210,6 +219,45 @@ export function WorkshopDetailsScreen({
         </View>
       ) : null}
 
+      {payment ? (
+        <View accessibilityLiveRegion="polite" style={styles.paymentResult}>
+          <Text accessibilityRole="header" style={styles.registrationTitle}>
+            Pagamento {paymentStatusLabel(payment.status)}
+          </Text>
+          <Text style={styles.registrationMessage}>
+            {payment.status === 'PENDING'
+              ? 'A solicitação foi criada e aguarda confirmação.'
+              : 'O estado do pagamento foi atualizado.'}
+          </Text>
+        </View>
+      ) : onCreatePayment && registration?.paymentStatus === 'PENDING' ? (
+        <View style={styles.registrationAction}>
+          {paymentError ? (
+            <Text accessibilityRole="alert" style={styles.registrationError}>
+              Não foi possível iniciar o pagamento. Tente novamente.
+            </Text>
+          ) : null}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ busy: paying, disabled: paying }}
+            disabled={paying}
+            onPress={onCreatePayment}
+            style={styles.registrationButton}
+          >
+            {paying ? (
+              <ActivityIndicator
+                accessibilityLabel="Iniciando pagamento"
+                color={colors.onBrand}
+              />
+            ) : (
+              <Text style={styles.registrationButtonText}>
+                Iniciar pagamento
+              </Text>
+            )}
+          </Pressable>
+        </View>
+      ) : null}
+
       {workshop.responsibleNames?.length ? (
         <View style={styles.section}>
           <Text accessibilityRole="header" style={styles.sectionTitle}>
@@ -309,6 +357,17 @@ function registrationMessage(registration: RegistrationResult) {
   if (registration.status === 'REFUNDED')
     return 'A inscrição foi cancelada e o reembolso foi processado.';
   return 'Sua inscrição está pendente de confirmação.';
+}
+
+function paymentStatusLabel(status: PaymentResult['status']) {
+  return {
+    PENDING: 'pendente',
+    PAID: 'confirmado',
+    DECLINED: 'recusado',
+    CANCELLED: 'cancelado',
+    REFUNDED: 'reembolsado',
+    EXEMPT: 'isento',
+  }[status];
 }
 
 const styles = StyleSheet.create({
@@ -474,5 +533,13 @@ const styles = StyleSheet.create({
     color: colors.danger,
     fontFamily: typography.familyBold,
     fontWeight: typography.bold,
+  },
+  paymentResult: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    marginTop: spacing.md,
+    padding: spacing.md,
   },
 });
