@@ -51,6 +51,7 @@ export function LoadingState({
   return (
     <View
       accessibilityLabel={message}
+      accessibilityLiveRegion="polite"
       accessibilityRole="progressbar"
       style={styles.container}
     >
@@ -130,7 +131,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   offline: {
-    color: colors.offline,
+    color: colors.textMuted,
   },
   button: {
     alignItems: 'center',

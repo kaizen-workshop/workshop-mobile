@@ -1,5 +1,12 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 import { colors, radii, sizes, spacing, typography } from '@/shared/theme';
 
@@ -43,7 +50,10 @@ export function ChangePasswordScreen({ onSubmit }: Props) {
   };
 
   return (
-    <View style={styles.page}>
+    <ScrollView
+      contentContainerStyle={styles.page}
+      keyboardShouldPersistTaps="handled"
+    >
       <View style={styles.card}>
         <Text accessibilityRole="header" style={styles.title}>
           Crie uma nova senha
@@ -91,6 +101,7 @@ export function ChangePasswordScreen({ onSubmit }: Props) {
         <Pressable
           accessibilityLabel="Alterar senha"
           accessibilityRole="button"
+          accessibilityState={{ busy: loading, disabled: loading }}
           disabled={loading}
           onPress={submit}
           style={[styles.button, loading && styles.buttonDisabled]}
@@ -100,14 +111,14 @@ export function ChangePasswordScreen({ onSubmit }: Props) {
           </Text>
         </Pressable>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   page: {
     backgroundColor: colors.brand,
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     padding: spacing.xl,
   },
@@ -149,7 +160,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   error: {
-    color: colors.danger,
+    color: colors.text,
     fontFamily: typography.familyRegular,
     marginTop: spacing.sm,
   },

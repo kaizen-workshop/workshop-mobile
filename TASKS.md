@@ -1277,8 +1277,13 @@ Status:
 Status:
 
 ```text
-[ ]
+[x]
 ```
+
+Revisados semântica para leitor de tela, estados de ações assíncronas, alvos de
+toque, contraste, conteúdo não interativo e adaptação dos formulários a teclado
+e fonte ampliada. A cobertura automatizada foi atualizada e o checklist manual
+para binários Android/iOS está registrado em `docs/accessibility-review.md`.
 
 ---
 

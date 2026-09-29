@@ -60,6 +60,7 @@ export function WorkshopListScreen({
       }
       refreshControl={
         <RefreshControl
+          accessibilityLabel="Atualizar workshops"
           colors={[colors.brand]}
           onRefresh={onRefresh}
           refreshing={refreshing}
@@ -93,7 +94,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   cachedNotice: {
-    color: colors.offline,
+    color: colors.textMuted,
     fontFamily: typography.familyRegular,
     fontSize: typography.label,
     marginBottom: spacing.md,

@@ -63,7 +63,7 @@ export function WorkshopDetailsScreen({
             style={styles.image}
           />
           {imageStatus !== 'loaded' ? (
-            <Text style={styles.imageStatus}>
+            <Text accessibilityLiveRegion="polite" style={styles.imageStatus}>
               {imageStatus === 'error'
                 ? 'Imagem indisponível'
                 : 'Carregando imagem'}
@@ -109,18 +109,31 @@ export function WorkshopDetailsScreen({
           <Text accessibilityRole="header" style={styles.sectionTitle}>
             Anexos
           </Text>
-          {workshop.attachments.map((attachment) => (
-            <Pressable
-              accessibilityLabel={`Abrir anexo ${attachment.name}`}
-              accessibilityRole="button"
-              disabled={!onOpenAttachment}
-              key={attachment.id}
-              onPress={() => onOpenAttachment?.(attachment)}
-              style={styles.attachment}
-            >
+          {workshop.attachments.map((attachment) => {
+            const label = (
               <Text style={styles.attachmentText}>{attachment.name}</Text>
-            </Pressable>
-          ))}
+            );
+
+            if (!onOpenAttachment) {
+              return (
+                <View key={attachment.id} style={styles.attachment}>
+                  {label}
+                </View>
+              );
+            }
+
+            return (
+              <Pressable
+                accessibilityLabel={`Abrir anexo ${attachment.name}`}
+                accessibilityRole="button"
+                key={attachment.id}
+                onPress={() => onOpenAttachment(attachment)}
+                style={styles.attachment}
+              >
+                {label}
+              </Pressable>
+            );
+          })}
         </View>
       ) : null}
 
@@ -144,7 +157,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   cachedNotice: {
-    color: colors.offline,
+    color: colors.textMuted,
     fontFamily: typography.familyRegular,
     fontSize: typography.label,
     marginBottom: spacing.md,

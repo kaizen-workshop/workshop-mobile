@@ -4,6 +4,7 @@ import { ResetPasswordScreen } from '@/auth/presentation/reset-password-screen';
 
 it('renders first access code controls', () => {
   render(<FirstAccessScreen onSubmit={jest.fn()} />);
+  expect(screen.getByRole('header', { name: 'Entrar' })).toBeTruthy();
   expect(screen.getByLabelText('Código')).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Enviar' })).toBeTruthy();
 });

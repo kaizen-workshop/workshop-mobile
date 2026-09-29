@@ -115,6 +115,8 @@ export function FeedScreen({
         loadingMore ? (
           <ActivityIndicator
             accessibilityLabel="Carregando mais itens"
+            accessibilityLiveRegion="polite"
+            accessibilityRole="progressbar"
             color={colors.brand}
             style={styles.loadingMore}
           />
@@ -124,6 +126,7 @@ export function FeedScreen({
       onEndReachedThreshold={0.4}
       refreshControl={
         <RefreshControl
+          accessibilityLabel="Atualizar feed"
           colors={[colors.brand]}
           onRefresh={onRefresh}
           refreshing={refreshing}
@@ -156,7 +159,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   cachedNotice: {
-    color: colors.offline,
+    color: colors.textMuted,
     fontFamily: typography.familyRegular,
     fontSize: typography.label,
     marginBottom: spacing.md,

@@ -60,6 +60,7 @@ it('preserves workshop order and tolerates optional fields', () => {
     'Qualidade na prática',
   ]);
   expect(screen.queryByText('undefined')).toBeNull();
+  expect(screen.queryByRole('button')).toBeNull();
 });
 
 it('opens workshops and connects pull-to-refresh', () => {

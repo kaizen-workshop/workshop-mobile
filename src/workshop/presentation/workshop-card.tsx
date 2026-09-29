@@ -7,14 +7,8 @@ export function WorkshopCard({
   onPress,
   workshop,
 }: Readonly<{ onPress?: () => void; workshop: WorkshopSummary }>) {
-  return (
-    <Pressable
-      accessibilityLabel={`Abrir workshop ${workshop.title}`}
-      accessibilityRole={onPress ? 'button' : undefined}
-      disabled={!onPress}
-      onPress={onPress}
-      style={styles.card}
-    >
+  const content = (
+    <>
       {workshop.theme ? (
         <Text style={styles.theme}>{workshop.theme}</Text>
       ) : null}
@@ -43,6 +37,19 @@ export function WorkshopCard({
       {workshop.registrationLabel ? (
         <Text style={styles.registration}>{workshop.registrationLabel}</Text>
       ) : null}
+    </>
+  );
+
+  if (!onPress) return <View style={styles.card}>{content}</View>;
+
+  return (
+    <Pressable
+      accessibilityLabel={`Abrir workshop ${workshop.title}`}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={styles.card}
+    >
+      {content}
     </Pressable>
   );
 }

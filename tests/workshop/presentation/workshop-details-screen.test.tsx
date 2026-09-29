@@ -43,6 +43,7 @@ it('renders every available workshop detail', () => {
   expect(
     screen.getByLabelText('Imagem do workshop Lean Manufacturing'),
   ).toBeTruthy();
+  expect(screen.queryByRole('button')).toBeNull();
 });
 
 it('omits unavailable optional sections', () => {

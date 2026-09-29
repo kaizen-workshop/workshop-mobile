@@ -108,6 +108,7 @@ export function PreferencesScreen({
         <Pressable
           accessibilityLabel="Continuar"
           accessibilityRole="button"
+          accessibilityState={{ busy: saving, disabled: saving }}
           disabled={saving}
           onPress={submit}
           style={[styles.button, saving && styles.buttonDisabled]}
@@ -187,7 +188,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   error: {
-    color: colors.danger,
+    color: colors.text,
     fontFamily: typography.familyRegular,
     marginBottom: spacing.xs,
     textAlign: 'center',
