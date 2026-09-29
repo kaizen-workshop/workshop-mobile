@@ -112,3 +112,72 @@ it('rejects malformed workshop pages', async () => {
     category: 'unknown',
   });
 });
+
+it('loads workshop details with taxonomy names and attachments', async () => {
+  const request = jest.fn(async ({ path }: { path: string }) => {
+    if (path === '/themes')
+      return [
+        {
+          id: 'theme-1',
+          name: 'Excelência operacional',
+          description: null,
+          active: true,
+        },
+      ];
+    if (path === '/categories')
+      return [
+        {
+          id: 'category-1',
+          name: 'Indústria',
+          description: null,
+          active: true,
+        },
+      ];
+    if (path.endsWith('/attachments'))
+      return [
+        {
+          id: 'attachment-1',
+          filename: 'material.png',
+          contentType: 'image/png',
+          sizeBytes: 100,
+          checksumSha256: 'checksum',
+          createdAt: '2026-09-29T12:00:00Z',
+        },
+      ];
+    return workshop;
+  });
+  const gateway = createApiWorkshopGateway({ request } as HttpClient, tokens);
+
+  await expect(gateway.loadDetails('workshop/1')).resolves.toEqual({
+    id: 'workshop-1',
+    title: 'Lean Manufacturing',
+    description: 'Melhoria contínua',
+    theme: 'Excelência operacional',
+    category: 'Indústria',
+    dateLabel: '10/10/2026',
+    timeLabel: '09:00–12:00',
+    location: 'Auditório',
+    modality: 'Presencial',
+    priceLabel: 'Gratuito',
+    registrationPeriodLabel: '01/09/2026 a 08/10/2026',
+    capacityLabel: '20 vagas',
+    attachments: [{ id: 'attachment-1', name: 'material.png' }],
+  });
+  expect(request).toHaveBeenCalledWith({
+    path: '/workshops/workshop%2F1',
+    headers: { Authorization: 'Bearer access' },
+  });
+});
+
+it('rejects malformed attachment metadata', async () => {
+  const request = jest.fn(async ({ path }: { path: string }) => {
+    if (path === '/themes' || path === '/categories') return [];
+    if (path.endsWith('/attachments')) return [{ id: 'incomplete' }];
+    return workshop;
+  });
+  const gateway = createApiWorkshopGateway({ request } as HttpClient, tokens);
+
+  await expect(gateway.loadDetails('workshop-1')).rejects.toMatchObject({
+    category: 'unknown',
+  });
+});

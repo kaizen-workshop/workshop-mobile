@@ -588,13 +588,13 @@ Cobrir filtros suportados pela API.
 Status:
 
 ```text
-[~]
+[x]
 ```
 
 Exibir dados disponíveis sem assumir preenchimento obrigatório de campos opcionais.
 
-Progresso: tela e tratamento de campos opcionais implementados com modelo local
-de UI. A carga por id aguarda o endpoint real.
+Tela integrada à consulta autenticada por id, incluindo taxonomias, agenda,
+inscrições, capacidade, anexos disponíveis, cache por usuário e retry.
 
 ---
 

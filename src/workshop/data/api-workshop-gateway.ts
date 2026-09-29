@@ -1,7 +1,7 @@
 import { AppError } from '@/core/errors';
 import type { HttpClient } from '@/core/http';
 import type { TokenStorage } from '@/core/secure-storage';
-import type { WorkshopSummary } from '@/workshop/domain';
+import type { WorkshopDetails, WorkshopSummary } from '@/workshop/domain';
 
 type TaxonomyResponse = Readonly<{
   id: string;
@@ -42,9 +42,19 @@ type PageResponse = Readonly<{
   last: boolean;
 }>;
 
+type AttachmentResponse = Readonly<{
+  id: string;
+  filename: string;
+  contentType: string;
+  sizeBytes: number;
+  checksumSha256: string;
+  createdAt: string;
+}>;
+
 export type WorkshopGateway = Readonly<{
   getCurrentUserId(): Promise<string>;
   loadList(): Promise<readonly WorkshopSummary[]>;
+  loadDetails(id: string): Promise<WorkshopDetails>;
 }>;
 
 export function createApiWorkshopGateway(
@@ -86,6 +96,28 @@ export function createApiWorkshopGateway(
       return workshops.map((workshop) =>
         toSummary(workshop, themeNames, categoryNames),
       );
+    },
+    async loadDetails(id) {
+      if (!id.trim()) throw new AppError({ category: 'bad_request' });
+      const encodedId = encodeURIComponent(id);
+      const [response, attachments, themes, categories] = await Promise.all([
+        authenticated<unknown>(`/workshops/${encodedId}`),
+        authenticated<unknown>(`/workshops/${encodedId}/attachments`),
+        loadTaxonomies(authenticated, '/themes'),
+        loadTaxonomies(authenticated, '/categories'),
+      ]);
+      if (!isWorkshopResponse(response)) throw invalidResponse('workshop');
+      if (
+        !Array.isArray(attachments) ||
+        !attachments.every(isAttachmentResponse)
+      ) {
+        throw invalidResponse('attachments');
+      }
+      const theme = themes.find((entry) => entry.id === response.themeId)?.name;
+      const category = categories.find(
+        (entry) => entry.id === response.categoryId,
+      )?.name;
+      return toDetails(response, attachments, theme, category);
     },
   };
 }
@@ -140,6 +172,44 @@ function toSummary(
   };
 }
 
+function toDetails(
+  workshop: WorkshopResponse,
+  attachments: readonly AttachmentResponse[],
+  theme?: string,
+  category?: string,
+): WorkshopDetails {
+  return {
+    id: workshop.id,
+    title: workshop.title,
+    description: workshop.description,
+    ...(theme ? { theme } : {}),
+    ...(category ? { category } : {}),
+    dateLabel:
+      workshop.startDate === workshop.endDate
+        ? formatDate(workshop.startDate)
+        : `${formatDate(workshop.startDate)} a ${formatDate(workshop.endDate)}`,
+    timeLabel: `${formatTime(workshop.startTime)}–${formatTime(workshop.endTime)}`,
+    location: workshop.location,
+    modality: formatModality(workshop.modality),
+    priceLabel:
+      workshop.price === 0
+        ? 'Gratuito'
+        : new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+          }).format(workshop.price),
+    registrationPeriodLabel: `${formatDate(workshop.registrationStart.slice(0, 10))} a ${formatDate(workshop.registrationEnd.slice(0, 10))}`,
+    capacityLabel: `${workshop.maximumParticipants} vagas`,
+    attachments: attachments.map((attachment) => ({
+      id: attachment.id,
+      name: attachment.filename,
+    })),
+    ...(workshop.additionalInformation
+      ? { additionalInformation: workshop.additionalInformation }
+      : {}),
+  };
+}
+
 function formatSchedule(workshop: WorkshopResponse) {
   const dates =
     workshop.startDate === workshop.endDate
@@ -183,6 +253,19 @@ function isTaxonomyResponse(value: unknown): value is TaxonomyResponse {
     (taxonomy.description === null ||
       typeof taxonomy.description === 'string') &&
     typeof taxonomy.active === 'boolean'
+  );
+}
+
+function isAttachmentResponse(value: unknown): value is AttachmentResponse {
+  if (!value || typeof value !== 'object') return false;
+  const attachment = value as Partial<AttachmentResponse>;
+  return (
+    typeof attachment.id === 'string' &&
+    typeof attachment.filename === 'string' &&
+    typeof attachment.contentType === 'string' &&
+    typeof attachment.sizeBytes === 'number' &&
+    typeof attachment.checksumSha256 === 'string' &&
+    typeof attachment.createdAt === 'string'
   );
 }
 
