@@ -80,10 +80,15 @@ function mapRegistration(value: unknown): RegistrationResult {
     workshopId: value.workshopId,
     status: value.status,
     paymentStatus: value.paymentStatus,
+    ...(value.waitingListPosition === null
+      ? {}
+      : { waitingListPosition: value.waitingListPosition }),
   };
 }
 
-function isRegistrationResponse(value: unknown): value is RegistrationResult {
+function isRegistrationResponse(
+  value: unknown,
+): value is RegistrationResult & { waitingListPosition: number | null } {
   if (!value || typeof value !== 'object') return false;
   const registration = value as Partial<RegistrationResult>;
   return (
@@ -92,7 +97,12 @@ function isRegistrationResponse(value: unknown): value is RegistrationResult {
     registration.status !== undefined &&
     registrationStatuses.includes(registration.status) &&
     registration.paymentStatus !== undefined &&
-    paymentStatuses.includes(registration.paymentStatus)
+    paymentStatuses.includes(registration.paymentStatus) &&
+    ('waitingListPosition' in registration
+      ? registration.waitingListPosition === null ||
+        (typeof registration.waitingListPosition === 'number' &&
+          registration.waitingListPosition >= 1)
+      : true)
   );
 }
 

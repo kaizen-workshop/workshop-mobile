@@ -727,7 +727,7 @@ API, distinguindo reembolso processado de cancelamento sem reembolso por prazo.
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Exibir:
@@ -735,6 +735,10 @@ Exibir:
 - status;
 - posição quando fornecida;
 - promoção quando recebida pela API.
+
+O estado de espera mostra a posição quando a API a fornece. A inscrição é
+reconciliada sempre que a tela volta ao foco, refletindo automaticamente a
+promoção para confirmação e removendo a posição antiga.
 
 ---
 

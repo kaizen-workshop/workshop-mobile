@@ -6,4 +6,5 @@ export type RegistrationResult = Readonly<{
   workshopId: string;
   status: RegistrationStatus;
   paymentStatus: PaymentStatus;
+  waitingListPosition?: number;
 }>;

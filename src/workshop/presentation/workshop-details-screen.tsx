@@ -346,7 +346,9 @@ function registrationMessage(registration: RegistrationResult) {
   if (registration.status === 'CONFIRMED')
     return 'Sua participação está confirmada.';
   if (registration.status === 'WAITING_LIST')
-    return 'O workshop está cheio. Você será avisado se surgir uma vaga.';
+    return registration.waitingListPosition
+      ? `O workshop está cheio. Sua posição na lista é ${registration.waitingListPosition}. Você será avisado se surgir uma vaga.`
+      : 'O workshop está cheio. Você será avisado se surgir uma vaga.';
   if (
     registration.status === 'CANCELLED' &&
     registration.paymentStatus === 'PAID'

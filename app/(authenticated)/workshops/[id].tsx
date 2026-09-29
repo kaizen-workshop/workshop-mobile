@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as Crypto from 'expo-crypto';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -192,19 +192,21 @@ export default function WorkshopDetailsRoute() {
     };
   }, [gateway, id]);
 
-  useEffect(() => {
-    if (!id) return;
-    let active = true;
-    void registrationGateway
-      .loadCurrent(id)
-      .then((current) => {
-        if (active && current) setRegistration(current);
-      })
-      .catch(() => undefined);
-    return () => {
-      active = false;
-    };
-  }, [id, registrationGateway]);
+  useFocusEffect(
+    useCallback(() => {
+      if (!id) return undefined;
+      let active = true;
+      void registrationGateway
+        .loadCurrent(id)
+        .then((current) => {
+          if (active && current) setRegistration(current);
+        })
+        .catch(() => undefined);
+      return () => {
+        active = false;
+      };
+    }, [id, registrationGateway]),
+  );
 
   return (
     <WorkshopDetailsScreen

@@ -178,6 +178,7 @@ it('shows registration success, waiting list and conflict outcomes', () => {
         workshopId: workshop.id,
         status: 'WAITING_LIST',
         paymentStatus: 'EXEMPT',
+        waitingListPosition: 3,
       }}
       status="success"
       workshop={workshop}
@@ -186,7 +187,7 @@ it('shows registration success, waiting list and conflict outcomes', () => {
   expect(screen.getByText('Você entrou na lista de espera')).toBeTruthy();
   expect(
     screen.getByText(
-      'O workshop está cheio. Você será avisado se surgir uma vaga.',
+      'O workshop está cheio. Sua posição na lista é 3. Você será avisado se surgir uma vaga.',
     ),
   ).toBeTruthy();
 

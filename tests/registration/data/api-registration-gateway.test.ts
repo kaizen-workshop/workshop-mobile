@@ -16,6 +16,7 @@ const response = {
   workshopId: 'workshop-1',
   status: 'WAITING_LIST',
   paymentStatus: 'EXEMPT',
+  waitingListPosition: 3,
   userId: 'user-1',
   registeredAt: '2026-09-29T12:00:00Z',
 };
@@ -34,6 +35,7 @@ it('registers once through the authenticated workshop endpoint', async () => {
     workshopId: 'workshop-1',
     status: 'WAITING_LIST',
     paymentStatus: 'EXEMPT',
+    waitingListPosition: 3,
   });
   expect(request).toHaveBeenCalledWith({
     path: '/workshops/workshop%2F1/registrations',
@@ -109,6 +111,7 @@ it('loads the current registration and treats not found as no registration', asy
   await expect(gateway.loadCurrent('workshop-1')).resolves.toMatchObject({
     id: 'registration-1',
     status: 'WAITING_LIST',
+    waitingListPosition: 3,
   });
   await expect(gateway.loadCurrent('workshop-2')).resolves.toBeNull();
   expect(request).toHaveBeenNthCalledWith(1, {
@@ -122,6 +125,7 @@ it('cancels the owners registration through the API', async () => {
     ...response,
     status: 'CANCELLED',
     paymentStatus: 'PAID',
+    waitingListPosition: null,
   };
   const request = jest.fn().mockResolvedValue(cancelled);
   const gateway = createApiRegistrationGateway(
