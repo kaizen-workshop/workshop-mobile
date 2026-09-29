@@ -31,7 +31,9 @@ export default function FeedRoute() {
   const [cacheUserId, setCacheUserId] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const loadingMoreRef = useRef(false);
+  const refreshingRef = useRef(false);
 
   const load = useCallback(async () => {
     setStatus('loading');
@@ -71,6 +73,27 @@ export default function FeedRoute() {
     }
   }, [cacheUserId, gateway, hasMore, nextPage, source]);
 
+  const refresh = useCallback(async () => {
+    if (refreshingRef.current) return;
+    refreshingRef.current = true;
+    setRefreshing(true);
+    try {
+      const result = await loadInitialFeed(gateway);
+      setItems(result.items);
+      setSource(result.source);
+      setNextPage(result.nextPage);
+      setHasMore(result.hasMore);
+      setCacheUserId(result.userId);
+      setLoadMoreError(false);
+      setStatus('success');
+    } catch {
+      if (items.length === 0) setStatus('error');
+    } finally {
+      refreshingRef.current = false;
+      setRefreshing(false);
+    }
+  }, [gateway, items.length]);
+
   useEffect(() => {
     let active = true;
     void loadInitialFeed(gateway)
@@ -97,10 +120,11 @@ export default function FeedRoute() {
       loadingMore={loadingMore}
       loadMoreError={loadMoreError}
       onLoadMore={hasMore ? loadMore : undefined}
-      onRefresh={load}
+      onRefresh={refresh}
       onRetry={load}
       source={source}
       status={status}
+      refreshing={refreshing}
     />
   );
 }

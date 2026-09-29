@@ -489,11 +489,12 @@ offline, pois o cache representa um snapshot.
 Status:
 
 ```text
-[~]
+[x]
 ```
 
-Progresso: o gesto e o estado visual estão ligados a callback injetado; falta a
-integração real do feed.
+O gesto executa nova leitura remota, atualiza o snapshot e a paginação após
+sucesso, mantém conteúdo anterior durante a operação e bloqueia refreshes
+concorrentes. Em falha, preserva dados já visíveis ou usa o fallback de cache.
 
 ---
 
