@@ -5,7 +5,11 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 
 import type { HttpClient } from '@/core/http';
 import type { TokenStorage } from '@/core/secure-storage';
-import { createApiFeedGateway, mergeFeedItems } from '@/feed/data';
+import {
+  createApiFeedGateway,
+  mergeFeedItems,
+  updateFeedLike,
+} from '@/feed/data';
 
 const tokens: TokenStorage = {
   read: jest
@@ -96,3 +100,40 @@ it('uses the requested page and stops after the API last page', async () => {
     headers: { Authorization: 'Bearer access' },
   });
 });
+
+it.each([
+  [true, 'PUT'],
+  [false, 'DELETE'],
+] as const)(
+  'uses the idempotent like endpoint (liked: %s)',
+  async (liked, method) => {
+    const request = jest.fn().mockResolvedValue(undefined);
+    const gateway = createApiFeedGateway({ request } as HttpClient, tokens);
+
+    await gateway.setLiked('post/id', liked);
+
+    expect(request).toHaveBeenCalledWith({
+      path: '/posts/post%2Fid/like',
+      method,
+      headers: { Authorization: 'Bearer access' },
+    });
+
+    it('can apply and roll back the optimistic like state', () => {
+      const items = [
+        {
+          id: 'post-id',
+          kind: 'post' as const,
+          title: 'Post',
+          likedByMe: false,
+          likeCount: 2,
+        },
+      ];
+
+      const optimistic = updateFeedLike(items, 'post-id', true, 3);
+      const rolledBack = updateFeedLike(optimistic, 'post-id', false, 2);
+
+      expect(optimistic[0]).toMatchObject({ likedByMe: true, likeCount: 3 });
+      expect(rolledBack).toEqual(items);
+    });
+  },
+);

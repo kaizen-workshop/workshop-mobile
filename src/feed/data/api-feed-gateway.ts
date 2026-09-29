@@ -23,17 +23,19 @@ type PageResponse = Readonly<{
 export type FeedGateway = Readonly<{
   getCurrentUserId(): Promise<string>;
   loadPage(page: number, size?: number): Promise<FeedPage>;
+  setLiked(postId: string, liked: boolean): Promise<void>;
 }>;
 
 export function createApiFeedGateway(
   http: HttpClient,
   tokenStorage: TokenStorage,
 ): FeedGateway {
-  const authenticated = async <T>(path: string): Promise<T> => {
+  const authenticated = async <T>(path: string, method = 'GET'): Promise<T> => {
     const tokens = await tokenStorage.read();
     if (!tokens) throw new AppError({ category: 'unauthorized' });
     return http.request<T>({
       path,
+      ...(method === 'GET' ? {} : { method }),
       headers: { Authorization: `Bearer ${tokens.accessToken}` },
     });
   };
@@ -70,6 +72,13 @@ export function createApiFeedGateway(
         hasMore: !response.last,
       };
     },
+    async setLiked(postId, liked) {
+      if (!postId.trim()) throw new AppError({ category: 'bad_request' });
+      await authenticated<void>(
+        `/posts/${encodeURIComponent(postId)}/like`,
+        liked ? 'PUT' : 'DELETE',
+      );
+    },
   };
 }
 
@@ -82,6 +91,19 @@ export function mergeFeedItems(
     ...current,
     ...incoming.filter((item) => !known.has(`${item.kind}:${item.id}`)),
   ];
+}
+
+export function updateFeedLike(
+  items: readonly FeedCard[],
+  postId: string,
+  likedByMe: boolean | undefined,
+  likeCount: number | undefined,
+): readonly FeedCard[] {
+  return items.map((item) =>
+    item.kind === 'post' && item.id === postId
+      ? { ...item, likedByMe, likeCount }
+      : item,
+  );
 }
 
 function toFeedCard(post: PostResponse): FeedCard {

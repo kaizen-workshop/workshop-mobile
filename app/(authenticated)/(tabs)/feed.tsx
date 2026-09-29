@@ -8,6 +8,7 @@ import {
   createFeedCache,
   loadFeed,
   mergeFeedItems,
+  updateFeedLike,
 } from '@/feed/data';
 import type { FeedCard, FeedPage } from '@/feed/domain';
 import { FeedScreen } from '@/feed/presentation';
@@ -34,6 +35,7 @@ export default function FeedRoute() {
   const [refreshing, setRefreshing] = useState(false);
   const loadingMoreRef = useRef(false);
   const refreshingRef = useRef(false);
+  const pendingLikes = useRef(new Set<string>());
 
   const load = useCallback(async () => {
     setStatus('loading');
@@ -94,6 +96,26 @@ export default function FeedRoute() {
     }
   }, [gateway, items.length]);
 
+  const toggleLike = useCallback(
+    async (item: FeedCard) => {
+      if (item.kind !== 'post' || pendingLikes.current.has(item.id)) return;
+      pendingLikes.current.add(item.id);
+      const liked = !item.likedByMe;
+      const likeCount = Math.max(0, (item.likeCount ?? 0) + (liked ? 1 : -1));
+      setItems((current) => updateFeedLike(current, item.id, liked, likeCount));
+      try {
+        await gateway.setLiked(item.id, liked);
+      } catch {
+        setItems((current) =>
+          updateFeedLike(current, item.id, item.likedByMe, item.likeCount),
+        );
+      } finally {
+        pendingLikes.current.delete(item.id);
+      }
+    },
+    [gateway],
+  );
+
   useEffect(() => {
     let active = true;
     void loadInitialFeed(gateway)
@@ -122,6 +144,7 @@ export default function FeedRoute() {
       onLoadMore={hasMore ? loadMore : undefined}
       onRefresh={refresh}
       onRetry={load}
+      onToggleLike={toggleLike}
       source={source}
       status={status}
       refreshing={refreshing}

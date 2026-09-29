@@ -106,3 +106,12 @@ it('does not start another page while incremental loading is active', () => {
   expect(onLoadMore).not.toHaveBeenCalled();
   expect(screen.getByLabelText('Carregando mais itens')).toBeTruthy();
 });
+
+it('reports the selected post when the like action is pressed', () => {
+  const onToggleLike = jest.fn();
+  render(<FeedScreen {...baseProps} onToggleLike={onToggleLike} />);
+
+  fireEvent.press(screen.getByRole('button', { name: 'Curtir' }));
+
+  expect(onToggleLike).toHaveBeenCalledWith(items[1]);
+});

@@ -524,7 +524,7 @@ offline sem impedir refresh ou paginação posteriores.
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Critérios:
@@ -532,6 +532,9 @@ Critérios:
 - feedback imediato controlado;
 - rollback em erro quando necessário;
 - operação idempotente.
+
+Implementada com `PUT`/`DELETE /api/v1/posts/{id}/like`, bloqueio por post,
+feedback otimista de estado/contagem e rollback integral quando a API falha.
 
 ---
 

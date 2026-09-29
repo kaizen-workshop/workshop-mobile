@@ -23,12 +23,18 @@ type Props = Readonly<{
   onRetry?: () => void;
   onLoadMore?: () => void;
   onItemPress?: (item: FeedCard) => void;
+  onToggleLike?: (item: FeedCard) => void;
 }>;
 
 function FeedItem({
   item,
   onPress,
-}: Readonly<{ item: FeedCard; onPress?: () => void }>) {
+  onToggleLike,
+}: Readonly<{
+  item: FeedCard;
+  onPress?: () => void;
+  onToggleLike?: () => void;
+}>) {
   const content = (
     <>
       <View style={styles.cardHeader}>
@@ -50,6 +56,19 @@ function FeedItem({
         </Text>
       ) : null}
       {item.context ? <Text style={styles.context}>{item.context}</Text> : null}
+      {item.kind === 'post' && onToggleLike ? (
+        <Pressable
+          accessibilityLabel={item.likedByMe ? 'Remover curtida' : 'Curtir'}
+          accessibilityRole="button"
+          accessibilityState={{ selected: item.likedByMe }}
+          onPress={onToggleLike}
+          style={styles.likeButton}
+        >
+          <Text style={styles.likeText}>
+            {item.likedByMe ? 'Curtido' : 'Curtir'} · {item.likeCount ?? 0}
+          </Text>
+        </Pressable>
+      ) : null}
     </>
   );
 
@@ -74,6 +93,7 @@ export function FeedScreen({
   onLoadMore,
   onRefresh,
   onRetry,
+  onToggleLike,
   refreshing = false,
   source = 'network',
   status,
@@ -149,6 +169,7 @@ export function FeedScreen({
         <FeedItem
           item={item}
           onPress={onItemPress ? () => onItemPress(item) : undefined}
+          onToggleLike={onToggleLike ? () => onToggleLike(item) : undefined}
         />
       )}
       style={styles.page}
@@ -225,6 +246,17 @@ const styles = StyleSheet.create({
     fontFamily: typography.familyRegular,
     fontSize: typography.label,
     marginTop: spacing.sm,
+  },
+  likeButton: {
+    alignSelf: 'flex-start',
+    justifyContent: 'center',
+    marginTop: spacing.sm,
+    minHeight: sizes.touchTarget,
+  },
+  likeText: {
+    color: colors.brand,
+    fontFamily: typography.familyMedium,
+    fontWeight: typography.medium,
   },
   loadingMore: {
     marginVertical: spacing.md,
