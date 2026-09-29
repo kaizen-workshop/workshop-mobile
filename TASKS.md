@@ -712,10 +712,14 @@ Exibir:
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Exibir estados retornados pela API.
+
+Implementada como tela de apresentação tipada para `PENDING`, `PAID`,
+`DECLINED`, `CANCELLED`, `REFUNDED` e `EXEMPT`, sem dados financeiros ou lógica
+de gateway. Todos os estados possuem descrição textual e cobertura de teste.
 
 ---
 
