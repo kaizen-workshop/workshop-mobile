@@ -1210,8 +1210,12 @@ Status:
 Status:
 
 ```text
-[ ]
+[x]
 ```
+
+Cobertos contrato e ordem das páginas, última página, deduplicação de
+sobreposição, acionamento incremental, bloqueio durante request concorrente e
+retry visual após falha.
 
 ---
 

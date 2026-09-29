@@ -97,3 +97,13 @@ it('offers retry when incremental loading fails', () => {
 
   expect(onLoadMore).toHaveBeenCalledTimes(1);
 });
+
+it('does not start another page while incremental loading is active', () => {
+  const onLoadMore = jest.fn();
+  render(<FeedScreen {...baseProps} loadingMore onLoadMore={onLoadMore} />);
+
+  screen.getByTestId('feed-list').props.onEndReached();
+
+  expect(onLoadMore).not.toHaveBeenCalled();
+  expect(screen.getByLabelText('Carregando mais itens')).toBeTruthy();
+});

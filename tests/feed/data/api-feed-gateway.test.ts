@@ -77,3 +77,22 @@ it('rejects malformed pages instead of rendering invented defaults', async () =>
     category: 'unknown',
   });
 });
+
+it('uses the requested page and stops after the API last page', async () => {
+  const request = jest.fn().mockResolvedValue({
+    content: [],
+    number: 2,
+    last: true,
+  });
+  const gateway = createApiFeedGateway({ request } as HttpClient, tokens);
+
+  await expect(gateway.loadPage(2, 10)).resolves.toEqual({
+    items: [],
+    page: 2,
+    hasMore: false,
+  });
+  expect(request).toHaveBeenCalledWith({
+    path: '/posts/feed?page=2&size=10',
+    headers: { Authorization: 'Bearer access' },
+  });
+});
