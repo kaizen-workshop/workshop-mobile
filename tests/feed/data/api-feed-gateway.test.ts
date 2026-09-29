@@ -117,23 +117,23 @@ it.each([
       method,
       headers: { Authorization: 'Bearer access' },
     });
-
-    it('can apply and roll back the optimistic like state', () => {
-      const items = [
-        {
-          id: 'post-id',
-          kind: 'post' as const,
-          title: 'Post',
-          likedByMe: false,
-          likeCount: 2,
-        },
-      ];
-
-      const optimistic = updateFeedLike(items, 'post-id', true, 3);
-      const rolledBack = updateFeedLike(optimistic, 'post-id', false, 2);
-
-      expect(optimistic[0]).toMatchObject({ likedByMe: true, likeCount: 3 });
-      expect(rolledBack).toEqual(items);
-    });
   },
 );
+
+it('can apply and roll back the optimistic like state', () => {
+  const items = [
+    {
+      id: 'post-id',
+      kind: 'post' as const,
+      title: 'Post',
+      likedByMe: false,
+      likeCount: 2,
+    },
+  ];
+
+  const optimistic = updateFeedLike(items, 'post-id', true, 3);
+  const rolledBack = updateFeedLike(optimistic, 'post-id', false, 2);
+
+  expect(optimistic[0]).toMatchObject({ likedByMe: true, likeCount: 3 });
+  expect(rolledBack).toEqual(items);
+});
