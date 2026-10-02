@@ -58,6 +58,7 @@ export function createHttpClient(
             code,
           });
         }
+        if (response.status === 204) return undefined as T;
         return (await response.json()) as T;
       } catch (error) {
         if (controller.signal.aborted)

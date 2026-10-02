@@ -1,5 +1,12 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 import { colors, radii, sizes, spacing, typography } from '@/shared/theme';
 
@@ -24,7 +31,10 @@ export function ForgotPasswordScreen({
     }
   };
   return (
-    <View style={styles.page}>
+    <ScrollView
+      contentContainerStyle={styles.page}
+      keyboardShouldPersistTaps="handled"
+    >
       <View style={styles.card}>
         <Text accessibilityRole="header" style={styles.title}>
           Recuperar senha
@@ -48,6 +58,7 @@ export function ForgotPasswordScreen({
           </Text>
         ) : null}
         <Pressable
+          accessibilityState={{ busy: loading, disabled: loading }}
           accessibilityRole="button"
           accessibilityLabel="Enviar código"
           disabled={loading}
@@ -59,14 +70,14 @@ export function ForgotPasswordScreen({
           </Text>
         </Pressable>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   page: {
     backgroundColor: colors.brand,
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     padding: spacing.lg,
   },
@@ -104,7 +115,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   error: {
-    color: colors.danger,
+    color: colors.text,
     fontFamily: typography.familyRegular,
     marginTop: spacing.sm,
   },

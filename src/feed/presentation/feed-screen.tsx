@@ -17,17 +17,24 @@ type Props = Readonly<{
   items: readonly FeedCard[];
   refreshing?: boolean;
   loadingMore?: boolean;
+  loadMoreError?: boolean;
   source?: 'network' | 'cache';
   onRefresh(): void;
   onRetry?: () => void;
   onLoadMore?: () => void;
   onItemPress?: (item: FeedCard) => void;
+  onToggleLike?: (item: FeedCard) => void;
 }>;
 
 function FeedItem({
   item,
   onPress,
-}: Readonly<{ item: FeedCard; onPress?: () => void }>) {
+  onToggleLike,
+}: Readonly<{
+  item: FeedCard;
+  onPress?: () => void;
+  onToggleLike?: () => void;
+}>) {
   const content = (
     <>
       <View style={styles.cardHeader}>
@@ -49,6 +56,19 @@ function FeedItem({
         </Text>
       ) : null}
       {item.context ? <Text style={styles.context}>{item.context}</Text> : null}
+      {item.kind === 'post' && onToggleLike ? (
+        <Pressable
+          accessibilityLabel={item.likedByMe ? 'Remover curtida' : 'Curtir'}
+          accessibilityRole="button"
+          accessibilityState={{ selected: item.likedByMe }}
+          onPress={onToggleLike}
+          style={styles.likeButton}
+        >
+          <Text style={styles.likeText}>
+            {item.likedByMe ? 'Curtido' : 'Curtir'} · {item.likeCount ?? 0}
+          </Text>
+        </Pressable>
+      ) : null}
     </>
   );
 
@@ -68,10 +88,12 @@ function FeedItem({
 export function FeedScreen({
   items,
   loadingMore = false,
+  loadMoreError = false,
   onItemPress,
   onLoadMore,
   onRefresh,
   onRetry,
+  onToggleLike,
   refreshing = false,
   source = 'network',
   status,
@@ -97,7 +119,7 @@ export function FeedScreen({
     <FlatList
       testID="feed-list"
       contentContainerStyle={styles.list}
-      data={[...items]}
+      data={items}
       keyExtractor={(item) => `${item.kind}:${item.id}`}
       ListHeaderComponent={
         <View>
@@ -115,15 +137,28 @@ export function FeedScreen({
         loadingMore ? (
           <ActivityIndicator
             accessibilityLabel="Carregando mais itens"
+            accessibilityLiveRegion="polite"
+            accessibilityRole="progressbar"
             color={colors.brand}
             style={styles.loadingMore}
           />
+        ) : loadMoreError && onLoadMore ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={onLoadMore}
+            style={styles.paginationRetry}
+          >
+            <Text style={styles.paginationRetryText}>
+              Não foi possível carregar mais. Tentar novamente
+            </Text>
+          </Pressable>
         ) : null
       }
       onEndReached={loadingMore ? undefined : onLoadMore}
       onEndReachedThreshold={0.4}
       refreshControl={
         <RefreshControl
+          accessibilityLabel="Atualizar feed"
           colors={[colors.brand]}
           onRefresh={onRefresh}
           refreshing={refreshing}
@@ -134,6 +169,7 @@ export function FeedScreen({
         <FeedItem
           item={item}
           onPress={onItemPress ? () => onItemPress(item) : undefined}
+          onToggleLike={onToggleLike ? () => onToggleLike(item) : undefined}
         />
       )}
       style={styles.page}
@@ -156,7 +192,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   cachedNotice: {
-    color: colors.offline,
+    color: colors.textMuted,
     fontFamily: typography.familyRegular,
     fontSize: typography.label,
     marginBottom: spacing.md,
@@ -211,7 +247,28 @@ const styles = StyleSheet.create({
     fontSize: typography.label,
     marginTop: spacing.sm,
   },
+  likeButton: {
+    alignSelf: 'flex-start',
+    justifyContent: 'center',
+    marginTop: spacing.sm,
+    minHeight: sizes.touchTarget,
+  },
+  likeText: {
+    color: colors.brand,
+    fontFamily: typography.familyMedium,
+    fontWeight: typography.medium,
+  },
   loadingMore: {
     marginVertical: spacing.md,
+  },
+  paginationRetry: {
+    alignItems: 'center',
+    minHeight: sizes.touchTarget,
+    padding: spacing.sm,
+  },
+  paginationRetryText: {
+    color: colors.brand,
+    fontFamily: typography.familyMedium,
+    fontWeight: typography.medium,
   },
 });

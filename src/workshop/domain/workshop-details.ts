@@ -1,6 +1,7 @@
 export type WorkshopAttachment = Readonly<{
   id: string;
   name: string;
+  contentType?: string;
 }>;
 
 export type WorkshopDetails = Readonly<{

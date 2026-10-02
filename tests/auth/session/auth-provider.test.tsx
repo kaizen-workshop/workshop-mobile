@@ -18,6 +18,27 @@ it('exposes unauthenticated state when secure storage is empty', async () => {
   expect(result.current.state).toBe('UNAUTHENTICATED');
 });
 
+it('keeps the context value stable when authentication state does not change', async () => {
+  const gateway = { login: jest.fn(), refresh: jest.fn(), logout: jest.fn() };
+  const tokens = {
+    read: jest.fn().mockResolvedValue(null),
+    save: jest.fn(),
+    clear: jest.fn(),
+  };
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
+    <AuthProvider gateway={gateway as never} tokenStorage={tokens}>
+      {children}
+    </AuthProvider>
+  );
+  const { result, rerender } = renderHook(() => useAuth(), { wrapper });
+  await waitFor(() => expect(result.current.isRestoring).toBe(false));
+  const stableValue = result.current;
+
+  rerender(undefined);
+
+  expect(result.current).toBe(stableValue);
+});
+
 it('publishes the unauthenticated state after a failed refresh', async () => {
   const gateway = {
     login: jest.fn(),

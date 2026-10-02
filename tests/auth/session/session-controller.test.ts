@@ -100,3 +100,23 @@ it('clears tokens after a failed refresh', async () => {
   expect(controller.getState()).toBe('UNAUTHENTICATED');
   expect(tokens.clear).toHaveBeenCalled();
 });
+
+it('finishes onboarding only from the onboarding state', async () => {
+  const gateway = {
+    login: jest.fn().mockResolvedValue({
+      ...session,
+      requiresOnboarding: true,
+    }),
+  };
+  const tokens = {
+    read: jest.fn(),
+    save: jest.fn(),
+    clear: jest.fn(),
+  };
+  const controller = createSessionController(gateway as never, tokens);
+  await controller.login({ login: 'ana', password: 'senha' });
+
+  controller.completeOnboarding();
+
+  expect(controller.getState()).toBe('AUTHENTICATED');
+});

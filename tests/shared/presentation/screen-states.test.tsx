@@ -37,3 +37,12 @@ it.each([
 
   expect(screen.getByText(new RegExp(message))).toBeTruthy();
 });
+
+it('offers an explicit retry while offline', () => {
+  const onRetry = jest.fn();
+  render(<OfflineState onRetry={onRetry} />);
+
+  fireEvent.press(screen.getByRole('button', { name: 'Tentar novamente' }));
+
+  expect(onRetry).toHaveBeenCalledTimes(1);
+});

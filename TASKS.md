@@ -321,16 +321,15 @@ Telas:
 Status:
 
 ```text
-[~]
+[x]
 ```
 
 Exibir temas retornados pela API.
 
 Permitir múltipla seleção.
 
-Progresso: a seleção múltipla e os estados visuais estão implementados. A carga
-real permanece bloqueada porque os DTOs e endpoints existem apenas como tasks
-pendentes da `workshop_api`, sem implementação/OpenAPI publicado.
+Implementado com carga autenticada de `GET /api/v1/themes`, validação defensiva
+do contrato, seleção múltipla e estados de loading, erro, retry e vazio.
 
 ---
 
@@ -339,7 +338,7 @@ pendentes da `workshop_api`, sem implementação/OpenAPI publicado.
 Status:
 
 ```text
-[!]
+[x]
 ```
 
 Critérios:
@@ -349,7 +348,8 @@ Critérios:
 - retry;
 - sucesso leva ao feed.
 
-Bloqueio: depende do contrato OpenAPI de preferências e da TASK-015.
+Implementado com `PUT /api/v1/users/me/themes`, estado de salvamento, erro com
+retry manual e avanço para o feed somente após confirmação da API.
 
 ---
 
@@ -358,12 +358,13 @@ Bloqueio: depende do contrato OpenAPI de preferências e da TASK-015.
 Status:
 
 ```text
-[!]
+[x]
 ```
 
 Disponível nas configurações/perfil.
 
-Bloqueio: depende do contrato OpenAPI de preferências e da TASK-015.
+Disponível pelo perfil, carregando a seleção atual de `GET /api/v1/users/me` e
+salvando a substituição confirmada em `PUT /api/v1/users/me/themes`.
 
 ---
 
@@ -436,10 +437,13 @@ OfflineState
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Consumir endpoint da API.
+
+Implementado com `GET /api/v1/posts/feed`, autenticação, validação defensiva do
+Spring Page, mapeamento para o modelo local e fallback para o cache por usuário.
 
 ---
 
@@ -457,9 +461,9 @@ Exibir:
 - posts;
 - destaques.
 
-Progresso: apresentação e estados visuais usam modelos locais de UI. A origem
-real dos itens permanece bloqueada pela TASK-021 e pelo endpoint ainda não
-implementado na `workshop_api`.
+Progresso: posts e destaques já usam a origem real da API. Workshops permanecem
+ausentes porque o endpoint atual entrega somente `PostResponse`; o mobile não
+mistura outra listagem e não recalcula a ordenação autoritativa.
 
 ---
 
@@ -468,10 +472,15 @@ implementado na `workshop_api`.
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Preferir cursor quando fornecido pela API.
+
+Implementada com a paginação por página fornecida pelo Spring Page atual,
+bloqueio de requests concorrentes, deduplicação defensiva e preservação da
+ordem retornada pela API. O carregamento incremental é desabilitado no fallback
+offline, pois o cache representa um snapshot.
 
 ---
 
@@ -480,11 +489,12 @@ Preferir cursor quando fornecido pela API.
 Status:
 
 ```text
-[~]
+[x]
 ```
 
-Progresso: o gesto e o estado visual estão ligados a callback injetado; falta a
-integração real do feed.
+O gesto executa nova leitura remota, atualiza o snapshot e a paginação após
+sucesso, mantém conteúdo anterior durante a operação e bloqueia refreshes
+concorrentes. Em falha, preserva dados já visíveis ou usa o fallback de cache.
 
 ---
 
@@ -514,7 +524,7 @@ offline sem impedir refresh ou paginação posteriores.
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Critérios:
@@ -522,6 +532,9 @@ Critérios:
 - feedback imediato controlado;
 - rollback em erro quando necessário;
 - operação idempotente.
+
+Implementada com `PUT`/`DELETE /api/v1/posts/{id}/like`, bloqueio por post,
+feedback otimista de estado/contagem e rollback integral quando a API falha.
 
 ---
 
@@ -549,11 +562,12 @@ Criar:
 Status:
 
 ```text
-[~]
+[x]
 ```
 
-Progresso: listagem, estados visuais, refresh e abertura de item estão
-implementados com modelo local de UI. A integração aguarda o endpoint real.
+Implementada com a API autenticada, paginação completa do catálogo publicado,
+nomes de temas/categorias, cache por usuário, pull-to-refresh e navegação para
+os detalhes.
 
 ---
 
@@ -562,10 +576,13 @@ implementados com modelo local de UI. A integração aguarda o endpoint real.
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Cobrir filtros suportados pela API.
+
+Implementados filtros combináveis de status, tema e categoria, com opções
+ativas da API, feedback de carregamento e consulta remota parametrizada.
 
 ---
 
@@ -574,13 +591,13 @@ Cobrir filtros suportados pela API.
 Status:
 
 ```text
-[~]
+[x]
 ```
 
 Exibir dados disponíveis sem assumir preenchimento obrigatório de campos opcionais.
 
-Progresso: tela e tratamento de campos opcionais implementados com modelo local
-de UI. A carga por id aguarda o endpoint real.
+Tela integrada à consulta autenticada por id, incluindo taxonomias, agenda,
+inscrições, capacidade, anexos disponíveis, cache por usuário e retry.
 
 ---
 
@@ -589,13 +606,14 @@ de UI. A carga por id aguarda o endpoint real.
 Status:
 
 ```text
-[~]
+[x]
 ```
 
 Visualizar/abrir anexos suportados.
 
-Progresso: anexos disponíveis são listados e expostos por callback acessível; a
-abertura/download real depende do contrato de arquivos.
+Os anexos são listados com metadados reais, baixados do endpoint autenticado
+para o cache temporário e abertos pelo compartilhamento nativo, com feedback de
+progresso e erro.
 
 ---
 
@@ -623,7 +641,7 @@ nem substituem o erro original quando não existe conteúdo local.
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Critérios:
@@ -635,6 +653,10 @@ Critérios:
 - conflito;
 - workshop cheio.
 
+A ação usa o endpoint autenticado do workshop, bloqueia envios concorrentes,
+mostra progresso, diferencia conflito de erro genérico e apresenta confirmação,
+pendência ou entrada na lista de espera conforme a resposta da API.
+
 ---
 
 ## TASK-034 — Implementar Idempotency-Key
@@ -642,12 +664,15 @@ Critérios:
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Para retries da mesma inscrição.
 
 A mesma operação deve reutilizar a mesma chave.
+
+Cada abertura do fluxo gera uma UUID, enviada no cabeçalho `Idempotency-Key` e
+mantida estável em todas as tentativas até a inscrição concluir.
 
 ---
 
@@ -656,7 +681,7 @@ A mesma operação deve reutilizar a mesma chave.
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Exibir:
@@ -671,6 +696,10 @@ REFUNDED
 
 conforme contrato da API.
 
+Implementada como tela de apresentação tipada para `PENDING`, `CONFIRMED`,
+`WAITING_LIST`, `CANCELLED` e `REFUNDED`. Os estados possuem descrição textual,
+sem antecipar posição da lista de espera ou ações ainda dependentes da API.
+
 ---
 
 ## TASK-036 — Implementar cancelamento de inscrição
@@ -678,7 +707,7 @@ conforme contrato da API.
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Critérios:
@@ -687,6 +716,10 @@ Critérios:
 - tratamento de regra de prazo;
 - atualização de estado.
 
+A tela reconcilia a inscrição mais recente do usuário, exige confirmação antes
+do cancelamento, bloqueia envios concorrentes e atualiza o estado retornado pela
+API, distinguindo reembolso processado de cancelamento sem reembolso por prazo.
+
 ---
 
 ## TASK-037 — Implementar lista de espera
@@ -694,7 +727,7 @@ Critérios:
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Exibir:
@@ -702,6 +735,10 @@ Exibir:
 - status;
 - posição quando fornecida;
 - promoção quando recebida pela API.
+
+O estado de espera mostra a posição quando a API a fornece. A inscrição é
+reconciliada sempre que a tela volta ao foco, refletindo automaticamente a
+promoção para confirmação e removendo a posição antiga.
 
 ---
 
@@ -712,10 +749,14 @@ Exibir:
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Exibir estados retornados pela API.
+
+Implementada como tela de apresentação tipada para `PENDING`, `PAID`,
+`DECLINED`, `CANCELLED`, `REFUNDED` e `EXEMPT`, sem dados financeiros ou lógica
+de gateway. Todos os estados possuem descrição textual e cobertura de teste.
 
 ---
 
@@ -724,12 +765,16 @@ Exibir estados retornados pela API.
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 Implementação depende da definição do gateway.
 
 Não incluir dados sensíveis desnecessários no app.
+
+Integrado ao gateway simulado da API com `Idempotency-Key` estável por tentativa.
+O app envia apenas os identificadores necessários, bloqueia duplicidade, apresenta
+progresso/erro e exibe o estado retornado sem expor referência externa sensível.
 
 ---
 
@@ -923,7 +968,7 @@ Refletir permissões retornadas pela API.
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 ---
@@ -933,7 +978,7 @@ Status:
 Status:
 
 ```text
-[ ]
+[x]
 ```
 
 ---
@@ -1182,8 +1227,13 @@ Status:
 Status:
 
 ```text
-[ ]
+[x]
 ```
+
+Cobertos criação autenticada, reutilização da `Idempotency-Key`, respostas
+inválidas e conflitos, consulta da inscrição atual, cancelamento, posição e
+promoção na lista de espera, além do início do pagamento e dos estados exibidos
+durante todo o fluxo.
 
 ---
 
@@ -1192,8 +1242,12 @@ Status:
 Status:
 
 ```text
-[ ]
+[x]
 ```
+
+Cobertos contrato e ordem das páginas, última página, deduplicação de
+sobreposição, acionamento incremental, bloqueio durante request concorrente e
+retry visual após falha.
 
 ---
 
@@ -1202,8 +1256,13 @@ Status:
 Status:
 
 ```text
-[ ]
+[x]
 ```
+
+Cobertos cache expirado/inválido, fallback de feed e workshops, fluxo integrado
+online para offline, recuperação por retry explícito, erros HTTP de rede e
+timeout, ação visual de retry e refresh concorrente de sessão. Escritas ainda
+condicionais não receberam retry automático sem contrato OpenAPI.
 
 ---
 
@@ -1277,8 +1336,13 @@ Status:
 Status:
 
 ```text
-[ ]
+[x]
 ```
+
+Revisados semântica para leitor de tela, estados de ações assíncronas, alvos de
+toque, contraste, conteúdo não interativo e adaptação dos formulários a teclado
+e fonte ampliada. A cobertura automatizada foi atualizada e o checklist manual
+para binários Android/iOS está registrado em `docs/accessibility-review.md`.
 
 ---
 
@@ -1287,8 +1351,13 @@ Status:
 Status:
 
 ```text
-[ ]
+[x]
 ```
+
+Revisados renders do contexto de autenticação, identidade dos dados das listas,
+virtualização, imagens, cache, timers, listeners, requests concorrentes e bundle.
+As correções mensuráveis receberam testes de regressão; medições com dados reais
+estão registradas em `docs/performance-review.md`.
 
 ---
 

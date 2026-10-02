@@ -1,7 +1,13 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+} from 'react-native';
 
-import { colors, radii, spacing, typography } from '@/shared/theme';
+import { colors, radii, sizes, spacing, typography } from '@/shared/theme';
 
 export function FirstAccessScreen({
   onSubmit,
@@ -24,9 +30,14 @@ export function FirstAccessScreen({
     }
   };
   return (
-    <View style={styles.page}>
+    <ScrollView
+      contentContainerStyle={styles.page}
+      keyboardShouldPersistTaps="handled"
+    >
       <Text style={styles.logo}>WEG</Text>
-      <Text style={styles.title}>Entrar</Text>
+      <Text accessibilityRole="header" style={styles.title}>
+        Entrar
+      </Text>
       <Text style={styles.label}>Código</Text>
       <TextInput
         accessibilityLabel="Código"
@@ -43,6 +54,7 @@ export function FirstAccessScreen({
         </Text>
       ) : null}
       <Pressable
+        accessibilityState={{ busy: loading, disabled: loading }}
         accessibilityRole="button"
         accessibilityLabel="Enviar"
         disabled={loading}
@@ -53,12 +65,12 @@ export function FirstAccessScreen({
           {loading ? 'Enviando...' : 'Enviar'}
         </Text>
       </Pressable>
-    </View>
+    </ScrollView>
   );
 }
 const styles = StyleSheet.create({
   page: {
-    flex: 1,
+    flexGrow: 1,
     padding: spacing.xxl,
     justifyContent: 'center',
     backgroundColor: colors.brand,
@@ -89,6 +101,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     color: colors.text,
     fontFamily: typography.familyRegular,
+    minHeight: sizes.touchTarget,
     padding: spacing.md,
   },
   button: {
@@ -97,6 +110,8 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     marginTop: spacing.lg,
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: sizes.touchTarget,
   },
   buttonText: {
     color: colors.brand,

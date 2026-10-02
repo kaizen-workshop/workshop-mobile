@@ -1,7 +1,14 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
-import { colors, radii, spacing, typography } from '@/shared/theme';
+import { colors, radii, sizes, spacing, typography } from '@/shared/theme';
 
 type Props = Readonly<{
   onSubmit(input: { login: string; password: string }): Promise<void> | void;
@@ -32,9 +39,14 @@ export function LoginScreen({
     }
   };
   return (
-    <View style={styles.page}>
+    <ScrollView
+      contentContainerStyle={styles.page}
+      keyboardShouldPersistTaps="handled"
+    >
       <View style={styles.card}>
-        <Text style={styles.title}>Entrar</Text>
+        <Text accessibilityRole="header" style={styles.title}>
+          Entrar
+        </Text>
         <Text style={styles.label}>Usuário / Email</Text>
         <TextInput
           accessibilityLabel="Usuário ou e-mail"
@@ -89,6 +101,7 @@ export function LoginScreen({
           </Pressable>
         ) : null}
         <Pressable
+          accessibilityState={{ busy: loading, disabled: loading }}
           accessibilityRole="button"
           accessibilityLabel="Entrar"
           disabled={loading}
@@ -100,12 +113,12 @@ export function LoginScreen({
           </Text>
         </Pressable>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 const styles = StyleSheet.create({
   page: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     padding: spacing.xl,
     backgroundColor: colors.brand,
@@ -137,6 +150,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     color: colors.text,
     fontFamily: typography.familyRegular,
+    minHeight: sizes.touchTarget,
     padding: spacing.md,
   },
   password: {
@@ -157,11 +171,13 @@ const styles = StyleSheet.create({
   visibilityButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 44,
-    minWidth: 44,
+    minHeight: sizes.touchTarget,
+    minWidth: sizes.touchTarget,
   },
   button: {
+    justifyContent: 'center',
     marginTop: spacing.lg,
+    minHeight: sizes.touchTarget,
     padding: spacing.md,
     borderRadius: radii.lg,
     backgroundColor: colors.brand,
@@ -173,14 +189,14 @@ const styles = StyleSheet.create({
     fontWeight: typography.bold,
   },
   error: {
-    color: colors.danger,
+    color: colors.text,
     fontFamily: typography.familyRegular,
     marginTop: spacing.sm,
   },
   link: {
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 44,
+    minHeight: sizes.touchTarget,
     paddingHorizontal: spacing.sm,
   },
   linkText: {

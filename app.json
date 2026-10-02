@@ -16,7 +16,8 @@
       "expo-router",
       "expo-splash-screen",
       "expo-secure-store",
-      "expo-notifications"
+      "expo-notifications",
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true,

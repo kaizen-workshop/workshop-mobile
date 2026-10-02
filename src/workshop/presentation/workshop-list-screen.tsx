@@ -1,21 +1,44 @@
-import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 import { EmptyState, ErrorState, LoadingState } from '@/shared/presentation';
 import { colors, spacing, typography } from '@/shared/theme';
-import type { WorkshopSummary } from '@/workshop/domain';
+import type {
+  WorkshopFilterOption,
+  WorkshopFilterOptions,
+  WorkshopFilters,
+  WorkshopStatus,
+  WorkshopSummary,
+} from '@/workshop/domain';
 import { WorkshopCard } from './workshop-card';
 
 type Props = Readonly<{
   status: 'loading' | 'error' | 'success';
   workshops: readonly WorkshopSummary[];
   refreshing?: boolean;
+  filtering?: boolean;
   source?: 'network' | 'cache';
+  filters?: WorkshopFilters;
+  filterOptions?: WorkshopFilterOptions;
+  onFiltersChange?: (filters: WorkshopFilters) => void;
   onRefresh(): void;
   onRetry?: () => void;
   onOpen?: (workshop: WorkshopSummary) => void;
 }>;
 
 export function WorkshopListScreen({
+  filtering = false,
+  filterOptions,
+  filters,
+  onFiltersChange,
   onOpen,
   onRefresh,
   onRetry,
@@ -33,24 +56,31 @@ export function WorkshopListScreen({
         onRetry={onRetry}
       />
     );
-  if (workshops.length === 0)
-    return (
-      <EmptyState
-        message="Altere os filtros ou tente novamente mais tarde."
-        title="Nenhum workshop encontrado"
-      />
-    );
-
   return (
     <FlatList
       contentContainerStyle={styles.content}
-      data={[...workshops]}
+      data={workshops}
       keyExtractor={(workshop) => workshop.id}
       ListHeaderComponent={
         <View>
           <Text accessibilityRole="header" style={styles.heading}>
             Workshops
           </Text>
+          {filters && filterOptions && onFiltersChange ? (
+            <WorkshopFilterBar
+              filters={filters}
+              onChange={onFiltersChange}
+              options={filterOptions}
+            />
+          ) : null}
+          {filtering ? (
+            <ActivityIndicator
+              accessibilityLabel="Aplicando filtros"
+              accessibilityRole="progressbar"
+              color={colors.brand}
+              style={styles.filtering}
+            />
+          ) : null}
           {source === 'cache' ? (
             <Text accessibilityRole="alert" style={styles.cachedNotice}>
               Sem conexão. Exibindo workshops salvos neste dispositivo.
@@ -58,8 +88,15 @@ export function WorkshopListScreen({
           ) : null}
         </View>
       }
+      ListEmptyComponent={
+        <EmptyState
+          message="Altere os filtros ou tente novamente mais tarde."
+          title="Nenhum workshop encontrado"
+        />
+      }
       refreshControl={
         <RefreshControl
+          accessibilityLabel="Atualizar workshops"
           colors={[colors.brand]}
           onRefresh={onRefresh}
           refreshing={refreshing}
@@ -78,6 +115,115 @@ export function WorkshopListScreen({
   );
 }
 
+const statusOptions: readonly WorkshopFilterOption[] = [
+  { id: 'DRAFT', name: 'Rascunho' },
+  { id: 'SCHEDULED', name: 'Agendado' },
+  { id: 'PUBLISHED', name: 'Publicado' },
+  { id: 'CLOSED', name: 'Encerrado' },
+  { id: 'CANCELLED', name: 'Cancelado' },
+  { id: 'ARCHIVED', name: 'Arquivado' },
+];
+
+function WorkshopFilterBar({
+  filters,
+  onChange,
+  options,
+}: Readonly<{
+  filters: WorkshopFilters;
+  onChange(filters: WorkshopFilters): void;
+  options: WorkshopFilterOptions;
+}>) {
+  return (
+    <View accessibilityLabel="Filtros de workshops" style={styles.filters}>
+      <FilterGroup
+        label="Status"
+        onSelect={(status) =>
+          onChange({
+            ...filters,
+            status: status as WorkshopStatus | undefined,
+          })
+        }
+        options={statusOptions}
+        selectedId={filters.status}
+      />
+      <FilterGroup
+        label="Tema"
+        onSelect={(themeId) => onChange({ ...filters, themeId })}
+        options={options.themes}
+        selectedId={filters.themeId}
+      />
+      <FilterGroup
+        label="Categoria"
+        onSelect={(categoryId) => onChange({ ...filters, categoryId })}
+        options={options.categories}
+        selectedId={filters.categoryId}
+      />
+    </View>
+  );
+}
+
+function FilterGroup({
+  label,
+  onSelect,
+  options,
+  selectedId,
+}: Readonly<{
+  label: string;
+  onSelect(id: string | undefined): void;
+  options: readonly WorkshopFilterOption[];
+  selectedId?: string;
+}>) {
+  return (
+    <View style={styles.filterGroup}>
+      <Text style={styles.filterLabel}>{label}</Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filterChoices}
+      >
+        <FilterChip
+          label="Todos"
+          onPress={() => onSelect(undefined)}
+          selected={!selectedId}
+        />
+        {options.map((option) => (
+          <FilterChip
+            key={option.id}
+            label={option.name}
+            onPress={() => onSelect(option.id)}
+            selected={selectedId === option.id}
+          />
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
+function FilterChip({
+  label,
+  onPress,
+  selected,
+}: Readonly<{ label: string; onPress(): void; selected: boolean }>) {
+  return (
+    <Pressable
+      accessibilityLabel={`Filtrar por ${label}`}
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      onPress={onPress}
+      style={[styles.filterChip, selected && styles.filterChipSelected]}
+    >
+      <Text
+        style={[
+          styles.filterChipText,
+          selected && styles.filterChipTextSelected,
+        ]}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   page: {
     backgroundColor: colors.background,
@@ -93,9 +239,48 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   cachedNotice: {
-    color: colors.offline,
+    color: colors.textMuted,
     fontFamily: typography.familyRegular,
     fontSize: typography.label,
     marginBottom: spacing.md,
+  },
+  filters: {
+    marginBottom: spacing.md,
+  },
+  filterGroup: {
+    marginBottom: spacing.sm,
+  },
+  filterLabel: {
+    color: colors.textMuted,
+    fontFamily: typography.familyMedium,
+    fontSize: typography.label,
+    fontWeight: typography.medium,
+    marginBottom: spacing.xs,
+  },
+  filterChoices: {
+    gap: spacing.xs,
+  },
+  filterChip: {
+    borderColor: colors.border,
+    borderRadius: 999,
+    borderWidth: 1,
+    justifyContent: 'center',
+    minHeight: 40,
+    paddingHorizontal: spacing.md,
+  },
+  filterChipSelected: {
+    backgroundColor: colors.brand,
+    borderColor: colors.brand,
+  },
+  filterChipText: {
+    color: colors.text,
+    fontFamily: typography.familyMedium,
+    fontWeight: typography.medium,
+  },
+  filterChipTextSelected: {
+    color: colors.onBrand,
+  },
+  filtering: {
+    marginBottom: spacing.sm,
   },
 });

@@ -38,6 +38,7 @@ it('renders loading, error and empty states', () => {
 it('preserves item order and identifies highlighted content', () => {
   render(<FeedScreen {...baseProps} />);
 
+  expect(screen.getByTestId('feed-list').props.data).toBe(items);
   const headers = screen
     .getAllByRole('header')
     .map((node) => node.props.children);
@@ -82,4 +83,35 @@ it('identifies content loaded from the offline cache', () => {
     screen.getByText('Sem conexão. Exibindo conteúdo salvo neste dispositivo.'),
   ).toBeTruthy();
   expect(screen.getByText('Lean Manufacturing')).toBeTruthy();
+});
+
+it('offers retry when incremental loading fails', () => {
+  const onLoadMore = jest.fn();
+  render(<FeedScreen {...baseProps} loadMoreError onLoadMore={onLoadMore} />);
+
+  fireEvent.press(
+    screen.getByRole('button', {
+      name: 'Não foi possível carregar mais. Tentar novamente',
+    }),
+  );
+
+  expect(onLoadMore).toHaveBeenCalledTimes(1);
+});
+
+it('does not start another page while incremental loading is active', () => {
+  const onLoadMore = jest.fn();
+  render(<FeedScreen {...baseProps} loadingMore onLoadMore={onLoadMore} />);
+
+  expect(screen.getByTestId('feed-list').props.onEndReached).toBeUndefined();
+  expect(onLoadMore).not.toHaveBeenCalled();
+  expect(screen.getByLabelText('Carregando mais itens')).toBeTruthy();
+});
+
+it('reports the selected post when the like action is pressed', () => {
+  const onToggleLike = jest.fn();
+  render(<FeedScreen {...baseProps} onToggleLike={onToggleLike} />);
+
+  fireEvent.press(screen.getByRole('button', { name: 'Curtir' }));
+
+  expect(onToggleLike).toHaveBeenCalledWith(items[1]);
 });
