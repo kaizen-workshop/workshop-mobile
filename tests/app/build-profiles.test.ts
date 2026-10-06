@@ -15,8 +15,8 @@ describe('EAS build profiles', () => {
       distribution: 'internal',
       environment: 'development',
       env: {
-        APP_VARIANT: 'development',
-        APP_AUTH_MODE: 'api',
+        EXPO_PUBLIC_APP_VARIANT: 'development',
+        EXPO_PUBLIC_APP_AUTH_MODE: 'api',
       },
     });
     expect(packageJson.dependencies['expo-dev-client']).toBeDefined();
@@ -27,8 +27,8 @@ describe('EAS build profiles', () => {
       distribution: 'internal',
       environment: 'preview',
       env: {
-        APP_VARIANT: 'staging',
-        APP_AUTH_MODE: 'api',
+        EXPO_PUBLIC_APP_VARIANT: 'staging',
+        EXPO_PUBLIC_APP_AUTH_MODE: 'api',
       },
       android: { buildType: 'apk' },
     });
@@ -39,8 +39,8 @@ describe('EAS build profiles', () => {
       distribution: 'store',
       environment: 'production',
       env: {
-        APP_VARIANT: 'production',
-        APP_AUTH_MODE: 'api',
+        EXPO_PUBLIC_APP_VARIANT: 'production',
+        EXPO_PUBLIC_APP_AUTH_MODE: 'api',
       },
     });
   });

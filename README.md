@@ -2,9 +2,9 @@
 
 ## Autenticação
 
-`APP_AUTH_MODE=api` usa os contratos atuais da `workshop_api` para login,
+`EXPO_PUBLIC_APP_AUTH_MODE=api` usa os contratos atuais da `workshop_api` para login,
 refresh, logout, troca e recuperação de senha. O perfil autenticado determina
-se o onboarding de temas ainda é necessário. `APP_AUTH_MODE=demo` continua
+se o onboarding de temas ainda é necessário. `EXPO_PUBLIC_APP_AUTH_MODE=demo` continua
 disponível somente em development/test para validar as telas sem backend;
 senhas e códigos nunca são persistidos ou registrados.
 
@@ -30,7 +30,7 @@ Jest/`jest-expo` e Testing Library; lint usa
 Expo ESLint e a formatação usa Prettier.
 
 Os ambientes aceitos são `development`, `staging` e `production`, definidos
-por `APP_VARIANT` e `EXPO_PUBLIC_API_URL`. Variáveis `EXPO_PUBLIC_*` nunca
+por `EXPO_PUBLIC_APP_VARIANT` e `EXPO_PUBLIC_API_URL`. Variáveis `EXPO_PUBLIC_*` nunca
 podem conter segredos. A URL deve incluir a base `/api/v1`, por exemplo
 `http://10.0.2.2:8080/api/v1` no emulador Android. Os gateways validam
 defensivamente os DTOs documentados e implementados na API.

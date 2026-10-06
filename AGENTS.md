@@ -50,28 +50,7 @@ Quando existir divergência entre mobile e API, registrar o conflito.
 
 ---
 
-# 2. Stack
-
-A stack mobile ainda deve ser definida formalmente.
-
-Não assumir automaticamente:
-
-- Flutter;
-- React Native;
-- Kotlin;
-- Swift;
-- Expo;
-- arquitetura específica;
-- biblioteca específica de estado;
-- biblioteca específica de navegação.
-
-Quando a stack for escolhida, atualizar este arquivo e o `README.md`.
-
-Até lá, todas as decisões devem permanecer conceituais e independentes de framework.
-
----
-
-# 3. Objetivo arquitetural
+# 2. Objetivo arquitetural
 
 O aplicativo deve ser modular e organizado por feature.
 

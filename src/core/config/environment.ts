@@ -6,7 +6,7 @@ export type EnvironmentConfig = Readonly<{
 }>;
 
 export function getAppVariant(
-  input: Record<string, string | undefined> = process.env,
+  input: Record<string, string | undefined> = publicBuildEnvironment(),
 ): AppVariant {
   const variant = input.APP_VARIANT ?? (__DEV__ ? 'development' : 'production');
   if (!appVariants.includes(variant as AppVariant))
@@ -17,7 +17,7 @@ export function getAppVariant(
 }
 
 export function getEnvironment(
-  input: Record<string, string | undefined> = process.env,
+  input: Record<string, string | undefined> = publicBuildEnvironment(),
 ): EnvironmentConfig {
   const variant = getAppVariant(input);
   try {
@@ -32,4 +32,11 @@ export function getEnvironment(
       'EXPO_PUBLIC_API_URL inválida. Informe uma URL HTTP(S) absoluta.',
     );
   }
+}
+
+function publicBuildEnvironment(): Record<string, string | undefined> {
+  return {
+    APP_VARIANT: process.env.EXPO_PUBLIC_APP_VARIANT,
+    EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL,
+  };
 }

@@ -5,8 +5,9 @@ código existente. Esta verificação deve ser repetida antes de cada release.
 
 ## Resultado
 
-- Não há chamadas `console.log`, `console.debug`, `console.info`,
-  `console.warn` ou `console.error` em `app/` e `src/`.
+- Não há chamadas `console.log`, `console.debug`, `console.info` ou
+  `console.warn` em `app/` e `src/`. O `console.error` do login é limitado a
+  `__DEV__` e registra apenas categorias e códigos de erro, sem credenciais.
 - Não foram encontrados padrões de chave privada, token de provedor ou chave de
   API nos arquivos versionados.
 - `.env.example` contém somente valores demonstrativos e nenhuma credencial.

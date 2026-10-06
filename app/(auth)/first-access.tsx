@@ -7,7 +7,7 @@ import { getAppVariant } from '@/core/config';
 export default function FirstAccessRoute() {
   const router = useRouter();
   const gateway = createAuthGateway(
-    process.env.APP_AUTH_MODE === 'demo' ? 'demo' : 'api',
+    process.env.EXPO_PUBLIC_APP_AUTH_MODE === 'demo' ? 'demo' : 'api',
     getAppVariant(),
   );
   return (

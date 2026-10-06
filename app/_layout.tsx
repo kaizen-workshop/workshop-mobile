@@ -22,7 +22,8 @@ import {
 import { colors } from '@/shared/theme';
 
 const variant = getAppVariant();
-const authMode = process.env.APP_AUTH_MODE === 'demo' ? 'demo' : 'api';
+const authMode =
+  process.env.EXPO_PUBLIC_APP_AUTH_MODE === 'demo' ? 'demo' : 'api';
 const tokenStorage = createTokenStorage();
 const environment = getEnvironment();
 const gateway = createAuthGateway(
