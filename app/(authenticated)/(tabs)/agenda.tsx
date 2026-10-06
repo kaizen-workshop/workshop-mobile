@@ -42,6 +42,11 @@ export default function AgendaRoute() {
   const [source, setSource] = useState<'network' | 'cache'>('network');
   const [refreshing, setRefreshing] = useState(false);
   const refreshingRef = useRef(false);
+  const [nextPage, setNextPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState(false);
+  const loadingMoreRef = useRef(false);
 
   const load = useCallback(async () => {
     setStatus('loading');
@@ -49,6 +54,9 @@ export default function AgendaRoute() {
       const result = await loadInitialWorkshops(gateway, filters);
       setWorkshops(result.data);
       setSource(result.source);
+      setNextPage(result.page + 1);
+      setHasMore(result.hasMore);
+      setLoadMoreError(false);
       setStatus('success');
     } catch {
       setStatus('error');
@@ -63,6 +71,9 @@ export default function AgendaRoute() {
       const result = await loadInitialWorkshops(gateway, filters);
       setWorkshops(result.data);
       setSource(result.source);
+      setNextPage(result.page + 1);
+      setHasMore(result.hasMore);
+      setLoadMoreError(false);
       setStatus('success');
     } catch {
       if (workshops.length === 0) setStatus('error');
@@ -71,6 +82,24 @@ export default function AgendaRoute() {
       setRefreshing(false);
     }
   }, [filters, gateway, workshops.length]);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMoreRef.current || !hasMore || source === 'cache') return;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    setLoadMoreError(false);
+    try {
+      const page = await gateway.loadPage(nextPage, filters);
+      setWorkshops((current) => mergeWorkshops(current, page.items));
+      setNextPage(page.page + 1);
+      setHasMore(page.hasMore);
+    } catch {
+      setLoadMoreError(true);
+    } finally {
+      loadingMoreRef.current = false;
+      setLoadingMore(false);
+    }
+  }, [filters, gateway, hasMore, nextPage, source]);
 
   useEffect(() => {
     let active = true;
@@ -92,6 +121,9 @@ export default function AgendaRoute() {
         if (!active) return;
         setWorkshops(result.data);
         setSource(result.source);
+        setNextPage(result.page + 1);
+        setHasMore(result.hasMore);
+        setLoadMoreError(false);
         setStatus('success');
       })
       .catch(() => {
@@ -115,6 +147,10 @@ export default function AgendaRoute() {
         selectWorkshop({ id: workshop.id, title: workshop.title });
         router.push('/(authenticated)/workshop');
       }}
+      hasMore={hasMore}
+      loadingMore={loadingMore}
+      loadMoreError={loadMoreError}
+      onLoadMore={loadMore}
       onRefresh={refresh}
       onRetry={load}
       refreshing={refreshing}
@@ -130,14 +166,29 @@ async function loadInitialWorkshops(
   filters: WorkshopFilters,
 ) {
   if (!isDefaultFilter(filters)) {
-    const data = await gateway.loadList(filters);
-    return { data, source: 'network' as const, updatedAt: Date.now() };
+    const page = await gateway.loadPage(0, filters);
+    return {
+      data: page.items,
+      source: 'network' as const,
+      updatedAt: Date.now(),
+      page: page.page,
+      hasMore: page.hasMore,
+    };
   }
   const userId = await gateway.getCurrentUserId();
-  return loadWorkshopList({
+  let networkPage: Awaited<ReturnType<typeof gateway.loadPage>> | undefined;
+  const result = await loadWorkshopList({
     cache: createWorkshopCache({ userId }),
-    loadRemote: () => gateway.loadList(filters),
+    loadRemote: async () => {
+      networkPage = await gateway.loadPage(0, filters);
+      return networkPage.items;
+    },
   });
+  return {
+    ...result,
+    page: networkPage?.page ?? 0,
+    hasMore: result.source === 'network' && Boolean(networkPage?.hasMore),
+  };
 }
 
 function isDefaultFilter(filters: WorkshopFilters) {
@@ -146,4 +197,15 @@ function isDefaultFilter(filters: WorkshopFilters) {
     filters.themeId === undefined &&
     filters.categoryId === undefined
   );
+}
+
+function mergeWorkshops(
+  current: readonly WorkshopSummary[],
+  incoming: readonly WorkshopSummary[],
+) {
+  const known = new Set(current.map((workshop) => workshop.id));
+  return [
+    ...current,
+    ...incoming.filter((workshop) => !known.has(workshop.id)),
+  ];
 }

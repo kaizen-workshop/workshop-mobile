@@ -17,6 +17,7 @@ export type AuthState =
 export function createSessionController(
   gateway: AuthGateway,
   tokenStorage: TokenStorage,
+  beforeLogout?: () => Promise<void>,
 ) {
   let tokens: Tokens | null = null;
   let state: AuthState = 'UNAUTHENTICATED';
@@ -56,7 +57,9 @@ export function createSessionController(
           tokens = stored;
           state = localSession.mustChangePassword
             ? 'REQUIRES_PASSWORD_CHANGE'
-            : 'AUTHENTICATED';
+            : localSession.requiresOnboarding
+              ? 'REQUIRES_ONBOARDING'
+              : 'AUTHENTICATED';
           return;
         }
         tokens = null;
@@ -104,6 +107,13 @@ export function createSessionController(
     async logout() {
       try {
         const current = await tokenStorage.read();
+        if (beforeLogout) {
+          try {
+            await beforeLogout();
+          } catch {
+            // Session revocation and local cleanup must still continue.
+          }
+        }
         if (current) await gateway.logout(current.refreshToken);
       } finally {
         tokens = null;

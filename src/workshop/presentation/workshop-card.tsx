@@ -23,12 +23,15 @@ export function WorkshopCard({
   onPress,
   workshop,
 }: Readonly<{ onPress?: () => void; workshop: WorkshopSummary }>) {
-  const imageSource = useWorkshopImageSource(workshop.imageUrl);
+  const { refreshImage, source: imageSource } = useWorkshopImageSource(
+    workshop.imageUrl,
+  );
   const content = (
     <>
       <Image
         accessibilityLabel={`Imagem do workshop ${workshop.title}`}
         contentFit="cover"
+        onError={refreshImage}
         source={imageSource}
         style={styles.image}
         transition={180}

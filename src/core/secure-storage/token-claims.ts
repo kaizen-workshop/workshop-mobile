@@ -6,12 +6,14 @@ type JwtPayload = Readonly<{
   sub?: unknown;
   exp?: unknown;
   mustChangePassword?: unknown;
+  requiresOnboarding?: unknown;
 }>;
 
 export type LocalJwtSession = Readonly<{
   userId: string;
   expiresAt: number;
   mustChangePassword: boolean;
+  requiresOnboarding: boolean;
 }>;
 
 export async function readSessionUserId(tokenStorage: TokenStorage) {
@@ -34,7 +36,8 @@ export function readJwtSession(accessToken: string): LocalJwtSession | null {
     !payload.sub.trim() ||
     typeof payload.exp !== 'number' ||
     !Number.isFinite(payload.exp) ||
-    typeof payload.mustChangePassword !== 'boolean'
+    typeof payload.mustChangePassword !== 'boolean' ||
+    typeof payload.requiresOnboarding !== 'boolean'
   ) {
     return null;
   }
@@ -42,6 +45,7 @@ export function readJwtSession(accessToken: string): LocalJwtSession | null {
     userId: payload.sub,
     expiresAt: payload.exp * 1_000,
     mustChangePassword: payload.mustChangePassword,
+    requiresOnboarding: payload.requiresOnboarding,
   };
 }
 

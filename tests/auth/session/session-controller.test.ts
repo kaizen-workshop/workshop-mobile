@@ -152,6 +152,7 @@ it('keeps an unexpired local session readable during a connectivity outage', asy
     sub: 'user-1',
     exp: Math.floor(Date.now() / 1_000) + 600,
     mustChangePassword: false,
+    requiresOnboarding: false,
   });
   const gateway = {
     refresh: jest.fn().mockRejectedValue(new AppError({ category: 'network' })),
@@ -166,6 +167,29 @@ it('keeps an unexpired local session readable during a connectivity outage', asy
   await controller.restore();
 
   expect(controller.getState()).toBe('AUTHENTICATED');
+  expect(tokens.clear).not.toHaveBeenCalled();
+});
+
+it('preserves required onboarding during an offline restore', async () => {
+  const accessToken = jwt({
+    sub: 'user-1',
+    exp: Math.floor(Date.now() / 1_000) + 600,
+    mustChangePassword: false,
+    requiresOnboarding: true,
+  });
+  const gateway = {
+    refresh: jest.fn().mockRejectedValue(new AppError({ category: 'network' })),
+  };
+  const tokens = {
+    read: jest.fn().mockResolvedValue({ accessToken, refreshToken: 'refresh' }),
+    save: jest.fn(),
+    clear: jest.fn(),
+  };
+  const controller = createSessionController(gateway as never, tokens);
+
+  await controller.restore();
+
+  expect(controller.getState()).toBe('REQUIRES_ONBOARDING');
   expect(tokens.clear).not.toHaveBeenCalled();
 });
 
@@ -224,4 +248,35 @@ it('uses the latest rotated refresh token when logging out', async () => {
 
   expect(gateway.logout).toHaveBeenCalledWith('rotated-refresh');
   expect(tokens.clear).toHaveBeenCalledTimes(1);
+});
+
+it('unregisters push before revoking and clearing the session', async () => {
+  const order: string[] = [];
+  const gateway = {
+    logout: jest.fn().mockImplementation(async () => {
+      order.push('logout');
+    }),
+  };
+  const tokens = {
+    read: jest.fn().mockResolvedValue({
+      accessToken: 'access',
+      refreshToken: 'refresh',
+    }),
+    save: jest.fn(),
+    clear: jest.fn().mockImplementation(async () => {
+      order.push('clear');
+    }),
+  };
+  const beforeLogout = jest.fn().mockImplementation(async () => {
+    order.push('push');
+  });
+  const controller = createSessionController(
+    gateway as never,
+    tokens,
+    beforeLogout,
+  );
+
+  await controller.logout();
+
+  expect(order).toEqual(['push', 'logout', 'clear']);
 });

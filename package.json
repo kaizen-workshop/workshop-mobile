@@ -44,6 +44,7 @@
     "eslint": "^9.39.5",
     "eslint-config-expo": "^57.0.2",
     "eslint-config-prettier": "^10.1.8",
+    "eslint-import-resolver-typescript": "^3.10.1",
     "jest-expo": "^57.0.5",
     "prettier": "^3.9.8",
     "react-test-renderer": "19.2.3",
@@ -61,7 +62,8 @@
     "test:watch": "jest --watch",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "audit:dependencies": "npm audit --omit=dev --audit-level=critical"
   },
   "private": true
 }

@@ -586,7 +586,7 @@ Status:
 [x]
 ```
 
-Implementada com a API autenticada, paginação completa do catálogo publicado,
+Implementada com a API autenticada, paginação incremental do catálogo publicado,
 nomes de temas/categorias, cache por usuário, pull-to-refresh e navegação para
 os detalhes.
 
@@ -1049,12 +1049,12 @@ internas conhecidas, tanto na central quanto ao tocar uma notificação push.
 Status:
 
 ```text
-[~]
+[x]
 ```
 
-Permissão, canal Android, token Expo e registro autenticado na API foram
-implementados nas configurações. A validação real aguarda `extra.eas.projectId`
-e os identificadores oficiais do app.
+Permissão, canal Android, token Expo, armazenamento seguro do `deviceId`, remoção
+no logout e registro autenticado na API foram implementados. Os identificadores
+nativos são fixos e `EAS_PROJECT_ID` é exigido nos builds staging/produção.
 
 ---
 

@@ -12,23 +12,36 @@ import { StatusBar } from 'expo-status-bar';
 import { createAuthGateway } from '@/auth/data/auth-gateway-factory';
 import { AuthProvider, useAuth } from '@/auth/session';
 import { getAppVariant, getEnvironment } from '@/core/config';
-import { createHttpClient } from '@/core/http';
+import { createAuthenticatedHttpClient, createHttpClient } from '@/core/http';
 import { createTokenStorage } from '@/core/secure-storage';
+import {
+  createApiNotificationGateway,
+  createPushDeviceStorage,
+  unregisterPushDevice,
+} from '@/notification/data';
 import { colors } from '@/shared/theme';
 
 const variant = getAppVariant();
 const authMode = process.env.APP_AUTH_MODE === 'demo' ? 'demo' : 'api';
 const tokenStorage = createTokenStorage();
+const environment = getEnvironment();
 const gateway = createAuthGateway(
   authMode,
   variant,
   authMode === 'api'
     ? {
-        http: createHttpClient(getEnvironment()),
+        http: createHttpClient(environment),
         tokenStorage,
       }
     : undefined,
 );
+const pushDeviceStorage = createPushDeviceStorage();
+const notificationGateway = createApiNotificationGateway(
+  createAuthenticatedHttpClient(environment, tokenStorage),
+  tokenStorage,
+);
+const cleanupPushDevice = () =>
+  unregisterPushDevice(notificationGateway, pushDeviceStorage);
 
 function SessionRoutes() {
   const { isRestoring, state } = useAuth();
@@ -90,7 +103,11 @@ export default function RootLayout() {
         edges={['top', 'right', 'bottom', 'left']}
         style={styles.safe}
       >
-        <AuthProvider gateway={gateway} tokenStorage={tokenStorage}>
+        <AuthProvider
+          beforeLogout={cleanupPushDevice}
+          gateway={gateway}
+          tokenStorage={tokenStorage}
+        >
           <SessionRoutes />
         </AuthProvider>
       </SafeAreaView>

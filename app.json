@@ -7,7 +7,11 @@
     "scheme": "kaizenworkshop",
     "userInterfaceStyle": "light",
     "android": {
+      "package": "br.com.weg.kaizenworkshop",
       "predictiveBackGestureEnabled": false
+    },
+    "ios": {
+      "bundleIdentifier": "br.com.weg.kaizenworkshop"
     },
     "web": {
       "output": "static"

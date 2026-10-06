@@ -4,13 +4,18 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import type { NotificationGateway } from './api-notification-gateway';
+import {
+  createPushDeviceStorage,
+  type PushDeviceStorage,
+} from './push-device-storage';
 
 export type PushRegistrationResult =
   | { status: 'registered'; deviceId: string }
-  | { status: 'unavailable' | 'denied' | 'missing_project_id' };
+  | { status: 'unavailable' | 'denied' | 'missing_project_id' | 'error' };
 
 export async function registerPushDevice(
   gateway: NotificationGateway,
+  storage: PushDeviceStorage = createPushDeviceStorage(),
 ): Promise<PushRegistrationResult> {
   if (!Device.isDevice || !['android', 'ios'].includes(Platform.OS))
     return { status: 'unavailable' };
@@ -38,5 +43,6 @@ export async function registerPushDevice(
     token,
     Platform.OS === 'ios' ? 'IOS' : 'ANDROID',
   );
+  await storage.save(deviceId);
   return { status: 'registered', deviceId };
 }

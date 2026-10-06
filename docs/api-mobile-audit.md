@@ -24,8 +24,8 @@ A análise foi feita diretamente nos controllers, DTOs, services e no
 2. Reembolso possui somente o estado final `REFUNDED`; os estados solicitado,
    processado e recusado não existem no contrato.
 3. O provedor Expo existe e pode ser ativado por configuração, mas a entrega
-   remota permanece desativada por padrão. Também faltam `extra.eas.projectId`
-   e identificadores oficiais no app.
+   remota permanece desativada por padrão. Os identificadores nativos estão no
+   app e `extra.eas.projectId` é injetado por `EAS_PROJECT_ID` nos builds remotos.
 4. `updatedAfter`, `updatedAt` e ETag já existem na API, porém a reconciliação
    incremental completa ainda está pendente no mobile.
 
