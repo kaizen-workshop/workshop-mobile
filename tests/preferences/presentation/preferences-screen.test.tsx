@@ -96,6 +96,7 @@ it('shows a safe save error and leaves retry available', async () => {
     />,
   );
 
+  fireEvent.press(screen.getByRole('checkbox', { name: 'Lean' }));
   await act(async () => {
     fireEvent.press(screen.getByRole('button', { name: 'Continuar' }));
   });

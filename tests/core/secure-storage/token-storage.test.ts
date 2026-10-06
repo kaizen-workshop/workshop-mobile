@@ -35,3 +35,21 @@ it('returns null when a token is missing and clears both token keys', async () =
   expect(adapter.deleteItemAsync).toHaveBeenCalledWith('workshop.accessToken');
   expect(adapter.deleteItemAsync).toHaveBeenCalledWith('workshop.refreshToken');
 });
+
+it('shares tokens only in memory between web gateways', async () => {
+  const authStorage = createTokenStorage(undefined, 'web');
+  const profileStorage = createTokenStorage(undefined, 'web');
+  await authStorage.clear();
+
+  await authStorage.save({
+    accessToken: 'web-access',
+    refreshToken: 'web-refresh',
+  });
+
+  await expect(profileStorage.read()).resolves.toEqual({
+    accessToken: 'web-access',
+    refreshToken: 'web-refresh',
+  });
+  await profileStorage.clear();
+  await expect(authStorage.read()).resolves.toBeNull();
+});

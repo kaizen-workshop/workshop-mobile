@@ -11,6 +11,7 @@ export default function ForgotPasswordRoute() {
   );
   return (
     <ForgotPasswordScreen
+      onBack={() => router.back()}
       onSubmit={async (login) => {
         await gateway.requestPasswordRecovery(login);
         router.push('/(auth)/reset-password');

@@ -1,64 +1,83 @@
-import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { colors, radii, sizes, spacing, typography } from '@/shared/theme';
+import { getEnvironment } from '@/core/config';
+import { createAuthenticatedHttpClient } from '@/core/http';
+import { createTokenStorage } from '@/core/secure-storage';
+import {
+  createApiProfileGateway,
+  ProfileScreen,
+  type UserProfile,
+} from '@/profile';
 
 export default function ProfileRoute() {
-  const router = useRouter();
+  const gateway = useMemo(
+    () =>
+      createApiProfileGateway(
+        createAuthenticatedHttpClient(getEnvironment()),
+        createTokenStorage(),
+      ),
+    [],
+  );
+  const [status, setStatus] = useState<'loading' | 'error' | 'success'>(
+    'loading',
+  );
+  const [profile, setProfile] = useState<UserProfile>();
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(false);
+
+  const load = useCallback(async () => {
+    setStatus('loading');
+    try {
+      setProfile(await gateway.load());
+      setStatus('success');
+    } catch {
+      setStatus('error');
+    }
+  }, [gateway]);
+
+  useEffect(() => {
+    let active = true;
+    void gateway
+      .load()
+      .then((value) => {
+        if (!active) return;
+        setProfile(value);
+        setStatus('success');
+      })
+      .catch(() => {
+        if (active) setStatus('error');
+      });
+    return () => {
+      active = false;
+    };
+  }, [gateway]);
 
   return (
-    <View style={styles.page}>
-      <Text accessibilityRole="header" style={styles.title}>
-        Perfil
-      </Text>
-      <Pressable
-        accessibilityHint="Abre a seleção de temas de interesse"
-        accessibilityRole="button"
-        onPress={() => router.push('/(authenticated)/preferences')}
-        style={styles.option}
-      >
-        <View>
-          <Text style={styles.optionTitle}>Preferências</Text>
-          <Text style={styles.optionDescription}>
-            Escolha os temas que personalizam seu conteúdo.
-          </Text>
-        </View>
-      </Pressable>
-    </View>
+    <ProfileScreen
+      key={`${profile?.id}:${profile?.name}:${profile?.phone}:${profile?.profileImage}`}
+      profile={profile}
+      status={status}
+      saving={saving}
+      saveError={saveError}
+      onRetry={load}
+      onSave={async (input) => {
+        if (saving) return;
+        setSaving(true);
+        setSaveError(false);
+        try {
+          setProfile(await gateway.update(input));
+        } catch {
+          setSaveError(true);
+        } finally {
+          setSaving(false);
+        }
+      }}
+      onOpenPreferences={() => router.push('/(authenticated)/preferences')}
+      onOpenHistory={() => router.push('/(authenticated)/history')}
+      onOpenCalendar={() => router.push('/(authenticated)/calendar')}
+      onOpenGroups={() => router.push('/(authenticated)/groups')}
+      onOpenSettings={() => router.push('/(authenticated)/settings')}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  page: {
-    backgroundColor: colors.background,
-    flex: 1,
-    padding: spacing.lg,
-  },
-  title: {
-    color: colors.text,
-    fontFamily: typography.familyBold,
-    fontSize: typography.title,
-    fontWeight: typography.bold,
-    marginBottom: spacing.lg,
-  },
-  option: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    justifyContent: 'center',
-    minHeight: sizes.touchTarget,
-    padding: spacing.md,
-  },
-  optionTitle: {
-    color: colors.text,
-    fontFamily: typography.familyMedium,
-    fontSize: typography.body,
-    fontWeight: typography.medium,
-  },
-  optionDescription: {
-    color: colors.textMuted,
-    fontFamily: typography.familyRegular,
-    marginTop: spacing.xxs,
-  },
-});

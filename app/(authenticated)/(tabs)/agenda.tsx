@@ -2,8 +2,9 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { getEnvironment } from '@/core/config';
-import { createHttpClient } from '@/core/http';
+import { createAuthenticatedHttpClient } from '@/core/http';
 import { createTokenStorage } from '@/core/secure-storage';
+import { selectWorkshop } from '@/navigation';
 import {
   createApiWorkshopGateway,
   createWorkshopCache,
@@ -17,13 +18,15 @@ import type {
 import { WorkshopListScreen } from '@/workshop/presentation';
 
 export default function AgendaRoute() {
+  const environment = useMemo(() => getEnvironment(), []);
   const gateway = useMemo(
     () =>
       createApiWorkshopGateway(
-        createHttpClient(getEnvironment()),
+        createAuthenticatedHttpClient(environment),
         createTokenStorage(),
+        environment.apiUrl,
       ),
-    [],
+    [environment],
   );
   const [status, setStatus] = useState<'loading' | 'error' | 'success'>(
     'loading',
@@ -71,9 +74,12 @@ export default function AgendaRoute() {
 
   useEffect(() => {
     let active = true;
-    void gateway.loadFilterOptions().then((options) => {
-      if (active) setFilterOptions(options);
-    });
+    void gateway
+      .loadFilterOptions()
+      .then((options) => {
+        if (active) setFilterOptions(options);
+      })
+      .catch(() => undefined);
     return () => {
       active = false;
     };
@@ -105,12 +111,10 @@ export default function AgendaRoute() {
         setStatus('loading');
         setFilters(nextFilters);
       }}
-      onOpen={(workshop) =>
-        router.push({
-          pathname: '/(authenticated)/workshops/[id]',
-          params: { id: workshop.id },
-        })
-      }
+      onOpen={(workshop) => {
+        selectWorkshop({ id: workshop.id, title: workshop.title });
+        router.push('/(authenticated)/workshop');
+      }}
       onRefresh={refresh}
       onRetry={load}
       refreshing={refreshing}

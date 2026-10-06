@@ -18,9 +18,9 @@ código existente. Esta verificação deve ser repetida antes de cada release.
   de demonstração, restrito a desenvolvimento/teste, e não concedem acesso a
   qualquer serviço.
 
-## Pendências externas
+## Integração real
 
-O cliente real de autenticação continua bloqueado até a disponibilização do
-OpenAPI. Quando ele for implementado, a revisão deve confirmar novamente que
-headers de autorização, payloads e respostas não aparecem em logs ou mensagens
-de erro da interface.
+O cliente de autenticação real foi revisado em 2 de outubro de 2026. Headers de
+autorização, senhas, tokens e respostas não são enviados para logs nem exibidos
+na interface. O push registra o token do provedor somente no endpoint
+autenticado e não o persiste em AsyncStorage.

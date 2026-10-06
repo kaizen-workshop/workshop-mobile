@@ -61,7 +61,7 @@ it('preserves workshop order and tolerates optional fields', () => {
     'Qualidade na prática',
   ]);
   expect(screen.queryByText('undefined')).toBeNull();
-  expect(screen.queryByRole('button')).toBeNull();
+  expect(screen.getByRole('button', { name: 'Abrir menu' })).toBeTruthy();
 });
 
 it('opens workshops and connects pull-to-refresh', () => {
@@ -118,6 +118,7 @@ it('applies status, theme and category filters', () => {
   };
   const { rerender } = render(<WorkshopListScreen {...props} />);
 
+  fireEvent.press(screen.getByRole('button', { name: 'Mostrar filtros' }));
   fireEvent.press(screen.getByRole('button', { name: 'Filtrar por Lean' }));
   expect(onFiltersChange).toHaveBeenLastCalledWith({
     status: 'PUBLISHED',
@@ -161,6 +162,7 @@ it('keeps filters available when no workshop matches', () => {
   );
 
   expect(screen.getByText('Nenhum workshop encontrado')).toBeTruthy();
+  fireEvent.press(screen.getByRole('button', { name: 'Mostrar filtros' }));
   expect(
     screen.getByRole('button', { name: 'Filtrar por Publicado' }),
   ).toBeTruthy();

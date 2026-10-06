@@ -58,8 +58,21 @@ export function createHttpClient(
             code,
           });
         }
-        if (response.status === 204) return undefined as T;
-        return (await response.json()) as T;
+        if (response.status === 204 || response.status === 205)
+          return undefined as T;
+        const contentLength = response.headers.get('content-length');
+        if (contentLength === '0') return undefined as T;
+        const text = await response.text();
+        if (!text) return undefined as T;
+        try {
+          return JSON.parse(text) as T;
+        } catch {
+          throw new AppError({
+            category: 'unknown',
+            status: response.status,
+            technicalMessage: 'Invalid JSON response.',
+          });
+        }
       } catch (error) {
         if (controller.signal.aborted)
           throw new AppError({ category: 'timeout' });

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { router } from 'expo-router';
 
 import { getEnvironment } from '@/core/config';
-import { createHttpClient } from '@/core/http';
+import { createAuthenticatedHttpClient } from '@/core/http';
 import { createTokenStorage } from '@/core/secure-storage';
 import {
   createApiFeedGateway,
@@ -12,12 +13,13 @@ import {
 } from '@/feed/data';
 import type { FeedCard, FeedPage } from '@/feed/domain';
 import { FeedScreen } from '@/feed/presentation';
+import { selectPost, selectWorkshop } from '@/navigation';
 
 export default function FeedRoute() {
   const gateway = useMemo(
     () =>
       createApiFeedGateway(
-        createHttpClient(getEnvironment()),
+        createAuthenticatedHttpClient(getEnvironment()),
         createTokenStorage(),
       ),
     [],
@@ -142,6 +144,15 @@ export default function FeedRoute() {
       loadingMore={loadingMore}
       loadMoreError={loadMoreError}
       onLoadMore={hasMore ? loadMore : undefined}
+      onItemPress={(item) => {
+        if (item.kind === 'post') {
+          selectPost({ id: item.id, title: item.title });
+          router.push('/(authenticated)/comments');
+        } else if (item.relatedWorkshopId) {
+          selectWorkshop({ id: item.relatedWorkshopId, title: item.title });
+          router.push('/(authenticated)/workshop');
+        }
+      }}
       onRefresh={refresh}
       onRetry={load}
       onToggleLike={toggleLike}

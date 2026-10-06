@@ -1,20 +1,27 @@
 import { useState } from 'react';
+import { ArrowLeft, Mail } from 'lucide-react-native';
 import {
+  ActivityIndicator,
+  ImageBackground,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
 
 import { colors, radii, sizes, spacing, typography } from '@/shared/theme';
 
 export function ForgotPasswordScreen({
+  onBack,
   onSubmit,
 }: {
+  onBack?: () => void;
   onSubmit(login: string): Promise<void> | void;
 }) {
+  const { height: viewportHeight } = useWindowDimensions();
   const [login, setLogin] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,60 +38,112 @@ export function ForgotPasswordScreen({
     }
   };
   return (
-    <ScrollView
-      contentContainerStyle={styles.page}
-      keyboardShouldPersistTaps="handled"
+    <ImageBackground
+      resizeMode="cover"
+      source={require('../../../assets/images/background-login.webp')}
+      style={[styles.background, { height: viewportHeight }]}
     >
-      <View style={styles.card}>
-        <Text accessibilityRole="header" style={styles.title}>
-          Recuperar senha
-        </Text>
-        <Text style={styles.description}>
-          Informe seu usuário ou e-mail para receber o código de recuperação.
-        </Text>
-        <Text style={styles.label}>Usuário ou e-mail</Text>
-        <TextInput
-          accessibilityLabel="Usuário ou e-mail"
-          autoCapitalize="none"
-          onChangeText={setLogin}
-          placeholder="email@exemplo.com"
-          placeholderTextColor={colors.placeholder}
-          style={styles.input}
-          value={login}
-        />
-        {error ? (
-          <Text accessibilityRole="alert" style={styles.error}>
-            {error}
-          </Text>
+      <View style={styles.overlay} />
+      <ScrollView
+        contentContainerStyle={styles.page}
+        keyboardShouldPersistTaps="handled"
+      >
+        {onBack ? (
+          <Pressable
+            accessibilityLabel="Voltar"
+            accessibilityRole="link"
+            onPress={onBack}
+            style={styles.back}
+          >
+            <ArrowLeft color={colors.onBrand} size={24} />
+          </Pressable>
         ) : null}
-        <Pressable
-          accessibilityState={{ busy: loading, disabled: loading }}
-          accessibilityRole="button"
-          accessibilityLabel="Enviar código"
-          disabled={loading}
-          onPress={submit}
-          style={[styles.button, loading && styles.buttonDisabled]}
-        >
-          <Text style={styles.buttonText}>
-            {loading ? 'Enviando...' : 'Enviar código'}
+        <View style={styles.card}>
+          <Text accessibilityRole="header" style={styles.title}>
+            Informe o Email
           </Text>
-        </Pressable>
-      </View>
-    </ScrollView>
+          <Text style={styles.description}>
+            Informe o e-mail vinculado à sua conta para receber as instruções de
+            recuperação.
+          </Text>
+          <Text style={styles.label}>Usuário / Email</Text>
+          <View style={styles.field}>
+            <Mail color={colors.textMuted} size={20} />
+            <TextInput
+              accessibilityLabel="E-mail"
+              autoCapitalize="none"
+              autoComplete="email"
+              keyboardType="email-address"
+              onChangeText={setLogin}
+              placeholder="email@gmail.com"
+              placeholderTextColor={colors.placeholder}
+              style={styles.input}
+              value={login}
+            />
+          </View>
+          {error ? (
+            <Text accessibilityRole="alert" style={styles.error}>
+              {error}
+            </Text>
+          ) : null}
+          <Pressable
+            accessibilityState={{ busy: loading, disabled: loading }}
+            accessibilityRole="button"
+            accessibilityLabel="Enviar recuperação"
+            disabled={loading}
+            onPress={submit}
+            style={({ pressed }) => [
+              styles.button,
+              pressed && styles.buttonPressed,
+              loading && styles.buttonDisabled,
+            ]}
+          >
+            {loading ? <ActivityIndicator color={colors.onBrand} /> : null}
+            <Text style={styles.buttonText}>
+              {loading ? 'Enviando...' : 'Enviar'}
+            </Text>
+          </Pressable>
+        </View>
+        <Text style={styles.footer}>
+          © 2026 WEG S.A. Todos os direitos reservados.
+        </Text>
+      </ScrollView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  background: { flex: 1, width: '100%' },
+  overlay: {
+    backgroundColor: 'rgba(0, 4, 35, 0.28)',
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
   page: {
-    backgroundColor: colors.brand,
+    alignItems: 'center',
     flexGrow: 1,
     justifyContent: 'center',
     padding: spacing.lg,
   },
+  back: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    borderRadius: radii.full,
+    height: sizes.touchTarget,
+    justifyContent: 'center',
+    marginBottom: spacing.md,
+    width: sizes.touchTarget,
+  },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: radii.xl,
-    padding: spacing.lg,
+    borderRadius: radii.xxxl,
+    maxWidth: sizes.formMaxWidth,
+    padding: spacing.xl,
+    width: '100%',
   },
   title: {
     color: colors.text,
@@ -96,7 +155,8 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontFamily: typography.familyRegular,
     lineHeight: 24,
-    marginVertical: spacing.md,
+    marginBottom: spacing.lg,
+    marginTop: spacing.md,
     textAlign: 'center',
   },
   label: {
@@ -104,15 +164,21 @@ const styles = StyleSheet.create({
     fontFamily: typography.familyMedium,
     marginBottom: spacing.xs,
   },
-  input: {
-    backgroundColor: colors.background,
+  field: {
+    alignItems: 'center',
     borderColor: colors.border,
-    borderRadius: radii.md,
+    borderRadius: radii.xl,
     borderWidth: 1,
-    color: colors.text,
-    fontFamily: typography.familyRegular,
-    minHeight: sizes.touchTarget,
+    flexDirection: 'row',
+    minHeight: 54,
     paddingHorizontal: spacing.md,
+  },
+  input: {
+    color: colors.text,
+    flex: 1,
+    fontFamily: typography.familyRegular,
+    minHeight: 52,
+    paddingHorizontal: spacing.sm,
   },
   error: {
     color: colors.text,
@@ -123,13 +189,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.brand,
     borderRadius: radii.lg,
+    flexDirection: 'row',
+    gap: spacing.xs,
     justifyContent: 'center',
     marginTop: spacing.lg,
     minHeight: sizes.touchTarget,
   },
+  buttonPressed: { backgroundColor: colors.brandPressed },
   buttonDisabled: { opacity: 0.65 },
   buttonText: {
     color: colors.onBrand,
     fontFamily: typography.familyBold,
+  },
+  footer: {
+    color: colors.onBrand,
+    fontFamily: typography.familyRegular,
+    fontSize: typography.caption,
+    marginTop: spacing.xxl,
   },
 });

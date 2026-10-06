@@ -35,6 +35,8 @@ it.each([
   ['muted text', colors.textMuted, colors.background],
   ['brand text', colors.brand, colors.background],
   ['button text', colors.onBrand, colors.brand],
+  ['placeholder text', colors.placeholder, colors.surface],
+  ['warning text', colors.warning, colors.warningSoft],
 ])(
   '%s meets WCAG AA contrast for normal text',
   (_name, foreground, background) => {

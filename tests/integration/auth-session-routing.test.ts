@@ -1,14 +1,22 @@
 import type { AuthGateway } from '@/auth/domain/auth-gateway';
 import { createSessionController, getRouteForAuthState } from '@/auth/session';
 
-it('routes login through password change and onboarding without replacing the session', async () => {
+it('requires a new login after password change before onboarding', async () => {
   const gateway: AuthGateway = {
-    login: jest.fn().mockResolvedValue({
-      accessToken: 'access',
-      refreshToken: 'refresh',
-      mustChangePassword: true,
-      requiresOnboarding: true,
-    }),
+    login: jest
+      .fn()
+      .mockResolvedValueOnce({
+        accessToken: 'access',
+        refreshToken: 'refresh',
+        mustChangePassword: true,
+        requiresOnboarding: false,
+      })
+      .mockResolvedValueOnce({
+        accessToken: 'new-access',
+        refreshToken: 'new-refresh',
+        mustChangePassword: false,
+        requiresOnboarding: true,
+      }),
     changePassword: jest.fn().mockResolvedValue(undefined),
     refresh: jest.fn(),
     requestPasswordRecovery: jest.fn(),
@@ -32,9 +40,12 @@ it('routes login through password change and onboarding without replacing the se
     newPassword: 'nova-senha',
   });
 
+  expect(getRouteForAuthState(session.getState())).toBe('/(auth)/login');
+  expect(tokenStorage.clear).toHaveBeenCalledTimes(1);
+
+  await session.login({ login: 'ana@example.com', password: 'nova-senha' });
   expect(getRouteForAuthState(session.getState())).toBe(
     '/(onboarding)/preferences',
   );
-  expect(tokenStorage.save).toHaveBeenCalledTimes(1);
-  expect(tokenStorage.clear).not.toHaveBeenCalled();
+  expect(tokenStorage.save).toHaveBeenCalledTimes(2);
 });

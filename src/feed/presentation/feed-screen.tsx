@@ -7,10 +7,25 @@ import {
   Text,
   View,
 } from 'react-native';
+import { Image } from 'expo-image';
 
 import type { FeedCard } from '@/feed/domain';
-import { EmptyState, ErrorState, LoadingState } from '@/shared/presentation';
-import { colors, radii, sizes, spacing, typography } from '@/shared/theme';
+import { AppHeader } from '@/navigation';
+import {
+  AppSymbol,
+  EmptyState,
+  ErrorState,
+  InlineNotice,
+  LoadingState,
+} from '@/shared/presentation';
+import {
+  colors,
+  radii,
+  shadows,
+  sizes,
+  spacing,
+  typography,
+} from '@/shared/theme';
 
 type Props = Readonly<{
   status: 'loading' | 'error' | 'success';
@@ -26,6 +41,22 @@ type Props = Readonly<{
   onToggleLike?: (item: FeedCard) => void;
 }>;
 
+const symbols = {
+  article: { ios: 'doc.text.fill', android: 'article', web: 'article' },
+  favorite: { ios: 'heart.fill', android: 'favorite', web: 'favorite' },
+  favoriteBorder: {
+    ios: 'heart',
+    android: 'favorite_border',
+    web: 'favorite_border',
+  },
+  next: {
+    ios: 'chevron.right',
+    android: 'chevron_right',
+    web: 'chevron_right',
+  },
+  workshop: { ios: 'person.3.fill', android: 'groups', web: 'groups' },
+} as const;
+
 function FeedItem({
   item,
   onPress,
@@ -35,12 +66,29 @@ function FeedItem({
   onPress?: () => void;
   onToggleLike?: () => void;
 }>) {
-  const content = (
+  const body = (
     <>
+      {item.imageUrl ? (
+        <Image
+          accessibilityLabel={`Imagem de ${item.title}`}
+          contentFit="cover"
+          source={{ uri: item.imageUrl }}
+          style={styles.cardImage}
+          transition={180}
+        />
+      ) : null}
       <View style={styles.cardHeader}>
-        <Text style={styles.kind}>
-          {item.kind === 'workshop' ? 'Workshop' : 'Post'}
-        </Text>
+        <View style={styles.kindBadge}>
+          <AppSymbol
+            color={colors.brand}
+            fallback={item.kind === 'workshop' ? 'W' : 'P'}
+            name={item.kind === 'workshop' ? symbols.workshop : symbols.article}
+            size={16}
+          />
+          <Text style={styles.kind}>
+            {item.kind === 'workshop' ? 'Workshop' : 'Publicação'}
+          </Text>
+        </View>
         {item.highlighted ? (
           <Text accessibilityLabel="Destaque" style={styles.highlight}>
             Destaque
@@ -56,32 +104,75 @@ function FeedItem({
         </Text>
       ) : null}
       {item.context ? <Text style={styles.context}>{item.context}</Text> : null}
-      {item.kind === 'post' && onToggleLike ? (
-        <Pressable
-          accessibilityLabel={item.likedByMe ? 'Remover curtida' : 'Curtir'}
-          accessibilityRole="button"
-          accessibilityState={{ selected: item.likedByMe }}
-          onPress={onToggleLike}
-          style={styles.likeButton}
-        >
-          <Text style={styles.likeText}>
-            {item.likedByMe ? 'Curtido' : 'Curtir'} · {item.likeCount ?? 0}
-          </Text>
-        </Pressable>
-      ) : null}
     </>
   );
 
-  if (!onPress) return <View style={styles.card}>{content}</View>;
   return (
-    <Pressable
-      accessibilityLabel={`Abrir ${item.title}`}
-      accessibilityRole="button"
-      onPress={onPress}
-      style={styles.card}
-    >
-      {content}
-    </Pressable>
+    <View style={styles.card}>
+      {onPress ? (
+        <Pressable
+          accessibilityLabel={`Abrir ${item.title}`}
+          accessibilityRole="button"
+          onPress={onPress}
+          style={({ pressed }) => [styles.cardBody, pressed && styles.pressed]}
+        >
+          {body}
+        </Pressable>
+      ) : (
+        <View style={styles.cardBody}>{body}</View>
+      )}
+
+      {item.kind === 'post' && onToggleLike ? (
+        <View style={styles.cardFooter}>
+          <Pressable
+            accessibilityLabel={item.likedByMe ? 'Remover curtida' : 'Curtir'}
+            accessibilityRole="button"
+            accessibilityState={{ selected: item.likedByMe }}
+            hitSlop={6}
+            onPress={onToggleLike}
+            style={({ pressed }) => [
+              styles.likeButton,
+              pressed && styles.pressed,
+            ]}
+          >
+            <AppSymbol
+              color={item.likedByMe ? colors.brand : colors.textMuted}
+              fallback={item.likedByMe ? '♥' : '♡'}
+              name={item.likedByMe ? symbols.favorite : symbols.favoriteBorder}
+              size={20}
+            />
+            <Text
+              style={[styles.likeText, item.likedByMe && styles.likeTextActive]}
+            >
+              {item.likedByMe ? 'Curtido' : 'Curtir'} · {item.likeCount ?? 0}
+            </Text>
+          </Pressable>
+          {onPress ? (
+            <View style={styles.openButton}>
+              <Text style={styles.openText}>Ver comentários</Text>
+              <AppSymbol
+                color={colors.brand}
+                fallback="›"
+                name={symbols.next}
+                size={18}
+              />
+            </View>
+          ) : null}
+        </View>
+      ) : item.kind === 'workshop' && onPress ? (
+        <View style={styles.cardFooter}>
+          <View style={styles.openButton}>
+            <Text style={styles.openText}>Ver detalhes</Text>
+            <AppSymbol
+              color={colors.brand}
+              fallback="›"
+              name={symbols.next}
+              size={18}
+            />
+          </View>
+        </View>
+      ) : null}
+    </View>
   );
 }
 
@@ -110,7 +201,9 @@ export function FeedScreen({
   if (items.length === 0)
     return (
       <EmptyState
+        actionLabel="Atualizar feed"
         message="Novos workshops e publicações aparecerão aqui."
+        onAction={onRefresh}
         title="Seu feed está vazio"
       />
     );
@@ -123,13 +216,12 @@ export function FeedScreen({
       keyExtractor={(item) => `${item.kind}:${item.id}`}
       ListHeaderComponent={
         <View>
-          <Text accessibilityRole="header" style={styles.title}>
-            Feed
-          </Text>
+          <AppHeader eyebrow="Kaizen Workshop" title="Feed" />
           {source === 'cache' ? (
-            <Text accessibilityRole="alert" style={styles.cachedNotice}>
-              Sem conexão. Exibindo conteúdo salvo neste dispositivo.
-            </Text>
+            <InlineNotice
+              message="Sem conexão. Exibindo conteúdo salvo neste dispositivo."
+              tone="warning"
+            />
           ) : null}
         </View>
       }
@@ -146,7 +238,10 @@ export function FeedScreen({
           <Pressable
             accessibilityRole="button"
             onPress={onLoadMore}
-            style={styles.paginationRetry}
+            style={({ pressed }) => [
+              styles.paginationRetry,
+              pressed && styles.pressed,
+            ]}
           >
             <Text style={styles.paginationRetryText}>
               Não foi possível carregar mais. Tentar novamente
@@ -182,40 +277,50 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   list: {
+    alignSelf: 'center',
+    maxWidth: sizes.contentMaxWidth,
     padding: spacing.md,
-  },
-  title: {
-    color: colors.text,
-    fontFamily: typography.familyBold,
-    fontSize: typography.title,
-    fontWeight: typography.bold,
-    marginBottom: spacing.md,
-  },
-  cachedNotice: {
-    color: colors.textMuted,
-    fontFamily: typography.familyRegular,
-    fontSize: typography.label,
-    marginBottom: spacing.md,
+    paddingBottom: spacing.xl,
+    width: '100%',
   },
   card: {
+    ...shadows.card,
     backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radii.xl,
+    borderColor: colors.surface3,
+    borderRadius: radii.xxl,
     borderWidth: 1,
     marginBottom: spacing.md,
+    overflow: 'hidden',
+  },
+  cardBody: {
     minHeight: sizes.touchTarget,
     padding: spacing.md,
+  },
+  cardImage: {
+    borderRadius: radii.xl,
+    height: 180,
+    marginBottom: spacing.md,
+    width: '100%',
   },
   cardHeader: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  kindBadge: {
+    alignItems: 'center',
+    backgroundColor: colors.brandSubtle,
+    borderRadius: radii.full,
+    flexDirection: 'row',
+    gap: spacing.xxs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
   },
   kind: {
     color: colors.brand,
     fontFamily: typography.familyBold,
-    fontSize: typography.label,
+    fontSize: typography.caption,
     fontWeight: typography.bold,
   },
   highlight: {
@@ -223,40 +328,70 @@ const styles = StyleSheet.create({
     borderRadius: radii.full,
     color: colors.onBrand,
     fontFamily: typography.familyBold,
-    fontSize: 12,
+    fontSize: typography.caption,
     fontWeight: typography.bold,
     overflow: 'hidden',
-    paddingHorizontal: spacing.xs,
+    paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xxs,
   },
   cardTitle: {
     color: colors.text,
     fontFamily: typography.familyBold,
-    fontSize: 20,
+    fontSize: typography.heading,
     fontWeight: typography.bold,
+    lineHeight: 28,
   },
   summary: {
     color: colors.textMuted,
     fontFamily: typography.familyRegular,
-    lineHeight: 22,
+    fontSize: typography.body,
+    lineHeight: 23,
     marginTop: spacing.xs,
   },
   context: {
     color: colors.textMuted,
-    fontFamily: typography.familyRegular,
-    fontSize: typography.label,
+    fontFamily: typography.familyMedium,
+    fontSize: typography.bodySmall,
     marginTop: spacing.sm,
   },
+  cardFooter: {
+    alignItems: 'center',
+    borderTopColor: colors.surface3,
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    minHeight: sizes.touchTarget,
+    paddingHorizontal: spacing.md,
+  },
   likeButton: {
-    alignSelf: 'flex-start',
-    justifyContent: 'center',
-    marginTop: spacing.sm,
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.xs,
     minHeight: sizes.touchTarget,
   },
   likeText: {
+    color: colors.textMuted,
+    fontFamily: typography.familyMedium,
+    fontSize: typography.bodySmall,
+    fontWeight: typography.medium,
+  },
+  likeTextActive: {
+    color: colors.brand,
+  },
+  openButton: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginLeft: 'auto',
+    minHeight: sizes.touchTarget,
+  },
+  openText: {
     color: colors.brand,
     fontFamily: typography.familyMedium,
+    fontSize: typography.bodySmall,
     fontWeight: typography.medium,
+  },
+  pressed: {
+    opacity: 0.65,
   },
   loadingMore: {
     marginVertical: spacing.md,

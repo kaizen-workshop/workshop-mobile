@@ -8,13 +8,33 @@ import {
 } from 'react-native';
 
 import type { NotificationItem } from '@/notification/domain';
-import { EmptyState, ErrorState, LoadingState } from '@/shared/presentation';
-import { colors, radii, sizes, spacing, typography } from '@/shared/theme';
+import { AppHeader } from '@/navigation';
+import {
+  AppSymbol,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+} from '@/shared/presentation';
+import {
+  colors,
+  radii,
+  shadows,
+  sizes,
+  spacing,
+  typography,
+} from '@/shared/theme';
+
+const notificationSymbol = {
+  ios: 'bell.fill',
+  android: 'notifications',
+  web: 'notifications',
+} as const;
 
 type Props = Readonly<{
   status: 'loading' | 'error' | 'success';
   items: readonly NotificationItem[];
   loadingMore?: boolean;
+  loadMoreError?: boolean;
   onRetry(): void;
   onLoadMore?: () => void;
   onPress?: (item: NotificationItem) => void;
@@ -28,17 +48,28 @@ function NotificationCard({
   onPress?: () => void;
 }>) {
   const content = (
-    <>
-      <View style={styles.header}>
-        <Text style={styles.cardTitle}>{item.title}</Text>
-        {!item.read ? (
-          <Text accessibilityLabel="Não lida" style={styles.dot}>
-            ●
-          </Text>
-        ) : null}
+    <View style={styles.cardContent}>
+      <View style={[styles.icon, !item.read && styles.iconUnread]}>
+        <AppSymbol
+          color={!item.read ? colors.brand : colors.textMuted}
+          fallback="•"
+          name={notificationSymbol}
+          size={20}
+        />
       </View>
-      <Text style={styles.message}>{item.message}</Text>
-    </>
+      <View style={styles.cardText}>
+        <View style={styles.header}>
+          <Text style={styles.cardTitle}>{item.title}</Text>
+          {!item.read ? (
+            <Text accessibilityLabel="Não lida" style={styles.dot}>
+              ●
+            </Text>
+          ) : null}
+        </View>
+        <Text style={styles.message}>{item.message}</Text>
+        <Text style={styles.date}>{formatDate(item.createdAt)}</Text>
+      </View>
+    </View>
   );
 
   if (!onPress)
@@ -50,7 +81,11 @@ function NotificationCard({
       accessibilityLabel={`${item.read ? '' : 'Não lida. '}${item.title}`}
       accessibilityRole="button"
       onPress={onPress}
-      style={[styles.card, !item.read && styles.unread]}
+      style={({ pressed }) => [
+        styles.card,
+        !item.read && styles.unread,
+        pressed && styles.pressed,
+      ]}
     >
       {content}
     </Pressable>
@@ -61,6 +96,7 @@ export function NotificationCentreScreen({
   status,
   items,
   loadingMore = false,
+  loadMoreError = false,
   onRetry,
   onLoadMore,
   onPress,
@@ -77,8 +113,10 @@ export function NotificationCentreScreen({
   if (items.length === 0)
     return (
       <EmptyState
+        actionLabel="Atualizar avisos"
         title="Nenhuma notificação"
         message="As novidades dos seus workshops aparecerão aqui."
+        onAction={onRetry}
       />
     );
 
@@ -89,9 +127,7 @@ export function NotificationCentreScreen({
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.content}
       ListHeaderComponent={
-        <Text accessibilityRole="header" style={styles.title}>
-          Notificações
-        </Text>
+        <AppHeader eyebrow="Central de avisos" title="Notificações" />
       }
       ListFooterComponent={
         loadingMore ? (
@@ -100,6 +136,19 @@ export function NotificationCentreScreen({
             accessibilityRole="progressbar"
             color={colors.brand}
           />
+        ) : loadMoreError && onLoadMore ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={onLoadMore}
+            style={({ pressed }) => [
+              styles.paginationRetry,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={styles.paginationRetryText}>
+              Não foi possível carregar mais. Tentar novamente
+            </Text>
+          </Pressable>
         ) : null
       }
       onEndReached={loadingMore ? undefined : onLoadMore}
@@ -114,25 +163,49 @@ export function NotificationCentreScreen({
   );
 }
 
+function formatDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
+}
+
 const styles = StyleSheet.create({
-  content: { padding: spacing.md },
-  title: {
-    color: colors.text,
-    fontFamily: typography.familyBold,
-    fontSize: typography.title,
-    fontWeight: typography.bold,
-    marginBottom: spacing.md,
+  content: {
+    alignSelf: 'center',
+    maxWidth: sizes.contentMaxWidth,
+    padding: spacing.md,
+    paddingBottom: spacing.xl,
+    width: '100%',
   },
   card: {
+    ...shadows.card,
     backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radii.xl,
+    borderColor: colors.surface3,
+    borderRadius: radii.xxl,
     borderWidth: 1,
     marginBottom: spacing.sm,
     minHeight: sizes.touchTarget,
     padding: spacing.md,
   },
-  unread: { borderColor: colors.brand, borderLeftWidth: 4 },
+  unread: { borderColor: colors.brandSoft },
+  pressed: { opacity: 0.68 },
+  cardContent: { flexDirection: 'row' },
+  icon: {
+    alignItems: 'center',
+    backgroundColor: colors.surface2,
+    borderRadius: radii.full,
+    height: 42,
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+    width: 42,
+  },
+  iconUnread: { backgroundColor: colors.brandSubtle },
+  cardText: { flex: 1 },
   header: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -151,5 +224,21 @@ const styles = StyleSheet.create({
     fontFamily: typography.familyRegular,
     lineHeight: 22,
     marginTop: spacing.xs,
+  },
+  date: {
+    color: colors.textMuted,
+    fontFamily: typography.familyRegular,
+    fontSize: typography.caption,
+    marginTop: spacing.sm,
+  },
+  paginationRetry: {
+    alignItems: 'center',
+    minHeight: sizes.touchTarget,
+    padding: spacing.sm,
+  },
+  paginationRetryText: {
+    color: colors.brand,
+    fontFamily: typography.familyMedium,
+    fontWeight: typography.medium,
   },
 });

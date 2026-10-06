@@ -19,11 +19,11 @@ cache local, HTTP e dependências existentes em setembro de 2026.
 - imagens remotas usam `expo-image`, cujo cache padrão instalado é em disco;
 - cache local possui expiração e isolamento por usuário;
 - timers HTTP são sempre liberados no bloco `finally`;
-- não existem subscriptions, observadores ou listeners persistentes nas telas
-  atuais;
+- subscriptions, observadores, listeners e timers possuem limpeza no ciclo de
+  vida correspondente;
 - refresh concorrente de autenticação já é consolidado em uma única Promise;
 - nenhuma dependência adicional foi necessária;
-- o export web de referência gera atualmente um bundle JavaScript de 1,3 MB
+- o export web de referência gera atualmente um bundle JavaScript de 1,5 MB
   antes de compressão.
 
 Não foram definidos números arbitrários para janela, lote ou recorte de

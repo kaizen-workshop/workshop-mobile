@@ -2,8 +2,34 @@ import { useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ThemeOption } from '@/preferences/domain';
-import { EmptyState, ErrorState, LoadingState } from '@/shared/presentation';
-import { colors, radii, sizes, spacing, typography } from '@/shared/theme';
+import {
+  AppSymbol,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  PageHeader,
+} from '@/shared/presentation';
+import {
+  colors,
+  radii,
+  shadows,
+  sizes,
+  spacing,
+  typography,
+} from '@/shared/theme';
+
+const selectionSymbols = {
+  checked: {
+    ios: 'checkmark.circle.fill',
+    android: 'check_circle',
+    web: 'check_circle',
+  },
+  unchecked: {
+    ios: 'circle',
+    android: 'radio_button_unchecked',
+    web: 'radio_button_unchecked',
+  },
+} as const;
 
 type Props = Readonly<{
   status: 'loading' | 'error' | 'success';
@@ -42,7 +68,9 @@ export function PreferencesScreen({
   if (themes.length === 0)
     return (
       <EmptyState
+        actionLabel="Atualizar temas"
         message="Tente novamente mais tarde."
+        onAction={onRetry}
         title="Nenhum tema disponível"
       />
     );
@@ -68,11 +96,19 @@ export function PreferencesScreen({
         data={themes}
         keyExtractor={(theme) => theme.id}
         ListHeaderComponent={
-          <View style={styles.header}>
-            <Text accessibilityRole="header" style={styles.title}>
-              {title}
-            </Text>
-            <Text style={styles.subtitle}>{subtitle}</Text>
+          <View>
+            <PageHeader
+              description={subtitle}
+              eyebrow="Personalize sua experiência"
+              title={title}
+            />
+            <View style={styles.selectionSummary}>
+              <Text style={styles.selectionSummaryText}>
+                {selectedIds.size === 0
+                  ? 'Selecione pelo menos um tema'
+                  : `${selectedIds.size} ${selectedIds.size === 1 ? 'tema selecionado' : 'temas selecionados'}`}
+              </Text>
+            </View>
           </View>
         }
         renderItem={({ item }) => {
@@ -83,7 +119,11 @@ export function PreferencesScreen({
               accessibilityRole="checkbox"
               accessibilityState={{ checked: selected }}
               onPress={() => onToggle(item.id)}
-              style={[styles.option, selected && styles.optionSelected]}
+              style={({ pressed }) => [
+                styles.option,
+                selected && styles.optionSelected,
+                pressed && styles.optionPressed,
+              ]}
             >
               <View style={styles.optionText}>
                 <Text style={styles.optionTitle}>{item.name}</Text>
@@ -93,13 +133,16 @@ export function PreferencesScreen({
                   </Text>
                 ) : null}
               </View>
-              <Text
-                accessibilityElementsHidden
-                importantForAccessibility="no"
-                style={styles.selectionMark}
-              >
-                {selected ? '✓' : '○'}
-              </Text>
+              <AppSymbol
+                color={selected ? colors.brand : colors.disabled}
+                fallback={selected ? '✓' : '○'}
+                name={
+                  selected
+                    ? selectionSymbols.checked
+                    : selectionSymbols.unchecked
+                }
+                size={26}
+              />
             </Pressable>
           );
         }}
@@ -113,10 +156,17 @@ export function PreferencesScreen({
         <Pressable
           accessibilityLabel={submitLabel}
           accessibilityRole="button"
-          accessibilityState={{ busy: saving, disabled: saving }}
-          disabled={saving}
+          accessibilityState={{
+            busy: saving,
+            disabled: saving || selectedIds.size === 0,
+          }}
+          disabled={saving || selectedIds.size === 0}
           onPress={submit}
-          style={[styles.button, saving && styles.buttonDisabled]}
+          style={({ pressed }) => [
+            styles.button,
+            pressed && styles.buttonPressed,
+            (saving || selectedIds.size === 0) && styles.buttonDisabled,
+          ]}
         >
           <Text style={styles.buttonText}>
             {saving ? 'Salvando...' : submitLabel}
@@ -133,29 +183,32 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
+    alignSelf: 'center',
+    maxWidth: sizes.contentMaxWidth,
     padding: spacing.lg,
+    width: '100%',
   },
-  header: {
-    marginBottom: spacing.lg,
+  selectionSummary: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.brandSubtle,
+    borderRadius: radii.full,
+    marginBottom: spacing.md,
+    marginTop: -spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
   },
-  title: {
-    color: colors.text,
-    fontFamily: typography.familyBold,
-    fontSize: typography.title,
-    fontWeight: typography.bold,
-  },
-  subtitle: {
-    color: colors.textMuted,
-    fontFamily: typography.familyRegular,
-    fontSize: typography.body,
-    lineHeight: 24,
-    marginTop: spacing.xs,
+  selectionSummaryText: {
+    color: colors.brandStrong,
+    fontFamily: typography.familyMedium,
+    fontSize: typography.bodySmall,
+    fontWeight: typography.medium,
   },
   option: {
+    ...shadows.card,
     alignItems: 'center',
     backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radii.md,
+    borderColor: colors.surface3,
+    borderRadius: radii.xl,
     borderWidth: 1,
     flexDirection: 'row',
     marginBottom: spacing.sm,
@@ -163,9 +216,11 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   optionSelected: {
+    backgroundColor: colors.brandSubtle,
     borderColor: colors.brand,
     borderWidth: 2,
   },
+  optionPressed: { opacity: 0.7 },
   optionText: {
     flex: 1,
   },
@@ -180,13 +235,9 @@ const styles = StyleSheet.create({
     fontFamily: typography.familyRegular,
     marginTop: spacing.xxs,
   },
-  selectionMark: {
-    color: colors.brand,
-    fontFamily: typography.familyMedium,
-    fontSize: sizes.icon,
-    marginLeft: spacing.sm,
-  },
   footer: {
+    ...shadows.card,
+    alignItems: 'center',
     backgroundColor: colors.surface,
     borderColor: colors.border,
     borderTopWidth: 1,
@@ -204,8 +255,11 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     justifyContent: 'center',
     minHeight: sizes.touchTarget,
+    maxWidth: sizes.contentMaxWidth,
     paddingHorizontal: spacing.lg,
+    width: '100%',
   },
+  buttonPressed: { backgroundColor: colors.brandPressed },
   buttonDisabled: {
     opacity: 0.65,
   },

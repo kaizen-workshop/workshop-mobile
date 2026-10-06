@@ -1,4 +1,6 @@
 import type { AuthGateway, AuthSession } from '../domain/auth-gateway';
+import { AppError } from '@/core/errors';
+import { readJwtSession } from '@/core/secure-storage';
 
 type Tokens = Readonly<{ accessToken: string; refreshToken: string }>;
 type TokenStorage = Readonly<{
@@ -36,8 +38,33 @@ export function createSessionController(
   return {
     getState: () => state,
     async restore() {
-      tokens = await tokenStorage.read();
-      state = tokens ? 'AUTHENTICATED' : 'UNAUTHENTICATED';
+      const stored = await tokenStorage.read();
+      if (!stored) {
+        tokens = null;
+        state = 'UNAUTHENTICATED';
+        return;
+      }
+      try {
+        await apply(await gateway.refresh(stored.refreshToken));
+      } catch (error) {
+        const localSession = readJwtSession(stored.accessToken);
+        if (
+          isConnectivityError(error) &&
+          localSession &&
+          localSession.expiresAt > Date.now()
+        ) {
+          tokens = stored;
+          state = localSession.mustChangePassword
+            ? 'REQUIRES_PASSWORD_CHANGE'
+            : 'AUTHENTICATED';
+          return;
+        }
+        tokens = null;
+        state = 'UNAUTHENTICATED';
+        stateAfterPasswordChange = 'AUTHENTICATED';
+        await tokenStorage.clear();
+        throw error;
+      }
     },
     async login(input: { login: string; password: string }) {
       await apply(await gateway.login(input));
@@ -47,7 +74,10 @@ export function createSessionController(
       newPassword: string;
     }) {
       await gateway.changePassword(input);
-      state = stateAfterPasswordChange;
+      tokens = null;
+      state = 'UNAUTHENTICATED';
+      stateAfterPasswordChange = 'AUTHENTICATED';
+      await tokenStorage.clear();
     },
     completeOnboarding() {
       if (state === 'REQUIRES_ONBOARDING') state = 'AUTHENTICATED';
@@ -56,9 +86,11 @@ export function createSessionController(
       if (!refreshPromise)
         refreshPromise = (async () => {
           try {
-            if (!tokens) throw new Error('No session');
-            await apply(await gateway.refresh(tokens.refreshToken));
+            const current = await tokenStorage.read();
+            if (!current) throw new Error('No session');
+            await apply(await gateway.refresh(current.refreshToken));
           } catch (error) {
+            if (isConnectivityError(error)) throw error;
             tokens = null;
             state = 'UNAUTHENTICATED';
             await tokenStorage.clear();
@@ -71,7 +103,8 @@ export function createSessionController(
     },
     async logout() {
       try {
-        if (tokens) await gateway.logout(tokens.refreshToken);
+        const current = await tokenStorage.read();
+        if (current) await gateway.logout(current.refreshToken);
       } finally {
         tokens = null;
         state = 'UNAUTHENTICATED';
@@ -79,5 +112,17 @@ export function createSessionController(
         await tokenStorage.clear();
       }
     },
+    invalidate() {
+      tokens = null;
+      state = 'UNAUTHENTICATED';
+      stateAfterPasswordChange = 'AUTHENTICATED';
+    },
   };
+}
+
+function isConnectivityError(error: unknown) {
+  return (
+    error instanceof AppError &&
+    (error.category === 'network' || error.category === 'timeout')
+  );
 }

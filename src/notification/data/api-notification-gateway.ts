@@ -6,18 +6,21 @@ import type { NotificationItem, NotificationPage } from '@/notification/domain';
 export type NotificationGateway = Readonly<{
   loadPage(page: number, size?: number): Promise<NotificationPage>;
   markRead(id: string): Promise<NotificationItem>;
+  registerDevice(token: string, platform: 'ANDROID' | 'IOS'): Promise<string>;
+  unregisterDevice(id: string): Promise<void>;
 }>;
 
 export function createApiNotificationGateway(
   http: HttpClient,
   tokenStorage: TokenStorage,
 ): NotificationGateway {
-  const request = async <T>(path: string, method = 'GET') => {
+  const request = async <T>(path: string, method = 'GET', body?: unknown) => {
     const tokens = await tokenStorage.read();
     if (!tokens) throw new AppError({ category: 'unauthorized' });
     return http.request<T>({
       path,
       ...(method === 'GET' ? {} : { method }),
+      ...(body === undefined ? {} : { body }),
       headers: { Authorization: `Bearer ${tokens.accessToken}` },
     });
   };
@@ -42,6 +45,22 @@ export function createApiNotificationGateway(
       );
       if (!isNotification(response)) throw invalidResponse();
       return response;
+    },
+    async registerDevice(token, platform) {
+      if (!token.trim()) throw new AppError({ category: 'bad_request' });
+      const response = await request<unknown>('/notification-devices', 'POST', {
+        token,
+        platform,
+      });
+      if (!isDevice(response)) throw invalidResponse();
+      return response.id;
+    },
+    async unregisterDevice(id) {
+      if (!id.trim()) throw new AppError({ category: 'bad_request' });
+      await request<void>(
+        `/notification-devices/${encodeURIComponent(id)}`,
+        'DELETE',
+      );
     },
   };
 }
@@ -89,6 +108,22 @@ function isNotification(value: unknown): value is NotificationItem {
     typeof item.data === 'object' &&
     !Array.isArray(item.data) &&
     Object.values(item.data).every((entry) => typeof entry === 'string')
+  );
+}
+
+function isDevice(
+  value: unknown,
+): value is { id: string; platform: string; active: boolean } {
+  if (!value || typeof value !== 'object') return false;
+  const device = value as {
+    id?: unknown;
+    platform?: unknown;
+    active?: unknown;
+  };
+  return (
+    typeof device.id === 'string' &&
+    typeof device.platform === 'string' &&
+    typeof device.active === 'boolean'
   );
 }
 

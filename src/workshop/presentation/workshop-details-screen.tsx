@@ -1,20 +1,42 @@
 import { useState } from 'react';
 import { Image } from 'expo-image';
 import {
+  Banknote,
+  CalendarDays,
+  Clock3,
+  MapPin,
+  MonitorSmartphone,
+  Send,
+  Tag,
+  Users,
+} from 'lucide-react-native';
+import type { ComponentType } from 'react';
+import {
   ActivityIndicator,
   Alert,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 
+import type { PostComment } from '@/feed/domain';
+import { BackHeader } from '@/navigation';
 import { ErrorState, LoadingState } from '@/shared/presentation';
 import type { RegistrationResult } from '@/registration/domain';
 import type { PaymentResult } from '@/payment/domain';
-import { colors, radii, sizes, spacing, typography } from '@/shared/theme';
+import {
+  colors,
+  radii,
+  shadows,
+  sizes,
+  spacing,
+  typography,
+} from '@/shared/theme';
 import type { WorkshopAttachment, WorkshopDetails } from '@/workshop/domain';
+import { useWorkshopImageSource } from './use-workshop-image-source';
 
 type Props = Readonly<{
   status: 'loading' | 'error' | 'success';
@@ -35,28 +57,55 @@ type Props = Readonly<{
   paymentError?: boolean;
   paying?: boolean;
   onCreatePayment?: () => void;
+  onEvaluate?: () => void;
+  discussionStatus?: 'loading' | 'error' | 'success' | 'unavailable';
+  comments?: readonly PostComment[];
+  currentUserId?: string;
+  commentSending?: boolean;
+  commentError?: boolean;
+  onRetryComments?: () => void;
+  onSendComment?: (content: string) => Promise<boolean> | boolean;
 }>;
 
-function Detail({ label, value }: Readonly<{ label: string; value?: string }>) {
+function Detail({
+  Icon,
+  label,
+  value,
+}: Readonly<{
+  Icon: ComponentType<{ color: string; size: number }>;
+  label: string;
+  value?: string;
+}>) {
   if (!value) return null;
   return (
     <View style={styles.detail}>
-      <Text style={styles.detailLabel}>{label}</Text>
-      <Text style={styles.detailValue}>{value}</Text>
+      <Icon color={colors.brand} size={21} />
+      <View style={styles.detailContent}>
+        <Text style={styles.detailLabel}>{label}</Text>
+        <Text style={styles.detailValue}>{value}</Text>
+      </View>
     </View>
   );
 }
 
 export function WorkshopDetailsScreen({
   attachmentError = false,
+  commentError = false,
+  comments = [],
+  commentSending = false,
+  currentUserId = '',
+  discussionStatus,
   cancellationError,
   cancellingRegistration = false,
   onCancelRegistration,
   onCreatePayment,
+  onEvaluate,
   onOpenAttachment,
   onRetry,
   openingAttachmentId,
   onRegister,
+  onRetryComments,
+  onSendComment,
   registration,
   registrationError,
   registering = false,
@@ -70,6 +119,8 @@ export function WorkshopDetailsScreen({
   const [imageStatus, setImageStatus] = useState<
     'loading' | 'loaded' | 'error'
   >('loading');
+  const [commentText, setCommentText] = useState('');
+  const imageSource = useWorkshopImageSource(workshop?.imageUrl);
 
   if (status === 'loading')
     return <LoadingState message="Carregando workshop" />;
@@ -83,31 +134,36 @@ export function WorkshopDetailsScreen({
 
   return (
     <ScrollView contentContainerStyle={styles.content} style={styles.page}>
+      <BackHeader eyebrow="Workshop" title="Detalhes" />
       {source === 'cache' ? (
         <Text accessibilityRole="alert" style={styles.cachedNotice}>
           Sem conexão. Exibindo os detalhes salvos neste dispositivo.
         </Text>
       ) : null}
-      {workshop.imageUrl ? (
-        <View style={styles.imageContainer}>
-          <Image
-            accessibilityLabel={`Imagem do workshop ${workshop.title}`}
-            contentFit="cover"
-            onError={() => setImageStatus('error')}
-            onLoad={() => setImageStatus('loaded')}
-            source={{ uri: workshop.imageUrl }}
-            style={styles.image}
-          />
-          {imageStatus !== 'loaded' ? (
-            <Text accessibilityLiveRegion="polite" style={styles.imageStatus}>
-              {imageStatus === 'error'
-                ? 'Imagem indisponível'
-                : 'Carregando imagem'}
-            </Text>
-          ) : null}
+      <View style={styles.imageContainer}>
+        <Image
+          accessibilityLabel={`Imagem do workshop ${workshop.title}`}
+          contentFit="cover"
+          onError={() => setImageStatus('error')}
+          onLoad={() => setImageStatus('loaded')}
+          source={imageSource}
+          style={styles.image}
+        />
+        {imageStatus !== 'loaded' ? (
+          <Text accessibilityLiveRegion="polite" style={styles.imageStatus}>
+            {imageStatus === 'error'
+              ? 'Imagem indisponível'
+              : 'Carregando imagem'}
+          </Text>
+        ) : null}
+      </View>
+
+      {workshop.theme ? (
+        <View style={styles.themePill}>
+          <View style={styles.themeDot} />
+          <Text style={styles.themeText}>{workshop.theme}</Text>
         </View>
       ) : null}
-
       <Text accessibilityRole="header" style={styles.title}>
         {workshop.title}
       </Text>
@@ -116,15 +172,22 @@ export function WorkshopDetailsScreen({
       ) : null}
 
       <View style={styles.panel}>
-        <Detail label="Tema" value={workshop.theme} />
-        <Detail label="Categoria" value={workshop.category} />
-        <Detail label="Data" value={workshop.dateLabel} />
-        <Detail label="Horário" value={workshop.timeLabel} />
-        <Detail label="Local" value={workshop.location} />
-        <Detail label="Modalidade" value={workshop.modality} />
-        <Detail label="Valor" value={workshop.priceLabel} />
-        <Detail label="Inscrições" value={workshop.registrationPeriodLabel} />
-        <Detail label="Vagas" value={workshop.capacityLabel} />
+        <Detail Icon={Tag} label="Categoria" value={workshop.category} />
+        <Detail Icon={CalendarDays} label="Data" value={workshop.dateLabel} />
+        <Detail Icon={Clock3} label="Horário" value={workshop.timeLabel} />
+        <Detail Icon={MapPin} label="Local" value={workshop.location} />
+        <Detail
+          Icon={MonitorSmartphone}
+          label="Modalidade"
+          value={workshop.modality}
+        />
+        <Detail Icon={Banknote} label="Valor" value={workshop.priceLabel} />
+        <Detail
+          Icon={CalendarDays}
+          label="Inscrições"
+          value={workshop.registrationPeriodLabel}
+        />
+        <Detail Icon={Users} label="Vagas" value={workshop.capacityLabel} />
       </View>
 
       {registration ? (
@@ -328,6 +391,116 @@ export function WorkshopDetailsScreen({
           <Text style={styles.listText}>{workshop.additionalInformation}</Text>
         </View>
       ) : null}
+      {onEvaluate ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={onEvaluate}
+          style={styles.evaluationButton}
+        >
+          <Text style={styles.evaluationButtonText}>Avaliar workshop</Text>
+        </Pressable>
+      ) : null}
+      {discussionStatus ? (
+        <View style={styles.commentsSection}>
+          <Text accessibilityRole="header" style={styles.sectionTitle}>
+            Comentários
+          </Text>
+          {discussionStatus === 'loading' ? (
+            <ActivityIndicator
+              accessibilityLabel="Carregando comentários"
+              color={colors.brand}
+            />
+          ) : null}
+          {discussionStatus === 'unavailable' ? (
+            <Text style={styles.commentsHint}>
+              Os comentários estarão disponíveis quando houver uma publicação
+              vinculada a este workshop.
+            </Text>
+          ) : null}
+          {discussionStatus === 'error' ? (
+            <View style={styles.commentsError}>
+              <Text style={styles.commentsHint}>
+                Não foi possível carregar os comentários.
+              </Text>
+              {onRetryComments ? (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={onRetryComments}
+                  style={styles.retryButton}
+                >
+                  <Text style={styles.retryText}>Tentar novamente</Text>
+                </Pressable>
+              ) : null}
+            </View>
+          ) : null}
+          {discussionStatus === 'success' ? (
+            <>
+              {comments.length ? (
+                comments.map((comment) => (
+                  <View key={comment.id} style={styles.commentCard}>
+                    <Text style={styles.commentAuthor}>
+                      {comment.userId === currentUserId
+                        ? 'Você'
+                        : 'Participante'}
+                    </Text>
+                    <Text style={styles.commentBody}>{comment.content}</Text>
+                    <Text style={styles.commentDate}>
+                      {new Date(comment.createdAt).toLocaleString('pt-BR')}
+                    </Text>
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.commentsHint}>
+                  Seja a primeira pessoa a comentar.
+                </Text>
+              )}
+              {onSendComment ? (
+                <View style={styles.commentComposer}>
+                  <TextInput
+                    accessibilityLabel="Novo comentário"
+                    maxLength={4000}
+                    multiline
+                    onChangeText={setCommentText}
+                    placeholder="Escreva um comentário"
+                    placeholderTextColor={colors.placeholder}
+                    style={styles.commentInput}
+                    value={commentText}
+                  />
+                  {commentError ? (
+                    <Text
+                      accessibilityRole="alert"
+                      style={styles.registrationError}
+                    >
+                      Não foi possível publicar o comentário.
+                    </Text>
+                  ) : null}
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{
+                      busy: commentSending,
+                      disabled: commentSending || !commentText.trim(),
+                    }}
+                    disabled={commentSending || !commentText.trim()}
+                    onPress={async () => {
+                      if (await onSendComment(commentText)) setCommentText('');
+                    }}
+                    style={[
+                      styles.commentButton,
+                      (commentSending || !commentText.trim()) &&
+                        styles.buttonDisabled,
+                    ]}
+                  >
+                    <Send color={colors.onBrand} size={18} />
+                    <Text style={styles.registrationButtonText}>
+                      {commentSending ? 'Publicando...' : 'Publicar'}
+                    </Text>
+                  </Pressable>
+                </View>
+              ) : null}
+            </>
+          ) : null}
+        </View>
+      ) : null}
     </ScrollView>
   );
 }
@@ -377,7 +550,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   content: {
-    padding: spacing.md,
+    alignSelf: 'center',
+    maxWidth: sizes.contentMaxWidth,
+    padding: spacing.lg,
+    paddingBottom: spacing.xxl,
+    width: '100%',
   },
   cachedNotice: {
     color: colors.textMuted,
@@ -389,7 +566,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.border,
     borderRadius: radii.xl,
-    height: 200,
+    height: 220,
     justifyContent: 'center',
     marginBottom: spacing.lg,
     overflow: 'hidden',
@@ -418,20 +595,32 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   panel: {
+    ...shadows.card,
     backgroundColor: colors.surface,
     borderColor: colors.border,
-    borderRadius: radii.xl,
+    borderRadius: radii.xxl,
     borderWidth: 1,
     marginTop: spacing.lg,
     padding: spacing.md,
   },
   detail: {
-    marginBottom: spacing.sm,
+    alignItems: 'center',
+    borderBottomColor: colors.surface3,
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    gap: spacing.md,
+    minHeight: 64,
+    paddingVertical: spacing.sm,
+  },
+  detailContent: {
+    flex: 1,
   },
   detailLabel: {
     color: colors.textMuted,
     fontFamily: typography.familyRegular,
-    fontSize: typography.label,
+    fontSize: typography.caption,
+    fontWeight: typography.medium,
+    textTransform: 'uppercase',
   },
   detailValue: {
     color: colors.text,
@@ -439,6 +628,29 @@ const styles = StyleSheet.create({
     fontSize: typography.body,
     fontWeight: typography.medium,
     marginTop: spacing.xxs,
+  },
+  themePill: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: colors.brandSubtle,
+    borderRadius: radii.full,
+    flexDirection: 'row',
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  themeDot: {
+    backgroundColor: colors.brand,
+    borderRadius: radii.full,
+    height: 6,
+    width: 6,
+  },
+  themeText: {
+    color: colors.brand,
+    fontFamily: typography.familyBold,
+    fontSize: typography.caption,
+    textTransform: 'uppercase',
   },
   section: {
     marginTop: spacing.lg,
@@ -544,4 +756,86 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     padding: spacing.md,
   },
+  evaluationButton: {
+    alignItems: 'center',
+    borderColor: colors.brand,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    justifyContent: 'center',
+    marginTop: spacing.lg,
+    minHeight: sizes.touchTarget,
+  },
+  evaluationButtonText: {
+    color: colors.brand,
+    fontFamily: typography.familyBold,
+  },
+  commentsSection: {
+    borderTopColor: colors.surface3,
+    borderTopWidth: 1,
+    marginTop: spacing.xl,
+    paddingTop: spacing.lg,
+  },
+  commentsHint: {
+    color: colors.textMuted,
+    fontFamily: typography.familyRegular,
+    lineHeight: 22,
+  },
+  commentsError: { gap: spacing.sm },
+  retryButton: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    borderColor: colors.brand,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    minHeight: sizes.touchTarget,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+  },
+  retryText: { color: colors.brand, fontFamily: typography.familyBold },
+  commentCard: {
+    backgroundColor: colors.surface,
+    borderColor: colors.surface3,
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    marginBottom: spacing.sm,
+    padding: spacing.md,
+  },
+  commentAuthor: {
+    color: colors.brand,
+    fontFamily: typography.familyBold,
+    fontSize: typography.bodySmall,
+  },
+  commentBody: {
+    color: colors.text,
+    fontFamily: typography.familyRegular,
+    lineHeight: 22,
+    marginTop: spacing.xs,
+  },
+  commentDate: {
+    color: colors.textMuted,
+    fontSize: typography.caption,
+    marginTop: spacing.sm,
+  },
+  commentComposer: { marginTop: spacing.md },
+  commentInput: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    color: colors.text,
+    minHeight: 100,
+    padding: spacing.md,
+    textAlignVertical: 'top',
+  },
+  commentButton: {
+    alignItems: 'center',
+    backgroundColor: colors.brand,
+    borderRadius: radii.xl,
+    flexDirection: 'row',
+    gap: spacing.xs,
+    justifyContent: 'center',
+    marginTop: spacing.sm,
+    minHeight: sizes.touchTarget,
+  },
+  buttonDisabled: { opacity: 0.55 },
 });
