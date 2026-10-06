@@ -24,7 +24,7 @@ A task só pode ser marcada como concluída quando atender à Definition of Done
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Definir explicitamente:
@@ -56,7 +56,7 @@ Critério de aceite:
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Critérios de aceite:
@@ -79,7 +79,7 @@ TASK-001
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Features iniciais:
@@ -110,7 +110,7 @@ core
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Criar suporte para:
@@ -132,7 +132,7 @@ Nenhum segredo deve estar no app.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Implementar:
@@ -151,7 +151,7 @@ Implementar:
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Usar mecanismo seguro da plataforma para:
@@ -168,7 +168,7 @@ Nunca armazenar senha.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Mapear:
@@ -192,7 +192,7 @@ Mapear:
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Campos:
@@ -217,7 +217,7 @@ Estados:
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Critérios:
@@ -227,13 +227,6 @@ Critérios:
 - trata usuário bloqueado;
 - não loga senha/token.
 
-Implementado com login, perfil para derivar onboarding, refresh, logout, troca
-e recuperação de senha. Android e iOS persistem tokens somente no SecureStore;
-o Web de desenvolvimento usa memória volátil porque o SecureStore não existe
-no navegador. A API retorna o envelope `401 UNAUTHORIZED` para credenciais
-inválidas e o mobile apresenta a mensagem correspondente sem registrar senha
-ou tokens.
-
 ---
 
 ## TASK-010 — Implementar roteamento por estado de autenticação
@@ -241,7 +234,7 @@ ou tokens.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Estados:
@@ -253,9 +246,6 @@ REQUIRES_ONBOARDING
 AUTHENTICATED
 ```
 
-Os grupos protegidos possuem layouts próprios para o Expo Router remover a rota
-anterior e redirecionar pelo novo estado após login, troca de senha e onboarding.
-
 ---
 
 ## TASK-011 — Implementar troca obrigatória de senha
@@ -263,7 +253,7 @@ anterior e redirecionar pelo novo estado após login, troca de senha e onboardin
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Fluxo:
@@ -275,10 +265,6 @@ login
 → session continues
 ```
 
-A API atual revoga todos os refresh tokens e invalida o access token ao trocar
-a senha sem devolver novos tokens. Por isso, após o sucesso o mobile limpa a
-sessão revogada e exige novo login antes de continuar para o onboarding.
-
 ---
 
 ## TASK-012 — Implementar refresh token
@@ -286,12 +272,8 @@ sessão revogada e exige novo login antes de continuar para o onboarding.
 Status:
 
 ```text
-[x]
+[ ]
 ```
-
-Respostas `401` em chamadas autenticadas renovam o par de tokens e repetem a
-requisição uma vez. Renovações concorrentes compartilham uma única chamada; um
-refresh rejeitado limpa a sessão e atualiza imediatamente o roteamento.
 
 Critérios:
 
@@ -306,7 +288,7 @@ Critérios:
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Critérios:
@@ -322,7 +304,7 @@ Critérios:
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Telas:
@@ -339,15 +321,12 @@ Telas:
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Exibir temas retornados pela API.
 
 Permitir múltipla seleção.
-
-Implementado com carga autenticada de `GET /api/v1/themes`, validação defensiva
-do contrato, seleção múltipla e estados de loading, erro, retry e vazio.
 
 ---
 
@@ -356,7 +335,7 @@ do contrato, seleção múltipla e estados de loading, erro, retry e vazio.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Critérios:
@@ -366,9 +345,6 @@ Critérios:
 - retry;
 - sucesso leva ao feed.
 
-Implementado com `PUT /api/v1/users/me/themes`, estado de salvamento, erro com
-retry manual e avanço para o feed somente após confirmação da API.
-
 ---
 
 ## TASK-017 — Editar preferências posteriormente
@@ -376,13 +352,10 @@ retry manual e avanço para o feed somente após confirmação da API.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Disponível nas configurações/perfil.
-
-Disponível pelo perfil, carregando a seleção atual de `GET /api/v1/users/me` e
-salvando a substituição confirmada em `PUT /api/v1/users/me/themes`.
 
 ---
 
@@ -393,7 +366,7 @@ salvando a substituição confirmada em `PUT /api/v1/users/me/themes`.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Áreas esperadas:
@@ -414,7 +387,7 @@ A composição final pode mudar conforme UX.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Centralizar:
@@ -434,7 +407,7 @@ Não criar design system gigantesco nesta fase.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Criar:
@@ -455,13 +428,10 @@ OfflineState
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Consumir endpoint da API.
-
-Implementado com `GET /api/v1/posts/feed`, autenticação, validação defensiva do
-Spring Page, mapeamento para o modelo local e fallback para o cache por usuário.
 
 ---
 
@@ -470,7 +440,7 @@ Spring Page, mapeamento para o modelo local e fallback para o cache por usuário
 Status:
 
 ```text
-[~]
+[ ]
 ```
 
 Exibir:
@@ -479,10 +449,6 @@ Exibir:
 - posts;
 - destaques.
 
-Progresso: posts e destaques já usam a origem real da API. Workshops permanecem
-ausentes porque o endpoint atual entrega somente `PostResponse`; o mobile não
-mistura outra listagem e não recalcula a ordenação autoritativa.
-
 ---
 
 ## TASK-023 — Implementar paginação do feed
@@ -490,15 +456,10 @@ mistura outra listagem e não recalcula a ordenação autoritativa.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Preferir cursor quando fornecido pela API.
-
-Implementada com a paginação por página fornecida pelo Spring Page atual,
-bloqueio de requests concorrentes, deduplicação defensiva e preservação da
-ordem retornada pela API. O carregamento incremental é desabilitado no fallback
-offline, pois o cache representa um snapshot.
 
 ---
 
@@ -507,12 +468,8 @@ offline, pois o cache representa um snapshot.
 Status:
 
 ```text
-[x]
+[ ]
 ```
-
-O gesto executa nova leitura remota, atualiza o snapshot e a paginação após
-sucesso, mantém conteúdo anterior durante a operação e bloqueia refreshes
-concorrentes. Em falha, preserva dados já visíveis ou usa o fallback de cache.
 
 ---
 
@@ -521,7 +478,7 @@ concorrentes. Em falha, preserva dados já visíveis ou usa o fallback de cache.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Critérios:
@@ -530,11 +487,6 @@ Critérios:
 - sincronização posterior atualiza cache;
 - cache não substitui refresh.
 
-Implementado com snapshot expirável e isolado por usuário. Toda carga tenta a
-origem remota primeiro, atualiza o cache após sucesso e recorre ao conteúdo
-salvo somente quando a leitura remota falha. A tela identifica o conteúdo
-offline sem impedir refresh ou paginação posteriores.
-
 ---
 
 ## TASK-026 — Implementar curtidas
@@ -542,7 +494,7 @@ offline sem impedir refresh ou paginação posteriores.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Critérios:
@@ -551,9 +503,6 @@ Critérios:
 - rollback em erro quando necessário;
 - operação idempotente.
 
-Implementada com `PUT`/`DELETE /api/v1/posts/{id}/like`, bloqueio por post,
-feedback otimista de estado/contagem e rollback integral quando a API falha.
-
 ---
 
 ## TASK-027 — Implementar comentários
@@ -561,7 +510,7 @@ feedback otimista de estado/contagem e rollback integral quando a API falha.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Criar:
@@ -570,9 +519,6 @@ Criar:
 - criação;
 - edição permitida;
 - exclusão permitida.
-
-Listagem paginada, criação idempotente, edição própria e exclusão própria estão
-integradas aos endpoints atuais da API.
 
 ---
 
@@ -583,12 +529,8 @@ integradas aos endpoints atuais da API.
 Status:
 
 ```text
-[x]
+[ ]
 ```
-
-Implementada com a API autenticada, paginação completa do catálogo publicado,
-nomes de temas/categorias, cache por usuário, pull-to-refresh e navegação para
-os detalhes.
 
 ---
 
@@ -597,13 +539,10 @@ os detalhes.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Cobrir filtros suportados pela API.
-
-Implementados filtros combináveis de status, tema e categoria, com opções
-ativas da API, feedback de carregamento e consulta remota parametrizada.
 
 ---
 
@@ -612,13 +551,10 @@ ativas da API, feedback de carregamento e consulta remota parametrizada.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Exibir dados disponíveis sem assumir preenchimento obrigatório de campos opcionais.
-
-Tela integrada à consulta autenticada por id, incluindo taxonomias, agenda,
-inscrições, capacidade, anexos disponíveis, cache por usuário e retry.
 
 ---
 
@@ -627,14 +563,10 @@ inscrições, capacidade, anexos disponíveis, cache por usuário e retry.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Visualizar/abrir anexos suportados.
-
-Os anexos são listados com metadados reais, baixados do endpoint autenticado
-para o cache temporário e abertos pelo compartilhamento nativo, com feedback de
-progresso e erro.
 
 ---
 
@@ -643,15 +575,10 @@ progresso e erro.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Permitir consulta básica offline de dados previamente carregados.
-
-Implementado com cache expirável de lista e detalhes, isolado por usuário,
-fallback para a última leitura válida quando a rede falha e identificação
-acessível do conteúdo salvo nas telas. Falhas do cache não ocultam dados novos
-nem substituem o erro original quando não existe conteúdo local.
 
 ---
 
@@ -662,7 +589,7 @@ nem substituem o erro original quando não existe conteúdo local.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Critérios:
@@ -674,10 +601,6 @@ Critérios:
 - conflito;
 - workshop cheio.
 
-A ação usa o endpoint autenticado do workshop, bloqueia envios concorrentes,
-mostra progresso, diferencia conflito de erro genérico e apresenta confirmação,
-pendência ou entrada na lista de espera conforme a resposta da API.
-
 ---
 
 ## TASK-034 — Implementar Idempotency-Key
@@ -685,15 +608,12 @@ pendência ou entrada na lista de espera conforme a resposta da API.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Para retries da mesma inscrição.
 
 A mesma operação deve reutilizar a mesma chave.
-
-Cada abertura do fluxo gera uma UUID, enviada no cabeçalho `Idempotency-Key` e
-mantida estável em todas as tentativas até a inscrição concluir.
 
 ---
 
@@ -702,7 +622,7 @@ mantida estável em todas as tentativas até a inscrição concluir.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Exibir:
@@ -717,10 +637,6 @@ REFUNDED
 
 conforme contrato da API.
 
-Implementada como tela de apresentação tipada para `PENDING`, `CONFIRMED`,
-`WAITING_LIST`, `CANCELLED` e `REFUNDED`. Os estados possuem descrição textual,
-sem antecipar posição da lista de espera ou ações ainda dependentes da API.
-
 ---
 
 ## TASK-036 — Implementar cancelamento de inscrição
@@ -728,7 +644,7 @@ sem antecipar posição da lista de espera ou ações ainda dependentes da API.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Critérios:
@@ -737,11 +653,6 @@ Critérios:
 - tratamento de regra de prazo;
 - atualização de estado.
 
-A tela reconcilia a inscrição mais recente do usuário, exige confirmação antes
-do cancelamento, bloqueia envios concorrentes e atualiza o estado retornado pela
-API, distinguindo reembolso processado de cancelamento sem reembolso por prazo.
-O `Idempotency-Key` permanece estável durante as tentativas da mesma operação.
-
 ---
 
 ## TASK-037 — Implementar lista de espera
@@ -749,7 +660,7 @@ O `Idempotency-Key` permanece estável durante as tentativas da mesma operação
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Exibir:
@@ -757,10 +668,6 @@ Exibir:
 - status;
 - posição quando fornecida;
 - promoção quando recebida pela API.
-
-O estado de espera mostra a posição quando a API a fornece. A inscrição é
-reconciliada sempre que a tela volta ao foco, refletindo automaticamente a
-promoção para confirmação e removendo a posição antiga.
 
 ---
 
@@ -771,14 +678,10 @@ promoção para confirmação e removendo a posição antiga.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Exibir estados retornados pela API.
-
-Implementada como tela de apresentação tipada para `PENDING`, `PAID`,
-`DECLINED`, `CANCELLED`, `REFUNDED` e `EXEMPT`, sem dados financeiros ou lógica
-de gateway. Todos os estados possuem descrição textual e cobertura de teste.
 
 ---
 
@@ -787,16 +690,12 @@ de gateway. Todos os estados possuem descrição textual e cobertura de teste.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Implementação depende da definição do gateway.
 
 Não incluir dados sensíveis desnecessários no app.
-
-Integrado ao gateway simulado da API com `Idempotency-Key` estável por tentativa.
-O app envia apenas os identificadores necessários, bloqueia duplicidade, apresenta
-progresso/erro e exibe o estado retornado sem expor referência externa sensível.
 
 ---
 
@@ -805,7 +704,7 @@ progresso/erro e exibe o estado retornado sem expor referência externa sensíve
 Status:
 
 ```text
-[!]
+[ ]
 ```
 
 Exibir:
@@ -817,9 +716,6 @@ Exibir:
 
 conforme contrato final da API.
 
-Bloqueio: o contrato atual expõe apenas o estado final `REFUNDED` (ou mantém
-`PAID` quando não há reembolso). Não há estados solicitado/processado/recusado.
-
 ---
 
 # Milestone 8 — History and Calendar
@@ -829,7 +725,7 @@ Bloqueio: o contrato atual expõe apenas o estado final `REFUNDED` (ou mantém
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Filtros:
@@ -840,9 +736,6 @@ Filtros:
 - cancelados;
 - lista de espera.
 
-O histórico paginado oferece os filtros `FUTURE`, `IN_PROGRESS`, `COMPLETED`,
-`CANCELLED` e `WAITING_LIST` definidos pelo contrato da API.
-
 ---
 
 ## TASK-042 — Criar calendário
@@ -850,7 +743,7 @@ O histórico paginado oferece os filtros `FUTURE`, `IN_PROGRESS`, `COMPLETED`,
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 ---
@@ -860,7 +753,7 @@ Status:
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 ---
@@ -872,7 +765,7 @@ Status:
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Mesmo que inicialmente exista apenas um grupo por workshop.
@@ -884,7 +777,7 @@ Mesmo que inicialmente exista apenas um grupo por workshop.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Exibir vínculo com workshop e acesso ao chat.
@@ -896,7 +789,7 @@ Exibir vínculo com workshop e acesso ao chat.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Se inscrição for cancelada ou workshop encerrado conforme regra.
@@ -910,7 +803,7 @@ Se inscrição for cancelada ou workshop encerrado conforme regra.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Com paginação.
@@ -922,7 +815,7 @@ Com paginação.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Estados:
@@ -940,13 +833,10 @@ failed
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Evitar duplicação.
-
-O mobile mantém a mesma UUID em `Idempotency-Key` enquanto o usuário repete uma
-mensagem que falhou, permitindo recuperar uma resposta perdida sem duplicação.
 
 ---
 
@@ -955,15 +845,12 @@ mensagem que falhou, permitindo recuperar uma resposta perdida sem duplicação.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Dependência:
 
 API com suporte WebSocket.
-
-Integrado ao STOMP nativo em `/ws`, com Bearer no `CONNECT`, assinatura do
-tópico autorizado e REST mantido como fonte persistente de verdade.
 
 ---
 
@@ -972,7 +859,7 @@ tópico autorizado e REST mantido como fonte persistente de verdade.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Critérios:
@@ -981,9 +868,6 @@ Critérios:
 - sincroniza mensagens perdidas;
 - não duplica mensagens.
 
-Reconexão exponencial limitada a 30 segundos, ressincronização REST após
-reconectar e deduplicação por ID.
-
 ---
 
 ## TASK-052 — Implementar exclusão/moderação visível
@@ -991,13 +875,10 @@ reconectar e deduplicação por ID.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Refletir permissões retornadas pela API.
-
-Exclusão própria, tombstone e moderação usam `canModerate` retornado pelo grupo;
-o compositor respeita separadamente `canSendMessages`.
 
 ---
 
@@ -1008,7 +889,7 @@ o compositor respeita separadamente `canSendMessages`.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 ---
@@ -1018,7 +899,7 @@ Status:
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 ---
@@ -1028,7 +909,7 @@ Status:
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Exemplos:
@@ -1039,9 +920,6 @@ notification -> post
 notification -> group/chat
 ```
 
-Metadados `workshopId`, `postId` e `groupId` são resolvidos apenas para rotas
-internas conhecidas, tanto na central quanto ao tocar uma notificação push.
-
 ---
 
 ## TASK-056 — Registrar dispositivo para push
@@ -1049,12 +927,8 @@ internas conhecidas, tanto na central quanto ao tocar uma notificação push.
 Status:
 
 ```text
-[~]
+[ ]
 ```
-
-Permissão, canal Android, token Expo e registro autenticado na API foram
-implementados nas configurações. A validação real aguarda `extra.eas.projectId`
-e os identificadores oficiais do app.
 
 ---
 
@@ -1063,12 +937,8 @@ e os identificadores oficiais do app.
 Status:
 
 ```text
-[!]
+[ ]
 ```
-
-O listener e a navegação interna estão implementados. Bloqueio: a API usa
-`NoOpPushProvider` e não envia notificações remotas até um provedor externo ser
-configurado; o projeto EAS também ainda não possui ID oficial.
 
 ---
 
@@ -1079,7 +949,7 @@ configurado; o projeto EAS também ainda não possui ID oficial.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 ---
@@ -1089,11 +959,8 @@ Status:
 Status:
 
 ```text
-[x]
+[ ]
 ```
-
-Somente `name`, `phone` e `profileImage` são enviados no `PATCH /users/me`.
-Usuário e e-mail permanecem somente leitura.
 
 ---
 
@@ -1102,7 +969,7 @@ Usuário e e-mail permanecem somente leitura.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Incluir conforme requisitos:
@@ -1114,9 +981,6 @@ Incluir conforme requisitos:
 - privacidade;
 - conta.
 
-Inclui atalhos para preferências e notificações, informação de tema do sistema,
-privacidade do armazenamento, ativação de push e logout.
-
 ---
 
 # Milestone 13 — Evaluations
@@ -1126,7 +990,7 @@ privacidade do armazenamento, ativação de push e logout.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Campos:
@@ -1144,14 +1008,10 @@ Campos:
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Tratar elegibilidade retornada pela API.
-
-A tela envia as quatro notas de 1 a 5 e comentário opcional. Conflito,
-proibição e recurso oculto são apresentados como indisponibilidade de avaliação.
-Reenvios preservam a mesma `Idempotency-Key` enquanto o conteúdo não muda.
 
 ---
 
@@ -1162,7 +1022,7 @@ Reenvios preservam a mesma `Idempotency-Key` enquanto o conteúdo não muda.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 Classificar operações em:
@@ -1180,7 +1040,7 @@ WRITE-ONLINE-ONLY
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 A tecnologia depende da stack escolhida.
@@ -1192,7 +1052,7 @@ A tecnologia depende da stack escolhida.
 Status:
 
 ```text
-[~]
+[ ]
 ```
 
 Utilizar suporte da API como:
@@ -1204,11 +1064,6 @@ updatedAfter
 
 quando disponível.
 
-Progresso: a API agora oferece `updatedAt`/`updatedAfter` para workshops, feed e
-notificações e ETag no detalhe de workshop. O mobile ainda usa refresh completo
-dos snapshots; a aplicação incremental e a remoção de itens que deixaram as
-coleções visíveis permanecem pendentes.
-
 ---
 
 ## TASK-066 — Criar fila controlada de operações retryable
@@ -1216,13 +1071,10 @@ coleções visíveis permanecem pendentes.
 Status:
 
 ```text
-[!]
+[ ]
 ```
 
 Não incluir automaticamente pagamentos.
-
-Inscrição, cancelamento, comentários, mensagens e avaliações já têm identidade
-idempotente, mas ainda não possuem fila persistida e política de expiração.
 
 ---
 
@@ -1231,15 +1083,12 @@ idempotente, mas ainda não possuem fila persistida e política de expiração.
 Status:
 
 ```text
-[!]
+[ ]
 ```
 
 Definir regra por domínio.
 
 Não usar "última escrita vence" universalmente sem avaliação.
-
-Bloqueio: depende das regras de conflito por domínio e das respostas definidas
-na API; não há versionamento de escritas ou precondições condicionais.
 
 ---
 
@@ -1250,7 +1099,7 @@ na API; não há versionamento de escritas ou precondições condicionais.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 ---
@@ -1260,7 +1109,7 @@ Status:
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 ---
@@ -1270,7 +1119,7 @@ Status:
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 ---
@@ -1280,7 +1129,7 @@ Status:
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 ---
@@ -1290,13 +1139,8 @@ Status:
 Status:
 
 ```text
-[x]
+[ ]
 ```
-
-Cobertos criação autenticada, reutilização da `Idempotency-Key`, respostas
-inválidas e conflitos, consulta da inscrição atual, cancelamento, posição e
-promoção na lista de espera, além do início do pagamento e dos estados exibidos
-durante todo o fluxo.
 
 ---
 
@@ -1305,12 +1149,8 @@ durante todo o fluxo.
 Status:
 
 ```text
-[x]
+[ ]
 ```
-
-Cobertos contrato e ordem das páginas, última página, deduplicação de
-sobreposição, acionamento incremental, bloqueio durante request concorrente e
-retry visual após falha.
 
 ---
 
@@ -1319,13 +1159,8 @@ retry visual após falha.
 Status:
 
 ```text
-[x]
+[ ]
 ```
-
-Cobertos cache expirado/inválido, fallback de feed e workshops, fluxo integrado
-online para offline, recuperação por retry explícito, erros HTTP de rede e
-timeout, ação visual de retry e refresh concorrente de sessão. Escritas sem
-identidade idempotente não receberam retry automático.
 
 ---
 
@@ -1334,11 +1169,8 @@ identidade idempotente não receberam retry automático.
 Status:
 
 ```text
-[x]
+[ ]
 ```
-
-Cobertos contrato do histórico por cursor, envio e exclusão persistente. A
-reconexão é validada pelos checks de tipo/lint e pela deduplicação do fluxo.
 
 ---
 
@@ -1349,12 +1181,8 @@ reconexão é validada pelos checks de tipo/lint e pela deduplicação do fluxo.
 Status:
 
 ```text
-[~]
+[ ]
 ```
-
-Progresso: perfil EAS interno com development client e ambiente de
-desenvolvimento configurado. A validação nativa aguarda os identificadores
-oficiais do aplicativo, vínculo do projeto EAS e credenciais das plataformas.
 
 ---
 
@@ -1363,13 +1191,8 @@ oficiais do aplicativo, vínculo do projeto EAS e credenciais das plataformas.
 Status:
 
 ```text
-[~]
+[ ]
 ```
-
-Progresso: perfil EAS de distribuição interna configurado, usando o ambiente
-`preview` do EAS, `APP_VARIANT=staging` e APK para validação Android. A URL de
-staging deve ser cadastrada externamente e o build nativo ainda precisa ser
-executado.
 
 ---
 
@@ -1378,12 +1201,8 @@ executado.
 Status:
 
 ```text
-[~]
+[ ]
 ```
-
-Progresso: perfil EAS para distribuição em loja configurado, sem URL ou segredo
-embutido. A conclusão depende dos identificadores oficiais, credenciais de loja,
-URL de produção no ambiente EAS e validação do binário assinado.
 
 ---
 
@@ -1392,7 +1211,7 @@ URL de produção no ambiente EAS e validação do binário assinado.
 Status:
 
 ```text
-[x]
+[ ]
 ```
 
 ---
@@ -1402,13 +1221,8 @@ Status:
 Status:
 
 ```text
-[x]
+[ ]
 ```
-
-Revisados semântica para leitor de tela, estados de ações assíncronas, alvos de
-toque, contraste, conteúdo não interativo e adaptação dos formulários a teclado
-e fonte ampliada. A cobertura automatizada foi atualizada e o checklist manual
-para binários Android/iOS está registrado em `docs/accessibility-review.md`.
 
 ---
 
@@ -1417,13 +1231,8 @@ para binários Android/iOS está registrado em `docs/accessibility-review.md`.
 Status:
 
 ```text
-[x]
+[ ]
 ```
-
-Revisados renders do contexto de autenticação, identidade dos dados das listas,
-virtualização, imagens, cache, timers, listeners, requests concorrentes e bundle.
-As correções mensuráveis receberam testes de regressão; medições com dados reais
-estão registradas em `docs/performance-review.md`.
 
 ---
 
@@ -1450,57 +1259,12 @@ Critérios:
 
 # TASK-083 — Validar implementação contra o protótipo Figma
 
-Status:
-
-```text
-[x]
-```
-
 - comparar telas implementadas com o protótipo;
 - validar navegação;
 - validar hierarquia visual;
 - validar estados de loading, erro e vazio;
 - registrar divergências intencionais;
 - atualizar Figma ou implementação quando necessário.
-
-As telas foram revisadas contra os arquivos fornecidos em
-`Trabalho-Mobile`. Login e recuperação usam o fundo e a marca WEG do material;
-a navegação principal usa menu hambúrguer lateral; lista e detalhes de workshop
-seguem a composição dos cartões de referência e usam a imagem ilustrativa do
-protótipo como fallback. Os detalhes incluem retorno, avaliação revisada e a
-discussão vinculada ao post publicado do workshop no final da rolagem.
-
-As navegações internas de workshop, grupo, chat, comentários e avaliação agora
-mantêm o identificador em estado de sessão e expõem URLs estáveis sem UUID. O
-fluxo real foi validado no navegador desde o login até lista, detalhes,
-comentários e avaliação, além dos testes, tipos, lint, formatação e export web.
-
----
-
-# TASK-084 — Adotar WEG Design System
-
-Status:
-
-```text
-[x]
-```
-
-- registrar a documentação oficial no `AGENTS.md`;
-- usar cores semânticas oficiais;
-- usar Roboto;
-- alinhar espaçamentos e radius;
-- adaptar componentes para React Native sem dependência web;
-- validar testes, lint, tipos, formatação e build.
-
-Revisão de UI/UX concluída nas telas de autenticação, navegação principal,
-feed, workshops, calendário, grupos, chat, notificações, preferências, perfil,
-avaliação, comentários e configurações. Foram padronizados cabeçalhos, cartões,
-ícones, hierarquia tipográfica, feedback de interação, estados de tela e largura
-responsiva conforme os tokens WEG e as referências visuais do projeto.
-
-Implementado com tokens semânticos consultados na documentação oficial,
-tipografia Roboto empacotada no aplicativo e adaptação dos componentes nativos
-existentes. Validado com testes, TypeScript, lint, Prettier e export web.
 
 ---
 
