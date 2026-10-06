@@ -61,21 +61,6 @@ export function createAuthenticatedHttpClient(
   };
 }
 
-export async function refreshStoredSession(
-  config: EnvironmentConfig,
-  tokenStorage: TokenStorage = createTokenStorage(),
-  http: HttpClient = createHttpClient(config),
-) {
-  const tokens = await tokenStorage.read();
-  if (!tokens) throw new AppError({ category: 'unauthorized' });
-  try {
-    return await refreshTokens(http, tokenStorage, tokens);
-  } catch (error) {
-    if (isUnauthorized(error)) await tokenStorage.clear();
-    throw error;
-  }
-}
-
 async function refreshTokens(
   http: HttpClient,
   tokenStorage: TokenStorage,

@@ -3,8 +3,7 @@ import * as Sharing from 'expo-sharing';
 
 import type { EnvironmentConfig } from '@/core/config';
 import { AppError } from '@/core/errors';
-import { refreshStoredSession } from '@/core/http';
-import type { SessionTokens, TokenStorage } from '@/core/secure-storage';
+import type { TokenStorage } from '@/core/secure-storage';
 import type { WorkshopAttachment } from '@/workshop/domain';
 
 type FileSystemAdapter = Readonly<{
@@ -33,30 +32,23 @@ export function createWorkshopAttachmentOpener(
   tokenStorage: TokenStorage,
   fileSystem: FileSystemAdapter = FileSystem,
   sharing: SharingAdapter = Sharing,
-  refreshSession: () => Promise<SessionTokens> = () =>
-    refreshStoredSession(config, tokenStorage),
 ): WorkshopAttachmentOpener {
   return {
     async open(workshopId, attachment) {
       if (!workshopId.trim() || !attachment.id.trim())
         throw new AppError({ category: 'bad_request' });
-      let tokens = await tokenStorage.read();
+      const tokens = await tokenStorage.read();
       if (!tokens) throw new AppError({ category: 'unauthorized' });
       if (!fileSystem.cacheDirectory || !(await sharing.isAvailableAsync()))
         throw unavailableError();
 
       const extension = safeExtension(attachment.name);
       const fileUri = `${fileSystem.cacheDirectory}workshop-${encodeURIComponent(attachment.id)}${extension}`;
-      const url = `${config.apiUrl}/workshops/${encodeURIComponent(workshopId)}/attachments/${encodeURIComponent(attachment.id)}/content`;
-      let result = await fileSystem.downloadAsync(url, fileUri, {
-        headers: { Authorization: `Bearer ${tokens.accessToken}` },
-      });
-      if (result.status === 401) {
-        tokens = await refreshSession();
-        result = await fileSystem.downloadAsync(url, fileUri, {
-          headers: { Authorization: `Bearer ${tokens.accessToken}` },
-        });
-      }
+      const result = await fileSystem.downloadAsync(
+        `${config.apiUrl}/workshops/${encodeURIComponent(workshopId)}/attachments/${encodeURIComponent(attachment.id)}/content`,
+        fileUri,
+        { headers: { Authorization: `Bearer ${tokens.accessToken}` } },
+      );
       if (result.status < 200 || result.status >= 300)
         throw new AppError({ category: 'unknown', status: result.status });
 

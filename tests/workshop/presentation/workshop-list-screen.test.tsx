@@ -167,34 +167,3 @@ it('keeps filters available when no workshop matches', () => {
     screen.getByRole('button', { name: 'Filtrar por Publicado' }),
   ).toBeTruthy();
 });
-
-it('loads another page at the end and exposes retry after failure', () => {
-  const onLoadMore = jest.fn();
-  const { rerender } = render(
-    <WorkshopListScreen
-      hasMore
-      onLoadMore={onLoadMore}
-      onRefresh={jest.fn()}
-      status="success"
-      workshops={workshops}
-    />,
-  );
-
-  screen.getByTestId('workshop-list').props.onEndReached();
-  expect(onLoadMore).toHaveBeenCalledTimes(1);
-
-  rerender(
-    <WorkshopListScreen
-      hasMore
-      loadMoreError
-      onLoadMore={onLoadMore}
-      onRefresh={jest.fn()}
-      status="success"
-      workshops={workshops}
-    />,
-  );
-  fireEvent.press(
-    screen.getByRole('button', { name: 'Tentar carregar mais workshops' }),
-  );
-  expect(onLoadMore).toHaveBeenCalledTimes(2);
-});

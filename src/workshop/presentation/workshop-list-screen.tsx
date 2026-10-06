@@ -47,10 +47,6 @@ type Props = Readonly<{
   onRefresh(): void;
   onRetry?: () => void;
   onOpen?: (workshop: WorkshopSummary) => void;
-  onLoadMore?: () => void;
-  hasMore?: boolean;
-  loadingMore?: boolean;
-  loadMoreError?: boolean;
 }>;
 
 export function WorkshopListScreen({
@@ -59,16 +55,12 @@ export function WorkshopListScreen({
   filters,
   onFiltersChange,
   onOpen,
-  onLoadMore,
   onRefresh,
   onRetry,
   refreshing = false,
   source = 'network',
   status,
   workshops,
-  hasMore = false,
-  loadingMore = false,
-  loadMoreError = false,
 }: Props) {
   const [filtersVisible, setFiltersVisible] = useState(false);
   if (status === 'loading' && workshops.length === 0)
@@ -133,27 +125,6 @@ export function WorkshopListScreen({
           title="Nenhum workshop encontrado"
         />
       }
-      ListFooterComponent={
-        loadingMore ? (
-          <ActivityIndicator
-            accessibilityLabel="Carregando mais workshops"
-            color={colors.brand}
-            style={styles.pagination}
-          />
-        ) : loadMoreError ? (
-          <Pressable
-            accessibilityRole="button"
-            onPress={onLoadMore}
-            style={styles.paginationRetry}
-          >
-            <Text style={styles.paginationRetryText}>
-              Tentar carregar mais workshops
-            </Text>
-          </Pressable>
-        ) : null
-      }
-      onEndReached={hasMore && !loadingMore ? onLoadMore : undefined}
-      onEndReachedThreshold={0.4}
       refreshControl={
         <RefreshControl
           accessibilityLabel="Atualizar workshops"
@@ -349,19 +320,5 @@ const styles = StyleSheet.create({
   },
   filtering: {
     marginBottom: spacing.sm,
-  },
-  pagination: {
-    marginVertical: spacing.md,
-  },
-  paginationRetry: {
-    alignItems: 'center',
-    minHeight: sizes.touchTarget,
-    justifyContent: 'center',
-    marginVertical: spacing.md,
-  },
-  paginationRetryText: {
-    color: colors.brand,
-    fontFamily: typography.familyMedium,
-    fontWeight: typography.medium,
   },
 });

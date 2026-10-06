@@ -61,18 +61,7 @@ export type WorkshopGateway = Readonly<{
   getCurrentUserId(): Promise<string>;
   loadFilterOptions(): Promise<WorkshopFilterOptions>;
   loadList(filters?: WorkshopFilters): Promise<readonly WorkshopSummary[]>;
-  loadPage(
-    page: number,
-    filters?: WorkshopFilters,
-    size?: number,
-  ): Promise<WorkshopPage>;
   loadDetails(id: string): Promise<WorkshopDetails>;
-}>;
-
-export type WorkshopPage = Readonly<{
-  items: readonly WorkshopSummary[];
-  page: number;
-  hasMore: boolean;
 }>;
 
 export function createApiWorkshopGateway(
@@ -114,35 +103,20 @@ export function createApiWorkshopGateway(
         categories: categories.map(({ id, name }) => ({ id, name })),
       };
     },
-    async loadPage(page, filters = { status: 'PUBLISHED' }, size = 20) {
+    async loadList(filters = { status: 'PUBLISHED' }) {
       validateFilters(filters);
-      if (
-        !Number.isInteger(page) ||
-        page < 0 ||
-        !Number.isInteger(size) ||
-        size < 1
-      )
-        throw new AppError({ category: 'bad_request' });
-      const [themes, categories, response] = await Promise.all([
+      const [themes, categories] = await Promise.all([
         loadTaxonomies(authenticated, '/themes'),
         loadTaxonomies(authenticated, '/categories'),
-        loadWorkshopPage(authenticated, filters, page, size),
       ]);
+      const workshops = await loadAllWorkshops(authenticated, filters);
       const themeNames = new Map(themes.map((theme) => [theme.id, theme.name]));
       const categoryNames = new Map(
         categories.map((category) => [category.id, category.name]),
       );
-      return {
-        items: response.content.map((workshop) =>
-          toSummary(workshop, themeNames, categoryNames, apiUrl),
-        ),
-        page: response.number,
-        hasMore: !response.last,
-      };
-    },
-    async loadList(filters = { status: 'PUBLISHED' }) {
-      const page = await this.loadPage(0, filters);
-      return page.items;
+      return workshops.map((workshop) =>
+        toSummary(workshop, themeNames, categoryNames, apiUrl),
+      );
     },
     async loadDetails(id) {
       if (!id.trim()) throw new AppError({ category: 'bad_request' });
@@ -179,22 +153,26 @@ async function loadTaxonomies(
   return response;
 }
 
-async function loadWorkshopPage(
+async function loadAllWorkshops(
   request: <T>(path: string) => Promise<T>,
   filters: WorkshopFilters,
-  page: number,
-  size: number,
 ) {
-  const query = new URLSearchParams({
-    ...(filters.status ? { status: filters.status } : {}),
-    ...(filters.themeId ? { themeId: filters.themeId } : {}),
-    ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
-    page: String(page),
-    size: String(size),
-  });
-  const response = await request<unknown>(`/workshops?${query}`);
-  if (!isPageResponse(response)) throw invalidResponse('workshops');
-  return response;
+  const workshops: WorkshopResponse[] = [];
+  let page = 0;
+  while (true) {
+    const query = new URLSearchParams({
+      ...(filters.status ? { status: filters.status } : {}),
+      ...(filters.themeId ? { themeId: filters.themeId } : {}),
+      ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
+      page: String(page),
+      size: '100',
+    });
+    const response = await request<unknown>(`/workshops?${query}`);
+    if (!isPageResponse(response)) throw invalidResponse('workshops');
+    workshops.push(...response.content);
+    if (response.last) return workshops;
+    page = response.number + 1;
+  }
 }
 
 function validateFilters(filters: WorkshopFilters) {

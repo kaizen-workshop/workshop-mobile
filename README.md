@@ -46,7 +46,7 @@ Os perfis ficam em `eas.json`:
 
 Antes do primeiro build, vincule o projeto à conta EAS, confirme com o time de
 produto os identificadores oficiais `android.package` e
-`ios.bundleIdentifier`, cadastre `EAS_PROJECT_ID` e `EXPO_PUBLIC_API_URL` nos ambientes
+`ios.bundleIdentifier` e cadastre `EXPO_PUBLIC_API_URL` nos ambientes
 `development`, `preview` e `production` do EAS. URLs e credenciais não devem
 ser adicionadas ao `eas.json`.
 

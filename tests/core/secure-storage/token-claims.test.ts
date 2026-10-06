@@ -25,30 +25,16 @@ it('reads the session owner from the locally stored JWT', async () => {
   await expect(readSessionUserId(storage)).resolves.toBe('user-123');
 });
 
-it('reads the local expiration and mandatory route state', () => {
+it('reads the local expiration and mandatory-password state', () => {
   expect(
     readJwtSession(
-      jwt({
-        sub: 'user-123',
-        exp: 1_800_000_000,
-        mustChangePassword: true,
-        requiresOnboarding: true,
-      }),
+      jwt({ sub: 'user-123', exp: 1_800_000_000, mustChangePassword: true }),
     ),
   ).toEqual({
     userId: 'user-123',
     expiresAt: 1_800_000_000_000,
     mustChangePassword: true,
-    requiresOnboarding: true,
   });
-});
-
-it('rejects legacy tokens without a safe offline onboarding state', () => {
-  expect(
-    readJwtSession(
-      jwt({ sub: 'user-123', exp: 1_800_000_000, mustChangePassword: false }),
-    ),
-  ).toBeNull();
 });
 
 it.each(['invalid', jwt({}), jwt({ sub: 42 })])(

@@ -34,17 +34,15 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({
   gateway,
   tokenStorage,
-  beforeLogout,
   children,
 }: {
   gateway: AuthGateway;
   tokenStorage: TokenStorage;
-  beforeLogout?: () => Promise<void>;
   children: ReactNode;
 }) {
   const controller = useMemo(
-    () => createSessionController(gateway, tokenStorage, beforeLogout),
-    [beforeLogout, gateway, tokenStorage],
+    () => createSessionController(gateway, tokenStorage),
+    [gateway, tokenStorage],
   );
   const [state, setState] = useState<AuthState>('UNAUTHENTICATED');
   const [isRestoring, setIsRestoring] = useState(true);

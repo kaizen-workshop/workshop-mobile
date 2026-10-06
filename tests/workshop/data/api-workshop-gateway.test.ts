@@ -87,14 +87,16 @@ it('loads published workshops and maps API metadata for the list', async () => {
     }),
   ]);
   expect(request).toHaveBeenCalledWith({
-    path: '/workshops?status=PUBLISHED&page=0&size=20',
+    path: '/workshops?status=PUBLISHED&page=0&size=100',
     headers: { Authorization: 'Bearer access' },
   });
 });
 
-it('loads one requested API page without eagerly consuming the catalog', async () => {
+it('loads all API pages without changing their order', async () => {
   const request = jest.fn(async ({ path }: { path: string }) => {
     if (path === '/themes' || path === '/categories') return [];
+    if (path.includes('page=0'))
+      return { content: [workshop], number: 0, last: false };
     return {
       content: [{ ...workshop, id: 'workshop-2', title: 'Segundo' }],
       number: 1,
@@ -103,14 +105,10 @@ it('loads one requested API page without eagerly consuming the catalog', async (
   });
   const gateway = createApiWorkshopGateway({ request } as HttpClient, tokens);
 
-  await expect(gateway.loadPage(1)).resolves.toEqual({
-    items: [expect.objectContaining({ id: 'workshop-2' })],
-    page: 1,
-    hasMore: false,
-  });
-  expect(request).not.toHaveBeenCalledWith(
-    expect.objectContaining({ path: expect.stringContaining('page=0') }),
-  );
+  await expect(gateway.loadList()).resolves.toEqual([
+    expect.objectContaining({ id: 'workshop-1' }),
+    expect.objectContaining({ id: 'workshop-2' }),
+  ]);
 });
 
 it('sends status, theme and category filters supported by the API', async () => {
@@ -127,7 +125,7 @@ it('sends status, theme and category filters supported by the API', async () => 
   });
 
   expect(request).toHaveBeenCalledWith({
-    path: '/workshops?status=CLOSED&themeId=theme%2F1&categoryId=category+1&page=0&size=20',
+    path: '/workshops?status=CLOSED&themeId=theme%2F1&categoryId=category+1&page=0&size=100',
     headers: { Authorization: 'Bearer access' },
   });
 });

@@ -120,9 +120,7 @@ export function WorkshopDetailsScreen({
     'loading' | 'loaded' | 'error'
   >('loading');
   const [commentText, setCommentText] = useState('');
-  const { refreshImage, source: imageSource } = useWorkshopImageSource(
-    workshop?.imageUrl,
-  );
+  const imageSource = useWorkshopImageSource(workshop?.imageUrl);
 
   if (status === 'loading')
     return <LoadingState message="Carregando workshop" />;
@@ -146,10 +144,7 @@ export function WorkshopDetailsScreen({
         <Image
           accessibilityLabel={`Imagem do workshop ${workshop.title}`}
           contentFit="cover"
-          onError={() => {
-            setImageStatus('error');
-            refreshImage();
-          }}
+          onError={() => setImageStatus('error')}
           onLoad={() => setImageStatus('loaded')}
           source={imageSource}
           style={styles.image}

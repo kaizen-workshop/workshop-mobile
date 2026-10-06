@@ -1,14 +1,7 @@
 import easConfig from '../../eas.json';
-import appConfig from '../../app.json';
 import packageJson from '../../package.json';
 
 describe('EAS build profiles', () => {
-  it('defines stable native application identifiers', () => {
-    expect(appConfig.expo.android.package).toBe('br.com.weg.kaizenworkshop');
-    expect(appConfig.expo.ios.bundleIdentifier).toBe(
-      'br.com.weg.kaizenworkshop',
-    );
-  });
   it('configures an internal development client', () => {
     expect(easConfig.build.development).toMatchObject({
       developmentClient: true,

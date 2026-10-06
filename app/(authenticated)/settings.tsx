@@ -13,10 +13,7 @@ import { useAuth } from '@/auth/session';
 import { getEnvironment } from '@/core/config';
 import { createAuthenticatedHttpClient } from '@/core/http';
 import { createTokenStorage } from '@/core/secure-storage';
-import {
-  createApiNotificationGateway,
-  createPushDeviceStorage,
-} from '@/notification/data';
+import { createApiNotificationGateway } from '@/notification/data';
 import { BackHeader } from '@/navigation';
 import {
   registerPushDevice,
@@ -43,7 +40,6 @@ export default function SettingsRoute() {
     [],
   );
   const [pushResult, setPushResult] = useState<PushRegistrationResult>();
-  const pushStorage = useMemo(() => createPushDeviceStorage(), []);
   const [registeringPush, setRegisteringPush] = useState(false);
   return (
     <ScrollView contentContainerStyle={styles.page}>
@@ -80,9 +76,7 @@ export default function SettingsRoute() {
             onPress={async () => {
               setRegisteringPush(true);
               try {
-                setPushResult(await registerPushDevice(gateway, pushStorage));
-              } catch {
-                setPushResult({ status: 'error' });
+                setPushResult(await registerPushDevice(gateway));
               } finally {
                 setRegisteringPush(false);
               }
@@ -174,8 +168,6 @@ function pushMessage(
   if (result.status === 'registered') return 'Dispositivo registrado.';
   if (result.status === 'denied')
     return 'A permissão de notificações foi negada.';
-  if (result.status === 'error')
-    return 'Nao foi possivel ativar o push. Tente novamente.';
   if (result.status === 'missing_project_id')
     return 'O projeto EAS ainda não foi vinculado.';
   return 'O push exige um dispositivo físico Android ou iOS.';
