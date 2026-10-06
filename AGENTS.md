@@ -1,5 +1,21 @@
 # AGENTS.md
 
+## Referências visuais
+
+As imagens de referência de telas ficam em `assets/images/examples`.
+Antes de implementar ou alterar uma tela, inspecione as imagens aplicáveis e
+use a hierarquia visual, o layout e os estados mostrados como referência de
+UI. Elas não substituem `TASKS.md`, requisitos funcionais ou o contrato
+OpenAPI; divergências intencionais devem ser registradas.
+
+> Decisão de stack: Expo SDK 57, React Native 0.86, React 19 e TypeScript
+> estrito. Expo Router navega; `fetch` encapsulado atende HTTP; AsyncStorage
+> atende apenas cache não sensível; Expo SecureStore armazena somente
+> access/refresh token; WebSocket nativo e Expo Notifications serão usados
+> nas tasks correspondentes. Testes usam Jest/`jest-expo`, lint usa Expo
+> ESLint e a formatação usa Prettier. Sem o OpenAPI no repositório, não criar
+> endpoints, payloads nem respostas de API.
+
 ## Projeto
 
 Nome: `workshop_mobile`
@@ -570,6 +586,32 @@ Quando a identidade visual for definida, centralizar:
 - componentes básicos.
 
 Não espalhar valores visuais arbitrários por dezenas de arquivos.
+
+## Referência visual oficial da WEG
+
+O aplicativo deve seguir o WEG Design System publicado em:
+
+```text
+https://design-system.weg.net/?path=/docs/about-introduction--documentation
+```
+
+Regras obrigatórias:
+
+- usar os tokens semânticos do WEG Design System como fonte para cores;
+- usar Roboto como tipografia principal;
+- respeitar a escala oficial de espaçamento, radius, tipografia e estados;
+- adaptar os padrões visuais para componentes nativos do React Native;
+- não instalar ou reutilizar diretamente componentes React destinados à web;
+- manter acessibilidade e tamanho mínimo de toque durante a adaptação mobile;
+- centralizar a adaptação em `src/shared/theme` e nos componentes básicos;
+- não copiar valores da paleta base quando existir token semântico equivalente;
+- consultar novamente a documentação oficial antes de criar um novo padrão
+  visual que ainda não esteja representado no aplicativo.
+
+As imagens em `assets/images/examples` continuam sendo referência de composição
+e hierarquia das telas. Em caso de diferença visual, o WEG Design System define
+os fundamentos e os requisitos funcionais continuam tendo prioridade sobre a
+aparência.
 
 ---
 
