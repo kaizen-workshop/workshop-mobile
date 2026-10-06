@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "KaizenWorkshop",
+    "slug": "KaizenWorkshop",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "kaizenworkshop",
+    "userInterfaceStyle": "light",
+    "android": {
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-splash-screen",
+      "expo-secure-store",
+      "expo-notifications",
+      "expo-sharing"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
