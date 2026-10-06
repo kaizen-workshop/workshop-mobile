@@ -2,9 +2,14 @@
 
 Baseline reviewed on 2026-10-06 for Expo SDK 57.
 
+`expo-notifications` is aligned with the SDK 57 compatibility check at `~57.0.22`.
+The npm override keeps the CLI and router server on the project's direct
+`expo-router` version, preventing an incompatible nested SDK 58 installation during
+static export.
+
 `npm audit fix --package-lock-only --omit=dev` applied every compatible lockfile
-update offered by npm. The remaining report contains 62 transitive findings (45 high,
-17 moderate and no critical findings). npm only offers `--force` remediations that
+update offered by npm. The remaining report contains 63 transitive findings (45 high,
+18 moderate and no critical findings). npm only offers `--force` remediations that
 downgrade Expo to SDK 44 or move individual packages to versions outside the SDK 57
 compatibility matrix, so those remediations are intentionally not applied.
 
