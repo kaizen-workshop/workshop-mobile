@@ -1,12 +1,13 @@
 import { AppError } from '@/core/errors';
 import type { HttpClient } from '@/core/http';
-import type { TokenStorage } from '@/core/secure-storage';
+import { readSessionUserId, type TokenStorage } from '@/core/secure-storage';
 import type { FeedCard, FeedPage } from '@/feed/domain';
 
 type PostResponse = Readonly<{
   id: string;
   title: string;
   content: string;
+  image?: string | null;
   workshopId: string | null;
   highlight: boolean;
   publishedAt: string | null;
@@ -23,6 +24,7 @@ type PageResponse = Readonly<{
 export type FeedGateway = Readonly<{
   getCurrentUserId(): Promise<string>;
   loadPage(page: number, size?: number): Promise<FeedPage>;
+  findPostIdForWorkshop(workshopId: string): Promise<string | undefined>;
   setLiked(postId: string, liked: boolean): Promise<void>;
 }>;
 
@@ -42,6 +44,8 @@ export function createApiFeedGateway(
 
   return {
     async getCurrentUserId() {
+      const tokenSubject = await readSessionUserId(tokenStorage);
+      if (tokenSubject) return tokenSubject;
       const profile = await authenticated<unknown>('/users/me');
       if (
         !profile ||
@@ -71,6 +75,23 @@ export function createApiFeedGateway(
         page: response.number,
         hasMore: !response.last,
       };
+    },
+    async findPostIdForWorkshop(workshopId) {
+      if (!workshopId.trim()) throw new AppError({ category: 'bad_request' });
+      let page = 0;
+      while (page < 20) {
+        const response = await authenticated<unknown>(
+          `/posts/feed?page=${page}&size=100`,
+        );
+        if (!isPageResponse(response)) throw invalidResponse('feed');
+        const related = response.content.find(
+          (post) => post.workshopId === workshopId,
+        );
+        if (related) return related.id;
+        if (response.last) return undefined;
+        page = response.number + 1;
+      }
+      return undefined;
     },
     async setLiked(postId, liked) {
       if (!postId.trim()) throw new AppError({ category: 'bad_request' });
@@ -111,6 +132,7 @@ function toFeedCard(post: PostResponse): FeedCard {
     id: post.id,
     kind: 'post',
     title: post.title,
+    ...(post.image ? { imageUrl: post.image } : {}),
     summary: post.content,
     highlighted: post.highlight,
     ...(post.workshopId ? { relatedWorkshopId: post.workshopId } : {}),
@@ -138,6 +160,9 @@ function isPostResponse(value: unknown): value is PostResponse {
     typeof post.id === 'string' &&
     typeof post.title === 'string' &&
     typeof post.content === 'string' &&
+    (post.image === undefined ||
+      post.image === null ||
+      typeof post.image === 'string') &&
     (post.workshopId === null || typeof post.workshopId === 'string') &&
     typeof post.highlight === 'boolean' &&
     (post.publishedAt === null || typeof post.publishedAt === 'string') &&

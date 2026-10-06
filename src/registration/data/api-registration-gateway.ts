@@ -13,7 +13,10 @@ export type RegistrationGateway = Readonly<{
     workshopId: string,
     idempotencyKey: string,
   ): Promise<RegistrationResult>;
-  cancel(registrationId: string): Promise<RegistrationResult>;
+  cancel(
+    registrationId: string,
+    idempotencyKey: string,
+  ): Promise<RegistrationResult>;
 }>;
 
 export function createApiRegistrationGateway(
@@ -61,12 +64,13 @@ export function createApiRegistrationGateway(
       );
       return mapRegistration(response);
     },
-    async cancel(registrationId) {
-      if (!registrationId.trim())
+    async cancel(registrationId, idempotencyKey) {
+      if (!registrationId.trim() || !idempotencyKey.trim())
         throw new AppError({ category: 'bad_request' });
       const response = await authenticated(
         `/registrations/${encodeURIComponent(registrationId)}/cancel`,
         'PATCH',
+        { 'Idempotency-Key': idempotencyKey },
       );
       return mapRegistration(response);
     },

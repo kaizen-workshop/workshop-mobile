@@ -15,6 +15,7 @@ type TokenStorage = Readonly<{
   read(): Promise<Tokens | null>;
   save(tokens: Tokens): Promise<void>;
   clear(): Promise<void>;
+  subscribeToClear?(listener: () => void): () => void;
 }>;
 type AuthContextValue = Readonly<{
   state: AuthState;
@@ -59,6 +60,14 @@ export function AuthProvider({
       mounted = false;
     };
   }, [controller]);
+  useEffect(
+    () =>
+      tokenStorage.subscribeToClear?.(() => {
+        controller.invalidate();
+        setState(controller.getState());
+      }),
+    [controller, tokenStorage],
+  );
   const sync = useCallback(
     async (operation: () => Promise<void>) => {
       try {

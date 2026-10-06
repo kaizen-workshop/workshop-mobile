@@ -6,19 +6,29 @@ import {
   useFonts,
 } from '@expo-google-fonts/roboto';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 
 import { createAuthGateway } from '@/auth/data/auth-gateway-factory';
 import { AuthProvider, useAuth } from '@/auth/session';
-import { getAppVariant } from '@/core/config';
+import { getAppVariant, getEnvironment } from '@/core/config';
+import { createHttpClient } from '@/core/http';
 import { createTokenStorage } from '@/core/secure-storage';
 import { colors } from '@/shared/theme';
 
 const variant = getAppVariant();
-const gateway = createAuthGateway(
-  process.env.APP_AUTH_MODE === 'demo' ? 'demo' : 'api',
-  variant,
-);
+const authMode = process.env.APP_AUTH_MODE === 'demo' ? 'demo' : 'api';
 const tokenStorage = createTokenStorage();
+const gateway = createAuthGateway(
+  authMode,
+  variant,
+  authMode === 'api'
+    ? {
+        http: createHttpClient(getEnvironment()),
+        tokenStorage,
+      }
+    : undefined,
+);
 
 function SessionRoutes() {
   const { isRestoring, state } = useAuth();
@@ -74,13 +84,25 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthProvider gateway={gateway} tokenStorage={tokenStorage}>
-      <SessionRoutes />
-    </AuthProvider>
+    <SafeAreaProvider>
+      <StatusBar style="light" />
+      <SafeAreaView
+        edges={['top', 'right', 'bottom', 'left']}
+        style={styles.safe}
+      >
+        <AuthProvider gateway={gateway} tokenStorage={tokenStorage}>
+          <SessionRoutes />
+        </AuthProvider>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
+  safe: {
+    backgroundColor: colors.brand,
+    flex: 1,
+  },
   loading: {
     alignItems: 'center',
     backgroundColor: colors.surface,

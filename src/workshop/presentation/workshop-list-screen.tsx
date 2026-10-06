@@ -8,9 +8,24 @@ import {
   Text,
   View,
 } from 'react-native';
+import { SlidersHorizontal } from 'lucide-react-native';
+import { useState } from 'react';
 
-import { EmptyState, ErrorState, LoadingState } from '@/shared/presentation';
-import { colors, spacing, typography } from '@/shared/theme';
+import { AppHeader } from '@/navigation';
+import {
+  EmptyState,
+  ErrorState,
+  InlineNotice,
+  LoadingState,
+} from '@/shared/presentation';
+import {
+  colors,
+  radii,
+  shadows,
+  sizes,
+  spacing,
+  typography,
+} from '@/shared/theme';
 import type {
   WorkshopFilterOption,
   WorkshopFilterOptions,
@@ -47,6 +62,7 @@ export function WorkshopListScreen({
   status,
   workshops,
 }: Props) {
+  const [filtersVisible, setFiltersVisible] = useState(false);
   if (status === 'loading' && workshops.length === 0)
     return <LoadingState message="Carregando workshops" />;
   if (status === 'error' && workshops.length === 0)
@@ -63,10 +79,24 @@ export function WorkshopListScreen({
       keyExtractor={(workshop) => workshop.id}
       ListHeaderComponent={
         <View>
-          <Text accessibilityRole="header" style={styles.heading}>
-            Workshops
-          </Text>
-          {filters && filterOptions && onFiltersChange ? (
+          <AppHeader
+            action={
+              filters && filterOptions && onFiltersChange ? (
+                <Pressable
+                  accessibilityLabel="Mostrar filtros"
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: filtersVisible }}
+                  onPress={() => setFiltersVisible((current) => !current)}
+                  style={styles.filterToggle}
+                >
+                  <SlidersHorizontal color={colors.text} size={22} />
+                </Pressable>
+              ) : undefined
+            }
+            eyebrow="Descubra e aprenda"
+            title="Workshops"
+          />
+          {filtersVisible && filters && filterOptions && onFiltersChange ? (
             <WorkshopFilterBar
               filters={filters}
               onChange={onFiltersChange}
@@ -82,9 +112,10 @@ export function WorkshopListScreen({
             />
           ) : null}
           {source === 'cache' ? (
-            <Text accessibilityRole="alert" style={styles.cachedNotice}>
-              Sem conexão. Exibindo workshops salvos neste dispositivo.
-            </Text>
+            <InlineNotice
+              message="Sem conexão. Exibindo workshops salvos neste dispositivo."
+              tone="warning"
+            />
           ) : null}
         </View>
       }
@@ -229,23 +260,29 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   content: {
+    alignSelf: 'center',
+    maxWidth: sizes.contentMaxWidth,
     padding: spacing.md,
-  },
-  heading: {
-    color: colors.text,
-    fontFamily: typography.familyBold,
-    fontSize: typography.title,
-    fontWeight: typography.bold,
-    marginBottom: spacing.md,
-  },
-  cachedNotice: {
-    color: colors.textMuted,
-    fontFamily: typography.familyRegular,
-    fontSize: typography.label,
-    marginBottom: spacing.md,
+    paddingBottom: spacing.xl,
+    width: '100%',
   },
   filters: {
+    ...shadows.card,
+    backgroundColor: colors.surface,
+    borderColor: colors.surface3,
+    borderRadius: radii.xxl,
+    borderWidth: 1,
     marginBottom: spacing.md,
+    padding: spacing.md,
+  },
+  filterToggle: {
+    alignItems: 'center',
+    borderColor: colors.surface3,
+    borderRadius: radii.full,
+    borderWidth: 1,
+    height: sizes.touchTarget,
+    justifyContent: 'center',
+    width: sizes.touchTarget,
   },
   filterGroup: {
     marginBottom: spacing.sm,
@@ -261,8 +298,9 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   filterChip: {
+    backgroundColor: colors.background,
     borderColor: colors.border,
-    borderRadius: 999,
+    borderRadius: radii.full,
     borderWidth: 1,
     justifyContent: 'center',
     minHeight: 40,

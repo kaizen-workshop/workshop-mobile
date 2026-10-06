@@ -55,7 +55,7 @@ it('preserves API order and identifies unread notifications', () => {
 
   expect(screen.getByTestId('notification-list').props.data).toBe(items);
   expect(screen.getByLabelText('Não lida')).toBeTruthy();
-  expect(screen.queryAllByRole('button')).toHaveLength(0);
+  expect(screen.getByRole('button', { name: 'Abrir menu' })).toBeTruthy();
 });
 
 it('connects item selection and incremental loading callbacks', () => {
@@ -95,4 +95,24 @@ it('does not request another page while loading', () => {
     screen.getByTestId('notification-list').props.onEndReached,
   ).toBeUndefined();
   expect(screen.getByLabelText('Carregando mais notificações')).toBeTruthy();
+});
+
+it('offers a retry after incremental loading fails', () => {
+  const onLoadMore = jest.fn();
+  render(
+    <NotificationCentreScreen
+      items={items}
+      loadMoreError
+      onLoadMore={onLoadMore}
+      onRetry={jest.fn()}
+      status="success"
+    />,
+  );
+
+  fireEvent.press(
+    screen.getByRole('button', {
+      name: 'Não foi possível carregar mais. Tentar novamente',
+    }),
+  );
+  expect(onLoadMore).toHaveBeenCalledTimes(1);
 });

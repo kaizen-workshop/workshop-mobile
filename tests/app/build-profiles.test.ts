@@ -9,7 +9,7 @@ describe('EAS build profiles', () => {
       environment: 'development',
       env: {
         APP_VARIANT: 'development',
-        APP_AUTH_MODE: 'demo',
+        APP_AUTH_MODE: 'api',
       },
     });
     expect(packageJson.dependencies['expo-dev-client']).toBeDefined();

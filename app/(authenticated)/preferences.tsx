@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 
 import { getEnvironment } from '@/core/config';
-import { createHttpClient } from '@/core/http';
+import { createAuthenticatedHttpClient } from '@/core/http';
 import { createTokenStorage } from '@/core/secure-storage';
 import { createApiPreferencesGateway } from '@/preferences/data';
 import type { ThemeOption } from '@/preferences/domain';
@@ -13,7 +13,7 @@ export default function EditPreferencesRoute() {
   const gateway = useMemo(
     () =>
       createApiPreferencesGateway(
-        createHttpClient(getEnvironment()),
+        createAuthenticatedHttpClient(getEnvironment()),
         createTokenStorage(),
       ),
     [],

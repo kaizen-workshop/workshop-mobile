@@ -1,6 +1,7 @@
 export type WorkshopSummary = Readonly<{
   id: string;
   title: string;
+  imageUrl?: string;
   description?: string;
   theme?: string;
   scheduleLabel?: string;

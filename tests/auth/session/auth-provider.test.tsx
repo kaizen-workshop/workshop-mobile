@@ -66,3 +66,41 @@ it('publishes the unauthenticated state after a failed refresh', async () => {
 
   await waitFor(() => expect(result.current.state).toBe('UNAUTHENTICATED'));
 });
+
+it('publishes the unauthenticated state when an HTTP refresh clears tokens', async () => {
+  let clearListener: (() => void) | undefined;
+  const gateway = {
+    login: jest.fn(),
+    refresh: jest.fn().mockResolvedValue({
+      accessToken: 'rotated-access',
+      refreshToken: 'rotated-refresh',
+      mustChangePassword: false,
+      requiresOnboarding: false,
+    }),
+    logout: jest.fn(),
+  };
+  const tokens = {
+    read: jest
+      .fn()
+      .mockResolvedValue({ accessToken: 'access', refreshToken: 'refresh' }),
+    save: jest.fn(),
+    clear: jest.fn(),
+    subscribeToClear: jest.fn((listener: () => void) => {
+      clearListener = listener;
+      return () => {
+        clearListener = undefined;
+      };
+    }),
+  };
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
+    <AuthProvider gateway={gateway as never} tokenStorage={tokens}>
+      {children}
+    </AuthProvider>
+  );
+  const { result } = renderHook(() => useAuth(), { wrapper });
+  await waitFor(() => expect(result.current.state).toBe('AUTHENTICATED'));
+
+  act(() => clearListener?.());
+
+  expect(result.current.state).toBe('UNAUTHENTICATED');
+});

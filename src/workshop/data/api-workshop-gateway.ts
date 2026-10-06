@@ -1,6 +1,6 @@
 import { AppError } from '@/core/errors';
 import type { HttpClient } from '@/core/http';
-import type { TokenStorage } from '@/core/secure-storage';
+import { readSessionUserId, type TokenStorage } from '@/core/secure-storage';
 import {
   workshopStatuses,
   type WorkshopDetails,
@@ -67,6 +67,7 @@ export type WorkshopGateway = Readonly<{
 export function createApiWorkshopGateway(
   http: HttpClient,
   tokenStorage: TokenStorage,
+  apiUrl?: string,
 ): WorkshopGateway {
   const authenticated = async <T>(path: string): Promise<T> => {
     const tokens = await tokenStorage.read();
@@ -79,6 +80,8 @@ export function createApiWorkshopGateway(
 
   return {
     async getCurrentUserId() {
+      const tokenSubject = await readSessionUserId(tokenStorage);
+      if (tokenSubject) return tokenSubject;
       const profile = await authenticated<unknown>('/users/me');
       if (
         !profile ||
@@ -112,7 +115,7 @@ export function createApiWorkshopGateway(
         categories.map((category) => [category.id, category.name]),
       );
       return workshops.map((workshop) =>
-        toSummary(workshop, themeNames, categoryNames),
+        toSummary(workshop, themeNames, categoryNames, apiUrl),
       );
     },
     async loadDetails(id) {
@@ -135,7 +138,7 @@ export function createApiWorkshopGateway(
       const category = categories.find(
         (entry) => entry.id === response.categoryId,
       )?.name;
-      return toDetails(response, attachments, theme, category);
+      return toDetails(response, attachments, theme, category, apiUrl);
     },
   };
 }
@@ -186,12 +189,16 @@ function toSummary(
   workshop: WorkshopResponse,
   themeNames: ReadonlyMap<string, string>,
   categoryNames: ReadonlyMap<string, string>,
+  apiUrl?: string,
 ): WorkshopSummary {
   const theme = themeNames.get(workshop.themeId);
   const category = categoryNames.get(workshop.categoryId);
   return {
     id: workshop.id,
     title: workshop.title,
+    ...(workshop.image
+      ? { imageUrl: workshopImageUrl(workshop.id, workshop.image, apiUrl) }
+      : {}),
     description: workshop.description,
     ...(theme ? { theme } : category ? { theme: category } : {}),
     scheduleLabel: formatSchedule(workshop),
@@ -213,10 +220,14 @@ function toDetails(
   attachments: readonly AttachmentResponse[],
   theme?: string,
   category?: string,
+  apiUrl?: string,
 ): WorkshopDetails {
   return {
     id: workshop.id,
     title: workshop.title,
+    ...(workshop.image
+      ? { imageUrl: workshopImageUrl(workshop.id, workshop.image, apiUrl) }
+      : {}),
     description: workshop.description,
     ...(theme ? { theme } : {}),
     ...(category ? { category } : {}),
@@ -245,6 +256,12 @@ function toDetails(
       ? { additionalInformation: workshop.additionalInformation }
       : {}),
   };
+}
+
+function workshopImageUrl(id: string, image: string, apiUrl?: string) {
+  return apiUrl
+    ? `${apiUrl}/workshops/${encodeURIComponent(id)}/image/content`
+    : image;
 }
 
 function formatSchedule(workshop: WorkshopResponse) {

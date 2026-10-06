@@ -1,24 +1,22 @@
 import { Tabs } from 'expo-router';
 
-import { colors, typography } from '@/shared/theme';
+import { colors } from '@/shared/theme';
 
 export default function MainTabsLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.brand,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarLabelStyle: {
-          fontFamily: typography.familyMedium,
-          fontSize: 12,
-          fontWeight: typography.medium,
+        sceneStyle: { backgroundColor: colors.background },
+        tabBarHideOnKeyboard: true,
+        tabBarStyle: {
+          display: 'none',
         },
       }}
     >
-      <Tabs.Screen name="feed" options={{ title: 'Feed' }} />
-      <Tabs.Screen name="agenda" options={{ title: 'Agenda' }} />
-      <Tabs.Screen name="notifications" options={{ title: 'Notificações' }} />
+      <Tabs.Screen name="feed" options={{ title: 'Início' }} />
+      <Tabs.Screen name="agenda" options={{ title: 'Workshops' }} />
+      <Tabs.Screen name="notifications" options={{ title: 'Avisos' }} />
       <Tabs.Screen name="profile" options={{ title: 'Perfil' }} />
     </Tabs>
   );

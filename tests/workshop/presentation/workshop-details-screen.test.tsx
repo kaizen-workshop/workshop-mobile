@@ -1,4 +1,9 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react-native';
 import { Alert } from 'react-native';
 
 import { WorkshopDetailsScreen } from '@/workshop/presentation';
@@ -328,4 +333,43 @@ it('starts payment only for a pending paid registration and shows its state', ()
     screen.getByText('A solicitação foi criada e aguarda confirmação.'),
   ).toBeTruthy();
   expect(screen.queryByText('simulated-reference')).toBeNull();
+});
+
+it('shows workshop comments in the detail scroll and publishes a new comment', async () => {
+  const onSendComment = jest.fn().mockResolvedValue(true);
+  render(
+    <WorkshopDetailsScreen
+      comments={[
+        {
+          id: 'comment-1',
+          userId: 'user-1',
+          content: 'Ótimo conteúdo e exemplos práticos.',
+          createdAt: '2026-10-02T12:00:00Z',
+          updatedAt: '2026-10-02T12:00:00Z',
+        },
+      ]}
+      currentUserId="user-1"
+      discussionStatus="success"
+      onSendComment={onSendComment}
+      status="success"
+      workshop={workshop}
+    />,
+  );
+
+  expect(screen.getByText('Comentários')).toBeTruthy();
+  expect(screen.getByText('Você')).toBeTruthy();
+  expect(screen.getByText('Ótimo conteúdo e exemplos práticos.')).toBeTruthy();
+
+  fireEvent.changeText(
+    screen.getByLabelText('Novo comentário'),
+    'Quero participar novamente.',
+  );
+  fireEvent.press(screen.getByRole('button', { name: 'Publicar' }));
+
+  await waitFor(() =>
+    expect(onSendComment).toHaveBeenCalledWith('Quero participar novamente.'),
+  );
+  await waitFor(() =>
+    expect(screen.getByLabelText('Novo comentário').props.value).toBe(''),
+  );
 });

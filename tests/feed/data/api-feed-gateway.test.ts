@@ -26,6 +26,7 @@ it('maps the API page without changing its authoritative order', async () => {
         id: 'highlight',
         title: 'Destaque',
         content: 'Primeiro',
+        image: 'https://cdn.example.test/highlight.webp',
         workshopId: 'workshop-id',
         highlight: true,
         publishedAt: '2026-09-29T12:00:00Z',
@@ -51,6 +52,9 @@ it('maps the API page without changing its authoritative order', async () => {
   const page = await gateway.loadPage(0);
 
   expect(page.items.map((item) => item.id)).toEqual(['highlight', 'recent']);
+  expect(page.items[0]).toMatchObject({
+    imageUrl: 'https://cdn.example.test/highlight.webp',
+  });
   expect(page).toMatchObject({ page: 0, hasMore: true });
   expect(request).toHaveBeenCalledWith({
     path: '/posts/feed?page=0&size=20',
@@ -97,6 +101,56 @@ it('uses the requested page and stops after the API last page', async () => {
   });
   expect(request).toHaveBeenCalledWith({
     path: '/posts/feed?page=2&size=10',
+    headers: { Authorization: 'Bearer access' },
+  });
+});
+
+it('finds the published post linked to a workshop across feed pages', async () => {
+  const request = jest
+    .fn()
+    .mockResolvedValueOnce({
+      content: [
+        {
+          id: 'unrelated',
+          title: 'Outro post',
+          content: 'Conteúdo',
+          workshopId: null,
+          highlight: false,
+          publishedAt: '2026-10-01T12:00:00Z',
+          likeCount: 0,
+          likedByMe: false,
+        },
+      ],
+      number: 0,
+      last: false,
+    })
+    .mockResolvedValueOnce({
+      content: [
+        {
+          id: 'discussion-post',
+          title: 'Workshop',
+          content: 'Discussão',
+          workshopId: 'workshop-1',
+          highlight: false,
+          publishedAt: '2026-10-02T12:00:00Z',
+          likeCount: 1,
+          likedByMe: false,
+        },
+      ],
+      number: 1,
+      last: true,
+    });
+  const gateway = createApiFeedGateway({ request } as HttpClient, tokens);
+
+  await expect(gateway.findPostIdForWorkshop('workshop-1')).resolves.toBe(
+    'discussion-post',
+  );
+  expect(request).toHaveBeenNthCalledWith(1, {
+    path: '/posts/feed?page=0&size=100',
+    headers: { Authorization: 'Bearer access' },
+  });
+  expect(request).toHaveBeenNthCalledWith(2, {
+    path: '/posts/feed?page=1&size=100',
     headers: { Authorization: 'Bearer access' },
   });
 });

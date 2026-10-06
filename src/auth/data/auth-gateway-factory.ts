@@ -1,9 +1,16 @@
 import type { AuthGateway } from '../domain/auth-gateway';
+import { getEnvironment } from '@/core/config';
+import { createHttpClient, type HttpClient } from '@/core/http';
+import { createTokenStorage, type TokenStorage } from '@/core/secure-storage';
+import { createApiAuthGateway } from './api-auth-gateway';
 import { DemoAuthGateway } from './demo-auth-gateway';
-import { unavailableAuthGateway } from './unavailable-auth-gateway';
 export function createAuthGateway(
   mode: 'demo' | 'api',
   variant: string,
+  dependencies?: Readonly<{
+    http: HttpClient;
+    tokenStorage: TokenStorage;
+  }>,
 ): AuthGateway {
   if (mode === 'demo') {
     if (!['development', 'test'].includes(variant))
@@ -12,5 +19,8 @@ export function createAuthGateway(
       );
     return new DemoAuthGateway();
   }
-  return unavailableAuthGateway;
+  return createApiAuthGateway(
+    dependencies?.http ?? createHttpClient(getEnvironment()),
+    dependencies?.tokenStorage ?? createTokenStorage(),
+  );
 }

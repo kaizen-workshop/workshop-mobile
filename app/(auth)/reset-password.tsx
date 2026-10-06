@@ -11,6 +11,7 @@ export default function ResetPasswordRoute() {
   );
   return (
     <ResetPasswordScreen
+      onBack={() => router.back()}
       onSubmit={async (input) => {
         await gateway.resetPassword(input);
         router.replace('/(auth)/login');

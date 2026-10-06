@@ -1,11 +1,14 @@
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as Crypto from 'expo-crypto';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { getEnvironment } from '@/core/config';
 import { AppError } from '@/core/errors';
-import { createHttpClient } from '@/core/http';
+import { createAuthenticatedHttpClient } from '@/core/http';
 import { createTokenStorage } from '@/core/secure-storage';
+import { createApiCommentGateway, createApiFeedGateway } from '@/feed/data';
+import type { PostComment } from '@/feed/domain';
+import { getSelectedWorkshop, selectWorkshop } from '@/navigation';
 import { createApiPaymentGateway } from '@/payment/data';
 import type { PaymentResult } from '@/payment/domain';
 import { createApiRegistrationGateway } from '@/registration/data';
@@ -20,15 +23,18 @@ import type { WorkshopAttachment, WorkshopDetails } from '@/workshop/domain';
 import { WorkshopDetailsScreen } from '@/workshop/presentation';
 
 export default function WorkshopDetailsRoute() {
+  const environment = useMemo(() => getEnvironment(), []);
   const params = useLocalSearchParams<{ id?: string | string[] }>();
-  const id = Array.isArray(params.id) ? params.id[0] : params.id;
+  const routeId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const id = routeId ?? getSelectedWorkshop()?.id;
   const gateway = useMemo(
     () =>
       createApiWorkshopGateway(
-        createHttpClient(getEnvironment()),
+        createAuthenticatedHttpClient(environment),
         createTokenStorage(),
+        environment.apiUrl,
       ),
-    [],
+    [environment],
   );
   const attachmentOpener = useMemo(
     () =>
@@ -38,7 +44,7 @@ export default function WorkshopDetailsRoute() {
   const registrationGateway = useMemo(
     () =>
       createApiRegistrationGateway(
-        createHttpClient(getEnvironment()),
+        createAuthenticatedHttpClient(getEnvironment()),
         createTokenStorage(),
       ),
     [],
@@ -46,7 +52,23 @@ export default function WorkshopDetailsRoute() {
   const paymentGateway = useMemo(
     () =>
       createApiPaymentGateway(
-        createHttpClient(getEnvironment()),
+        createAuthenticatedHttpClient(getEnvironment()),
+        createTokenStorage(),
+      ),
+    [],
+  );
+  const feedGateway = useMemo(
+    () =>
+      createApiFeedGateway(
+        createAuthenticatedHttpClient(getEnvironment()),
+        createTokenStorage(),
+      ),
+    [],
+  );
+  const commentGateway = useMemo(
+    () =>
+      createApiCommentGateway(
+        createAuthenticatedHttpClient(getEnvironment()),
         createTokenStorage(),
       ),
     [],
@@ -67,6 +89,9 @@ export default function WorkshopDetailsRoute() {
     Crypto.randomUUID(),
   );
   const [cancellingRegistration, setCancellingRegistration] = useState(false);
+  const [cancellationKey, setCancellationKey] = useState(() =>
+    Crypto.randomUUID(),
+  );
   const [cancellationError, setCancellationError] = useState<
     'conflict' | 'error'
   >();
@@ -77,6 +102,17 @@ export default function WorkshopDetailsRoute() {
   const [paying, setPaying] = useState(false);
   const [paymentError, setPaymentError] = useState(false);
   const payingRef = useRef(false);
+  const [discussionStatus, setDiscussionStatus] = useState<
+    'loading' | 'error' | 'success' | 'unavailable'
+  >('loading');
+  const [discussionPostId, setDiscussionPostId] = useState<string>();
+  const [comments, setComments] = useState<readonly PostComment[]>([]);
+  const [commentUserId, setCommentUserId] = useState('');
+  const [commentSending, setCommentSending] = useState(false);
+  const [commentError, setCommentError] = useState(false);
+  const pendingComment = useRef<{ content: string; key: string } | undefined>(
+    undefined,
+  );
 
   const load = useCallback(async () => {
     if (!id) {
@@ -143,8 +179,11 @@ export default function WorkshopDetailsRoute() {
     setCancellingRegistration(true);
     setCancellationError(undefined);
     try {
-      setRegistration(await registrationGateway.cancel(registration.id));
+      setRegistration(
+        await registrationGateway.cancel(registration.id, cancellationKey),
+      );
       setRegistrationKey(Crypto.randomUUID());
+      setCancellationKey(Crypto.randomUUID());
       setPayment(undefined);
       setPaymentKey(Crypto.randomUUID());
     } catch (error) {
@@ -157,7 +196,7 @@ export default function WorkshopDetailsRoute() {
       cancellingRef.current = false;
       setCancellingRegistration(false);
     }
-  }, [registration, registrationGateway]);
+  }, [cancellationKey, registration, registrationGateway]);
 
   const createPayment = useCallback(async () => {
     if (!registration || payingRef.current || payment) return;
@@ -173,6 +212,31 @@ export default function WorkshopDetailsRoute() {
       setPaying(false);
     }
   }, [payment, paymentGateway, paymentKey, registration]);
+
+  const loadDiscussion = useCallback(async () => {
+    if (!id) return;
+    setDiscussionStatus('loading');
+    setCommentError(false);
+    try {
+      const postId = await feedGateway.findPostIdForWorkshop(id);
+      if (!postId) {
+        setDiscussionPostId(undefined);
+        setComments([]);
+        setDiscussionStatus('unavailable');
+        return;
+      }
+      const [page, userId] = await Promise.all([
+        commentGateway.load(postId, 0, 50),
+        commentGateway.currentUserId(),
+      ]);
+      setDiscussionPostId(postId);
+      setCommentUserId(userId);
+      setComments(page.items);
+      setDiscussionStatus('success');
+    } catch {
+      setDiscussionStatus('error');
+    }
+  }, [commentGateway, feedGateway, id]);
 
   useEffect(() => {
     if (!id) return;
@@ -208,17 +272,91 @@ export default function WorkshopDetailsRoute() {
     }, [id, registrationGateway]),
   );
 
+  useEffect(() => {
+    if (!id) return;
+    let active = true;
+
+    void feedGateway
+      .findPostIdForWorkshop(id)
+      .then(async (postId) => {
+        if (!postId) return { postId: undefined, comments: [], userId: '' };
+        const [page, userId] = await Promise.all([
+          commentGateway.load(postId, 0, 50),
+          commentGateway.currentUserId(),
+        ]);
+        return { postId, comments: page.items, userId };
+      })
+      .then((discussion) => {
+        if (!active) return;
+        setDiscussionPostId(discussion.postId);
+        setComments(discussion.comments);
+        setCommentUserId(discussion.userId);
+        setDiscussionStatus(discussion.postId ? 'success' : 'unavailable');
+      })
+      .catch(() => {
+        if (active) setDiscussionStatus('error');
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [commentGateway, feedGateway, id]);
+
   return (
     <WorkshopDetailsScreen
       attachmentError={attachmentError}
+      commentError={commentError}
+      comments={comments}
+      commentSending={commentSending}
+      currentUserId={commentUserId}
+      discussionStatus={discussionStatus}
       cancellationError={cancellationError}
       cancellingRegistration={cancellingRegistration}
       openingAttachmentId={openingAttachmentId}
       onOpenAttachment={openAttachment}
       onCancelRegistration={cancelRegistration}
       onCreatePayment={createPayment}
+      onEvaluate={
+        workshop
+          ? () => {
+              selectWorkshop({ id: workshop.id, title: workshop.title });
+              router.push('/(authenticated)/evaluation');
+            }
+          : undefined
+      }
       onRegister={register}
       onRetry={load}
+      onRetryComments={loadDiscussion}
+      onSendComment={
+        discussionPostId
+          ? async (content) => {
+              if (commentSending) return false;
+              setCommentSending(true);
+              setCommentError(false);
+              try {
+                const normalized = content.trim();
+                const operation =
+                  pendingComment.current?.content === normalized
+                    ? pendingComment.current
+                    : { content: normalized, key: Crypto.randomUUID() };
+                pendingComment.current = operation;
+                const created = await commentGateway.create(
+                  discussionPostId,
+                  normalized,
+                  operation.key,
+                );
+                setComments((current) => [created, ...current]);
+                pendingComment.current = undefined;
+                return true;
+              } catch {
+                setCommentError(true);
+                return false;
+              } finally {
+                setCommentSending(false);
+              }
+            }
+          : undefined
+      }
       registration={registration}
       registrationError={registrationError}
       registering={registering}

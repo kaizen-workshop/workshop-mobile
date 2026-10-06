@@ -61,14 +61,24 @@ it('loads published workshops and maps API metadata for the list', async () => {
           active: true,
         },
       ];
-    return { content: [workshop], number: 0, last: true };
+    return {
+      content: [{ ...workshop, image: 'workshops/internal-key.webp' }],
+      number: 0,
+      last: true,
+    };
   });
-  const gateway = createApiWorkshopGateway({ request } as HttpClient, tokens);
+  const gateway = createApiWorkshopGateway(
+    { request } as HttpClient,
+    tokens,
+    'https://api.example.test/api/v1',
+  );
 
   await expect(gateway.loadList()).resolves.toEqual([
     expect.objectContaining({
       id: 'workshop-1',
       title: 'Lean Manufacturing',
+      imageUrl:
+        'https://api.example.test/api/v1/workshops/workshop-1/image/content',
       theme: 'Excelência operacional',
       scheduleLabel: '10/10/2026, 09:00–12:00',
       modality: 'Presencial',

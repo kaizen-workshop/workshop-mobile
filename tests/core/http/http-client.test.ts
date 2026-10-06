@@ -49,6 +49,38 @@ it('accepts a successful response without JSON content', async () => {
   ).resolves.toBeUndefined();
 });
 
+it('accepts an empty 202 response', async () => {
+  const fetchImpl = jest
+    .fn()
+    .mockResolvedValue(new Response(null, { status: 202 }));
+  const client = createHttpClient(
+    { variant: 'development', apiUrl: 'https://api.example.test/api/v1' },
+    fetchImpl,
+  );
+
+  await expect(
+    client.request<void>({ path: '/auth/forgot-password', method: 'POST' }),
+  ).resolves.toBeUndefined();
+});
+
+it('reports malformed successful JSON as a response error', async () => {
+  const fetchImpl = jest.fn().mockResolvedValue(
+    new Response('{invalid', {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    }),
+  );
+  const client = createHttpClient(
+    { variant: 'development', apiUrl: 'https://api.example.test/api/v1' },
+    fetchImpl,
+  );
+
+  await expect(client.request({ path: '/workshops' })).rejects.toMatchObject({
+    category: 'unknown',
+    technicalMessage: 'Invalid JSON response.',
+  });
+});
+
 it('maps a transport failure to a network error', async () => {
   const fetchImpl = jest.fn().mockRejectedValue(new Error('offline'));
   const client = createHttpClient(

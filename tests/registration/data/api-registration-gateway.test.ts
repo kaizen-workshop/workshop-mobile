@@ -133,13 +133,18 @@ it('cancels the owners registration through the API', async () => {
     tokens,
   );
 
-  await expect(gateway.cancel('registration/1')).resolves.toMatchObject({
+  await expect(
+    gateway.cancel('registration/1', 'cancellation-key'),
+  ).resolves.toMatchObject({
     status: 'CANCELLED',
     paymentStatus: 'PAID',
   });
   expect(request).toHaveBeenCalledWith({
     path: '/registrations/registration%2F1/cancel',
     method: 'PATCH',
-    headers: { Authorization: 'Bearer access' },
+    headers: {
+      Authorization: 'Bearer access',
+      'Idempotency-Key': 'cancellation-key',
+    },
   });
 });
