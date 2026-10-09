@@ -136,3 +136,66 @@ it('refreshes once and retries an attachment rejected with 401', async () => {
   );
   expect(shareAsync).toHaveBeenCalledTimes(1);
 });
+
+describe('on web', () => {
+  const { Platform } = jest.requireActual('react-native');
+  const config = { apiUrl: 'http://api/api/v1' } as never;
+  const attachment = { id: 'a/1', name: 'regulamento.png' };
+
+  beforeEach(() => {
+    jest.replaceProperty(Platform, 'OS', 'web');
+    const link = {
+      click: jest.fn(),
+      remove: jest.fn(),
+      href: '',
+      download: '',
+    };
+    (globalThis as { document?: unknown }).document = {
+      createElement: jest.fn(() => link),
+      body: { appendChild: jest.fn() },
+    };
+    (
+      globalThis.URL as unknown as { createObjectURL: unknown }
+    ).createObjectURL = jest.fn(() => 'blob:x');
+    (
+      globalThis.URL as unknown as { revokeObjectURL: unknown }
+    ).revokeObjectURL = jest.fn();
+    (globalThis as { __link?: unknown }).__link = link;
+  });
+  afterEach(() => {
+    jest.restoreAllMocks();
+    delete (globalThis as { document?: unknown }).document;
+  });
+
+  it('downloads with the session token and triggers a browser download', async () => {
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      blob: async () => ({}),
+    });
+    globalThis.fetch = fetchMock as never;
+
+    await createWorkshopAttachmentOpener(config, tokens).open('w1', attachment);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://api/api/v1/workshops/w1/attachments/a%2F1/content',
+      { headers: { Authorization: 'Bearer access' } },
+    );
+    const link = (
+      globalThis as unknown as {
+        __link: { click: jest.Mock; download: string };
+      }
+    ).__link;
+    expect(link.click).toHaveBeenCalledTimes(1);
+    expect(link.download).toBe('regulamento.png');
+  });
+
+  it('reports an unsuccessful download', async () => {
+    globalThis.fetch = jest
+      .fn()
+      .mockResolvedValue({ ok: false, status: 404 }) as never;
+    await expect(
+      createWorkshopAttachmentOpener(config, tokens).open('w1', attachment),
+    ).rejects.toMatchObject({ status: 404 });
+  });
+});

@@ -58,10 +58,13 @@ export function AppHeader({
   title,
   eyebrow,
   action,
+  showBack = false,
 }: Readonly<{
   title: string;
   eyebrow?: string;
   action?: React.ReactNode;
+  /** Adds a back arrow, shown only when there is a real previous screen. */
+  showBack?: boolean;
 }>) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -91,6 +94,19 @@ export function AppHeader({
         >
           <Menu color={colors.onBrand} size={25} strokeWidth={2.2} />
         </Pressable>
+        {showBack && router.canGoBack() ? (
+          <Pressable
+            accessibilityLabel="Voltar"
+            accessibilityRole="link"
+            onPress={() => router.back()}
+            style={({ pressed }) => [
+              styles.backButton,
+              pressed && styles.pressed,
+            ]}
+          >
+            <ArrowLeft color={colors.text} size={23} />
+          </Pressable>
+        ) : null}
         <View style={styles.heading}>
           {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
           <Text accessibilityRole="header" style={styles.title}>
@@ -133,7 +149,7 @@ export function AppHeader({
                     key={href}
                     onPress={() => {
                       setOpen(false);
-                      router.replace(href as Href);
+                      router.navigate(href as Href);
                     }}
                     style={({ pressed }) => [
                       styles.destination,
@@ -170,33 +186,20 @@ export function AppHeader({
   );
 }
 
+/**
+ * Header for secondary screens. The menu button stays visible everywhere; the back arrow
+ * appears next to it only when there is a real previous screen to return to.
+ */
 export function BackHeader({
   title,
   eyebrow,
-  fallback = '/(authenticated)/(tabs)/agenda',
-}: Readonly<{ title: string; eyebrow?: string; fallback?: string }>) {
-  return (
-    <View style={styles.header}>
-      <Pressable
-        accessibilityLabel="Voltar"
-        accessibilityRole="link"
-        onPress={() => {
-          if (router.canGoBack()) router.back();
-          else router.replace(fallback as never);
-        }}
-        style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
-      >
-        <ArrowLeft color={colors.text} size={23} />
-      </Pressable>
-      <View style={styles.heading}>
-        {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
-        <Text accessibilityRole="header" style={styles.title}>
-          {title}
-        </Text>
-      </View>
-      <View style={styles.actionPlaceholder} />
-    </View>
-  );
+}: Readonly<{
+  title: string;
+  eyebrow?: string;
+  /** Ignored: with the menu always visible no screen needs a fallback destination. */
+  fallback?: string;
+}>) {
+  return <AppHeader eyebrow={eyebrow} showBack title={title} />;
 }
 
 /**

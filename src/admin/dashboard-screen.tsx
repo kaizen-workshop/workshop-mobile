@@ -20,6 +20,7 @@ export function DashboardScreen({
   onCreatePost,
   onCreateWorkshop,
   onManageTaxonomies,
+  onOpenPosts,
   onOpenWorkshops,
   onRetry,
   status,
@@ -31,6 +32,7 @@ export function DashboardScreen({
   onCreateWorkshop(): void;
   /** Only for ADMIN accounts. */
   onManageTaxonomies?: () => void;
+  onOpenPosts(): void;
   onOpenWorkshops(): void;
   onRetry(): void;
   status: 'loading' | 'error' | 'success';
@@ -78,6 +80,7 @@ export function DashboardScreen({
         <SectionTitle>Ações rápidas</SectionTitle>
         <PrimaryButton label="+ Criar workshop" onPress={onCreateWorkshop} />
         <SecondaryButton label="+ Criar post" onPress={onCreatePost} />
+        <SecondaryButton label="Meus posts" onPress={onOpenPosts} />
         <SecondaryButton
           label="Enviar comunicado"
           onPress={onCreateAnnouncement}

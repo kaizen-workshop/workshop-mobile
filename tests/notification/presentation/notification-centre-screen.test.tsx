@@ -42,7 +42,7 @@ it('renders loading, error and empty states', () => {
     <NotificationCentreScreen items={[]} onRetry={onRetry} status="success" />,
   );
   expect(screen.getByText('Nenhuma notificação')).toBeTruthy();
-  expect(screen.getByRole('link', { name: 'Voltar' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Abrir menu' })).toBeTruthy();
 });
 
 it('preserves API order and identifies unread notifications', () => {
@@ -56,7 +56,7 @@ it('preserves API order and identifies unread notifications', () => {
 
   expect(screen.getByTestId('notification-list').props.data).toBe(items);
   expect(screen.getByLabelText('Não lida')).toBeTruthy();
-  expect(screen.getByRole('link', { name: 'Voltar' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Abrir menu' })).toBeTruthy();
 });
 
 it('connects item selection and incremental loading callbacks', () => {

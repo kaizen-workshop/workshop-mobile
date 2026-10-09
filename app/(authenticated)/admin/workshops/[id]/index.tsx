@@ -83,15 +83,38 @@ export default function ManageWorkshopRoute() {
     }
   };
 
+  const schedule = async (instant: string) => {
+    if (busy) return;
+    setBusy(true);
+    setFeedback(undefined);
+    try {
+      setChanged(await gateway.schedule(workshop.id, instant));
+      setFeedback({ tone: 'success', message: 'Publicação agendada.' });
+    } catch (cause) {
+      setFeedback({
+        tone: 'danger',
+        message: describeError(cause, {
+          bad_request:
+            'A data precisa estar no futuro e antes do início do workshop.',
+          conflict: 'Só rascunhos podem ser agendados.',
+        }).message,
+      });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <WorkshopManageScreen
       busy={busy}
       feedback={feedback}
       onEdit={() => router.push(adminHref.edit(workshop.id))}
+      onOpenEvaluations={() => router.push(adminHref.evaluations(workshop.id))}
       onOpenMedia={() => router.push(adminHref.media(workshop.id))}
       onOpenParticipants={() =>
         router.push(adminHref.participants(workshop.id))
       }
+      onSchedule={(instant) => void schedule(instant)}
       onTransition={(action) => void transition(action)}
       workshop={workshop}
     />

@@ -39,7 +39,7 @@ it('shows identity, stats and interests like the design', () => {
   expect(screen.getByLabelText('Concluídos: 2')).toBeTruthy();
   expect(screen.getByLabelText('Em espera: 1')).toBeTruthy();
   expect(screen.getByText('Esportes')).toBeTruthy();
-  expect(screen.getByRole('link', { name: 'Voltar' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Abrir menu' })).toBeTruthy();
 });
 
 it('keeps the edit form hidden until Editar perfil is pressed', () => {

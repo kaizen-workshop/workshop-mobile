@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type {
@@ -8,8 +9,10 @@ import type {
 import {
   AdminPage,
   Card,
+  Field,
   Heading,
   Notice,
+  SecondaryButton,
   SectionTitle,
   StatusChip,
 } from './admin-ui';
@@ -47,7 +50,9 @@ export function ParticipantsScreen({
   busyId,
   canSimulatePayments,
   error,
+  exporting,
   feedback,
+  onExport,
   onMarkAttendance,
   onRetry,
   onSimulate,
@@ -58,6 +63,8 @@ export function ParticipantsScreen({
   busyId?: string;
   canSimulatePayments: boolean;
   error?: unknown;
+  exporting?: boolean;
+  onExport(format: 'CSV' | 'XLSX'): void;
   feedback?: { tone: 'danger' | 'success'; message: string };
   onMarkAttendance(registrationId: string, status: AttendanceStatus): void;
   onRetry(): void;
@@ -66,6 +73,17 @@ export function ParticipantsScreen({
   payments: readonly WorkshopPayment[];
   status: 'loading' | 'error' | 'success';
 }>) {
+  const [query, setQuery] = useState('');
+  const visible = useMemo(() => {
+    const needle = query.trim().toLocaleLowerCase('pt-BR');
+    return needle
+      ? participants.filter((p) =>
+          `${p.name} ${p.email} ${p.wegRegistration ?? ''}`
+            .toLocaleLowerCase('pt-BR')
+            .includes(needle),
+        )
+      : participants;
+  }, [participants, query]);
   const frame = (node: React.ReactNode) => (
     <StatePage
       eyebrow="ARWEG · Administrativo"
@@ -136,12 +154,24 @@ export function ParticipantsScreen({
 
       <Card>
         <SectionTitle>{`Inscritos (${participants.length})`}</SectionTitle>
+        {participants.length > 0 ? (
+          <Field
+            label="Buscar participante"
+            onChangeText={setQuery}
+            placeholder="Nome, e-mail ou crachá"
+            value={query}
+          />
+        ) : null}
         {participants.length === 0 ? (
           <Text style={styles.empty}>
             Ainda não há inscrições neste workshop.
           </Text>
+        ) : visible.length === 0 ? (
+          <Text style={styles.empty}>
+            Ninguém encontrado para esta busca. Confira o nome ou limpe o campo.
+          </Text>
         ) : (
-          participants.map((participant) => (
+          visible.map((participant) => (
             <View key={participant.registrationId} style={styles.item}>
               <Text style={styles.name}>{participant.name}</Text>
               <Text style={styles.meta}>{participant.email}</Text>
@@ -206,6 +236,25 @@ export function ParticipantsScreen({
           ))
         )}
       </Card>
+
+      {participants.length > 0 ? (
+        <Card>
+          <SectionTitle>Exportar lista</SectionTitle>
+          <Text style={styles.empty}>
+            Baixe a lista completa de participantes deste workshop.
+          </Text>
+          <SecondaryButton
+            busy={exporting}
+            label="Exportar CSV"
+            onPress={() => onExport('CSV')}
+          />
+          <SecondaryButton
+            busy={exporting}
+            label="Exportar planilha (XLSX)"
+            onPress={() => onExport('XLSX')}
+          />
+        </Card>
+      ) : null}
     </AdminPage>
   );
 }

@@ -25,6 +25,7 @@ export default function AdminDashboardRoute() {
       onManageTaxonomies={
         role === 'ADMIN' ? () => router.push(adminHref.taxonomies) : undefined
       }
+      onOpenPosts={() => router.push(adminHref.posts)}
       onOpenWorkshops={() => router.push(adminHref.workshops)}
       onRetry={dashboard.reload}
       status={dashboard.status}

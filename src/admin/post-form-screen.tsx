@@ -36,20 +36,28 @@ export function validatePost(values: PostFormValues): PostFormErrors {
 export function PostFormScreen({
   busy,
   feedback,
+  heading = 'Criar post',
+  initial,
   onCancel,
   onSave,
+  publishLabel = 'Publicar agora',
+  saveLabel = 'Salvar rascunho',
+  subtitle = 'Preencha os dados para criar a publicação.',
 }: Readonly<{
   busy: boolean;
+  heading?: string;
+  initial?: PostFormValues;
+  publishLabel?: string;
+  saveLabel?: string;
+  subtitle?: string;
   feedback?: { tone: 'danger' | 'success'; message: string };
   onCancel(): void;
   /** `publish` also publishes right after saving the draft. */
   onSave(values: PostFormValues, publish: boolean): void;
 }>) {
-  const [values, setValues] = useState<PostFormValues>({
-    title: '',
-    content: '',
-    highlight: false,
-  });
+  const [values, setValues] = useState<PostFormValues>(
+    initial ?? { title: '', content: '', highlight: false },
+  );
   const [errors, setErrors] = useState<PostFormErrors>({});
 
   const submit = (publish: boolean) => {
@@ -59,11 +67,8 @@ export function PostFormScreen({
   };
 
   return (
-    <AdminPage title="Criar post">
-      <Heading
-        title="Novo post"
-        subtitle="Preencha os dados para criar a publicação."
-      />
+    <AdminPage fallback="/admin/posts" title={heading}>
+      <Heading title={heading} subtitle={subtitle} />
       <Card>
         <Field
           error={errors.title}
@@ -116,12 +121,12 @@ export function PostFormScreen({
 
       <PrimaryButton
         busy={busy}
-        label="Publicar agora"
+        label={publishLabel}
         onPress={() => submit(true)}
       />
       <SecondaryButton
         disabled={busy}
-        label="Salvar rascunho"
+        label={saveLabel}
         onPress={() => submit(false)}
       />
       <LinkButton label="Voltar" onPress={onCancel} />

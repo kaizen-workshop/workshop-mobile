@@ -127,3 +127,40 @@ export const statusLabels: Record<WorkshopStatus, string> = {
   CANCELLED: 'Cancelado',
   ARCHIVED: 'Arquivado',
 };
+
+export type PostStatus = 'DRAFT' | 'SCHEDULED' | 'PUBLISHED' | 'ARCHIVED';
+
+export type ManagedPost = Readonly<{
+  id: string;
+  title: string;
+  content: string;
+  status: PostStatus;
+  highlight: boolean;
+  scheduledAt?: string | null;
+  publishedAt?: string | null;
+}>;
+
+export const postStatusLabels: Record<PostStatus, string> = {
+  DRAFT: 'Rascunho',
+  SCHEDULED: 'Agendado',
+  PUBLISHED: 'Publicado',
+  ARCHIVED: 'Arquivado',
+};
+
+export type EvaluationSummary = Readonly<{
+  total: number;
+  averageRating: number | null;
+  averageContentRating: number | null;
+  averageInstructorRating: number | null;
+  averageOrganizationRating: number | null;
+}>;
+
+export type WorkshopEvaluation = Readonly<{
+  id: string;
+  rating: number;
+  contentRating: number;
+  instructorRating: number;
+  organizationRating: number;
+  comment?: string | null;
+  createdAt: string;
+}>;

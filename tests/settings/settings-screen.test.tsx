@@ -28,7 +28,7 @@ it('groups settings into the sections of the design', () => {
   expect(screen.getByText('Conta')).toBeTruthy();
   expect(screen.getByText('Notificações')).toBeTruthy();
   expect(screen.getByText('Aplicativo')).toBeTruthy();
-  expect(screen.getByRole('link', { name: 'Voltar' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Abrir menu' })).toBeTruthy();
 });
 
 it('opens account destinations and signs out', () => {

@@ -20,6 +20,8 @@ import {
   SectionTitle,
   StatusChip,
 } from './admin-ui';
+import { formatScheduled } from './schedule';
+import { SchedulePanel } from './schedule-panel';
 import { formatDate } from './workshop-form';
 import { colors, spacing, typography } from '@/shared/theme';
 
@@ -61,20 +63,25 @@ export function WorkshopManageScreen({
   busy,
   feedback,
   onEdit,
+  onOpenEvaluations,
   onOpenMedia,
   onOpenParticipants,
+  onSchedule,
   onTransition,
   workshop,
 }: Readonly<{
   busy: boolean;
   feedback?: { tone: 'danger' | 'success'; message: string };
   onEdit(): void;
+  onOpenEvaluations(): void;
   onOpenMedia(): void;
   onOpenParticipants(): void;
+  onSchedule(instant: string): void;
   onTransition(action: WorkshopTransition): void;
   workshop: ManagedWorkshop;
 }>) {
   const [pending, setPending] = useState<WorkshopTransition | null>(null);
+  const [scheduling, setScheduling] = useState(false);
   const transitions = availableTransitions(workshop.status);
   const confirmation = pending ? confirmations[pending] : undefined;
 
@@ -83,6 +90,25 @@ export function WorkshopManageScreen({
     else onTransition(action);
   };
 
+  if (scheduling)
+    return (
+      <AdminPage fallback="/admin/workshops" title="Agendar publicação">
+        <Heading
+          title={workshop.title}
+          subtitle="O workshop é publicado sozinho na data escolhida."
+        />
+        <SchedulePanel
+          busy={busy}
+          onCancel={() => setScheduling(false)}
+          onConfirm={(instant) => {
+            setScheduling(false);
+            onSchedule(instant);
+          }}
+          title="Quando publicar?"
+        />
+      </AdminPage>
+    );
+
   return (
     <AdminPage fallback="/admin/workshops" title="Gerenciar workshop">
       <Heading
@@ -90,6 +116,11 @@ export function WorkshopManageScreen({
         subtitle={`${formatDate(workshop.startDate)} · ${workshop.startTime.slice(0, 5)} · ${workshop.location}`}
       />
       <StatusChip label={statusLabels[workshop.status]} />
+      {workshop.status === 'SCHEDULED' && workshop.scheduledPublishAt ? (
+        <Notice tone="info">
+          {`Publicação agendada para ${formatScheduled(workshop.scheduledPublishAt)}. Você também pode publicar agora.`}
+        </Notice>
+      ) : null}
 
       {feedback ? (
         <Notice tone={feedback.tone}>{feedback.message}</Notice>
@@ -140,6 +171,12 @@ export function WorkshopManageScreen({
                 onPress={() => request('publish')}
               />
             ) : null}
+            {workshop.status === 'DRAFT' ? (
+              <SecondaryButton
+                label="Agendar publicação"
+                onPress={() => setScheduling(true)}
+              />
+            ) : null}
             {isEditable(workshop.status) ? (
               <SecondaryButton label="Editar workshop" onPress={onEdit} />
             ) : (
@@ -148,6 +185,7 @@ export function WorkshopManageScreen({
               </Text>
             )}
             <SecondaryButton label="Imagem e anexos" onPress={onOpenMedia} />
+            <SecondaryButton label="Avaliações" onPress={onOpenEvaluations} />
             <SecondaryButton
               label="Participantes e pagamentos"
               onPress={onOpenParticipants}

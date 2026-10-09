@@ -1,14 +1,18 @@
 import { AppError, toAppError } from '@/core/errors';
+import { downloadAuthenticatedFile } from '@/core/http/authenticated-download';
 import type { HttpClient } from '@/core/http';
 import type { TokenStorage } from '@/core/secure-storage';
 import type {
   AttendanceStatus,
   Dashboard,
+  EvaluationSummary,
   ManagedParticipant,
+  ManagedPost,
   ManagedWorkshop,
   PostInput,
   Taxonomy,
   WorkshopInput,
+  WorkshopEvaluation,
   WorkshopPayment,
   WorkshopStatus,
   WorkshopTransition,
@@ -217,6 +221,44 @@ export function createApiAdminGateway(
         'DELETE',
       );
     },
+    async evaluationSummary(id: string): Promise<EvaluationSummary> {
+      const value = await request<unknown>(
+        `/workshops/${encodeId(id)}/evaluations/summary`,
+      );
+      if (!isRecord(value) || typeof value.total !== 'number')
+        throw invalidResponse('evaluation summary');
+      const avg = (key: string) =>
+        typeof value[key] === 'number' ? (value[key] as number) : null;
+      return {
+        total: value.total,
+        averageRating: avg('averageRating'),
+        averageContentRating: avg('averageContentRating'),
+        averageInstructorRating: avg('averageInstructorRating'),
+        averageOrganizationRating: avg('averageOrganizationRating'),
+      };
+    },
+    async evaluations(id: string, pageNumber = 0, size = 50) {
+      return page(
+        await request<unknown>(
+          `/workshops/${encodeId(id)}/evaluations?page=${pageNumber}&size=${size}`,
+        ),
+        isEvaluation,
+      );
+    },
+    async exportParticipants(id: string, format: 'CSV' | 'XLSX') {
+      const tokens = await tokenStorage.read();
+      if (!tokens) throw new AppError({ category: 'unauthorized' });
+      if (!apiUrl) throw new AppError({ category: 'bad_request' });
+      await downloadAuthenticatedFile({
+        url: `${apiUrl}/arweg/workshops/${encodeId(id)}/participants/export?format=${format}`,
+        accessToken: tokens.accessToken,
+        filename: `participantes.${format.toLowerCase()}`,
+        mimeType:
+          format === 'CSV'
+            ? 'text/csv'
+            : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+    },
     async themes(): Promise<Taxonomy[]> {
       const value = await request<unknown>('/themes');
       if (!Array.isArray(value) || !value.every(isTaxonomy))
@@ -235,12 +277,27 @@ export function createApiAdminGateway(
         throw invalidResponse('post');
       return value.id;
     },
+    async listPosts(pageNumber = 0, size = 50) {
+      return page(
+        await request<unknown>(
+          `/posts/managed?page=${pageNumber}&size=${size}`,
+        ),
+        isManagedPost,
+      );
+    },
+    async updatePost(id: string, input: PostInput) {
+      await request<unknown>(`/posts/${encodeId(id)}`, 'PUT', input);
+    },
+    async archivePost(id: string) {
+      await request<unknown>(`/posts/${encodeId(id)}/archive`, 'PATCH');
+    },
     async publishPost(id: string) {
       await request<unknown>(`/posts/${encodeId(id)}/publish`, 'PATCH');
     },
     async schedulePost(id: string, scheduledPublishAt: string) {
+      // Unlike workshops, the post endpoint names this field scheduledAt.
       await request<unknown>(`/posts/${encodeId(id)}/schedule`, 'PATCH', {
-        scheduledPublishAt,
+        scheduledAt: scheduledPublishAt,
       });
     },
   };
@@ -314,6 +371,21 @@ function isWorkshopFile(value: unknown): value is WorkshopFile {
     typeof value.id === 'string' &&
     typeof value.filename === 'string' &&
     typeof value.sizeBytes === 'number'
+  );
+}
+function isManagedPost(value: unknown): value is ManagedPost {
+  return (
+    isRecord(value) &&
+    typeof value.id === 'string' &&
+    typeof value.title === 'string' &&
+    typeof value.status === 'string'
+  );
+}
+function isEvaluation(value: unknown): value is WorkshopEvaluation {
+  return (
+    isRecord(value) &&
+    typeof value.id === 'string' &&
+    typeof value.rating === 'number'
   );
 }
 function isTaxonomy(value: unknown): value is Taxonomy {
