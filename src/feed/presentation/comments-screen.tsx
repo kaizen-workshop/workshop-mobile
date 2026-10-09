@@ -78,19 +78,21 @@ export function CommentsScreen({
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.page}
     >
-      {keyboardVisible ? null : (
-        <View style={styles.header}>
-          <BackHeader eyebrow="Conversa" title="Comentários" />
-          {postTitle ? (
-            <View style={styles.postContext}>
-              <Text style={styles.postContextLabel}>Sobre o post</Text>
-              <Text numberOfLines={2} style={styles.postContextTitle}>
-                {postTitle}
-              </Text>
-            </View>
-          ) : null}
-        </View>
-      )}
+      <View style={styles.header}>
+        <BackHeader
+          compact={keyboardVisible}
+          eyebrow="Conversa"
+          title="Comentários"
+        />
+        {postTitle && !keyboardVisible ? (
+          <View style={styles.postContext}>
+            <Text style={styles.postContextLabel}>Sobre o post</Text>
+            <Text numberOfLines={2} style={styles.postContextTitle}>
+              {postTitle}
+            </Text>
+          </View>
+        ) : null}
+      </View>
       <FlatList
         data={items}
         keyExtractor={(item) => item.id}

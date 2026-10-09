@@ -99,14 +99,13 @@ export function ChatScreen({
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.page}
     >
-      {keyboardVisible ? null : (
-        <View style={styles.header}>
-          <BackHeader
-            eyebrow={active ? 'Grupo ativo' : 'Histórico do grupo'}
-            title={title}
-          />
-        </View>
-      )}
+      <View style={styles.header}>
+        <BackHeader
+          compact={keyboardVisible}
+          eyebrow={active ? 'Grupo ativo' : 'Histórico do grupo'}
+          title={title}
+        />
+      </View>
       {!active ? (
         <View style={styles.notice}>
           <InlineNotice message="Este grupo foi encerrado. O histórico permanece disponível." />

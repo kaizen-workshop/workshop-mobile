@@ -60,17 +60,20 @@ export function AppHeader({
   title,
   eyebrow,
   action,
+  compact = false,
   showBack = false,
 }: Readonly<{
   title: string;
   eyebrow?: string;
   action?: React.ReactNode;
+  /** One-line header for when the keyboard takes most of the screen. */
+  compact?: boolean;
   /** Adds a back arrow, shown only when there is a real previous screen. */
   showBack?: boolean;
 }>) {
   return (
     <>
-      <View style={styles.header}>
+      <View style={[styles.header, compact && styles.headerCompact]}>
         {/* The real, fixed button is FloatingMenu; this keeps the title aligned with it. */}
         <View style={styles.menuSlot} />
         {showBack && router.canGoBack() ? (
@@ -87,8 +90,14 @@ export function AppHeader({
           </Pressable>
         ) : null}
         <View style={styles.heading}>
-          {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
-          <Text accessibilityRole="header" style={styles.title}>
+          {eyebrow && !compact ? (
+            <Text style={styles.eyebrow}>{eyebrow}</Text>
+          ) : null}
+          <Text
+            accessibilityRole="header"
+            numberOfLines={compact ? 1 : undefined}
+            style={[styles.title, compact && styles.titleCompact]}
+          >
             {title}
           </Text>
         </View>
@@ -216,13 +225,17 @@ export function FloatingMenu() {
 export function BackHeader({
   title,
   eyebrow,
+  compact,
 }: Readonly<{
   title: string;
   eyebrow?: string;
+  compact?: boolean;
   /** Ignored: with the menu always visible no screen needs a fallback destination. */
   fallback?: string;
 }>) {
-  return <AppHeader eyebrow={eyebrow} showBack title={title} />;
+  return (
+    <AppHeader compact={compact} eyebrow={eyebrow} showBack title={title} />
+  );
 }
 
 /**
@@ -278,6 +291,8 @@ const styles = StyleSheet.create({
     minHeight: 56,
   },
   menuSlot: { height: 48, width: 48 },
+  headerCompact: { marginBottom: spacing.xs, minHeight: 48 },
+  titleCompact: { fontSize: typography.body, lineHeight: 22 },
   floatingMenu: {
     left: spacing.md,
     position: 'absolute',

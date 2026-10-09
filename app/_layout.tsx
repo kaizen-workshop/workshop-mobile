@@ -7,6 +7,7 @@ import {
   useFonts,
 } from '@expo-google-fonts/inter';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 
@@ -20,7 +21,11 @@ import {
   createPushDeviceStorage,
   unregisterPushDevice,
 } from '@/notification/data';
-import { colors, installWebFocusStyle } from '@/shared/theme';
+import {
+  colors,
+  installWebFocusStyle,
+  installWebViewportFit,
+} from '@/shared/theme';
 
 const variant = getAppVariant();
 const authMode =
@@ -82,6 +87,7 @@ function SessionRoutes() {
 export default function RootLayout() {
   useEffect(() => {
     installWebFocusStyle();
+    installWebViewportFit();
   }, []);
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
@@ -102,25 +108,30 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider>
-      <StatusBar style="light" />
-      <SafeAreaView
-        edges={['top', 'right', 'bottom', 'left']}
-        style={styles.safe}
-      >
-        <AuthProvider
-          beforeLogout={cleanupPushDevice}
-          gateway={gateway}
-          tokenStorage={tokenStorage}
+    <GestureHandlerRootView style={styles.root}>
+      <SafeAreaProvider>
+        <StatusBar style="light" />
+        <SafeAreaView
+          edges={['top', 'right', 'bottom', 'left']}
+          style={styles.safe}
         >
-          <SessionRoutes />
-        </AuthProvider>
-      </SafeAreaView>
-    </SafeAreaProvider>
+          <AuthProvider
+            beforeLogout={cleanupPushDevice}
+            gateway={gateway}
+            tokenStorage={tokenStorage}
+          >
+            <SessionRoutes />
+          </AuthProvider>
+        </SafeAreaView>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   safe: {
     backgroundColor: colors.brand,
     flex: 1,
