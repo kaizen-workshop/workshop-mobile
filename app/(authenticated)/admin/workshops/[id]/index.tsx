@@ -88,6 +88,7 @@ export default function ManageWorkshopRoute() {
       busy={busy}
       feedback={feedback}
       onEdit={() => router.push(adminHref.edit(workshop.id))}
+      onOpenMedia={() => router.push(adminHref.media(workshop.id))}
       onOpenParticipants={() =>
         router.push(adminHref.participants(workshop.id))
       }

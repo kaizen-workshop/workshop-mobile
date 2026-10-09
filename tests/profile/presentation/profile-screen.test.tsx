@@ -75,3 +75,15 @@ it('guides people without interests and opens the shortcuts', () => {
   expect(onOpenPreferences).toHaveBeenCalled();
   expect(onOpenHistory).toHaveBeenCalled();
 });
+
+it('shows the management shortcut only for managers', () => {
+  const onOpenAdmin = jest.fn();
+  setup({ onOpenAdmin });
+  fireEvent.press(screen.getByRole('button', { name: 'Painel de gestão' }));
+  expect(onOpenAdmin).toHaveBeenCalledTimes(1);
+});
+
+it('hides the management shortcut for participants', () => {
+  setup();
+  expect(screen.queryByRole('button', { name: 'Painel de gestão' })).toBeNull();
+});

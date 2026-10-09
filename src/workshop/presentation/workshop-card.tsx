@@ -18,6 +18,7 @@ import {
 } from '@/shared/theme';
 import type { WorkshopSummary } from '@/workshop/domain';
 import { useWorkshopImageSource } from './use-workshop-image-source';
+import { WorkshopCover } from './workshop-cover';
 
 export function WorkshopCard({
   onPress,
@@ -28,14 +29,22 @@ export function WorkshopCard({
   );
   const content = (
     <>
-      <Image
-        accessibilityLabel={`Imagem do workshop ${workshop.title}`}
-        contentFit="cover"
-        onError={refreshImage}
-        source={imageSource}
-        style={styles.image}
-        transition={180}
-      />
+      {workshop.imageUrl ? (
+        <Image
+          accessibilityLabel={`Imagem do workshop ${workshop.title}`}
+          contentFit="cover"
+          onError={refreshImage}
+          source={imageSource}
+          style={styles.image}
+          transition={180}
+        />
+      ) : (
+        <WorkshopCover
+          style={styles.image}
+          theme={workshop.theme}
+          title={workshop.title}
+        />
+      )}
       <View style={styles.body}>
         <View style={styles.topRow}>
           {workshop.theme ? (

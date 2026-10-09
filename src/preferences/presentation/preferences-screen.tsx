@@ -1,10 +1,11 @@
 import { describeError } from '@/core/errors';
 import { useState } from 'react';
+import { Check } from 'lucide-react-native';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { ThemeOption } from '@/preferences/domain';
+import { coverFor } from '@/workshop/presentation/workshop-cover';
 import {
-  AppSymbol,
   EmptyState,
   ErrorState,
   LoadingState,
@@ -18,19 +19,6 @@ import {
   spacing,
   typography,
 } from '@/shared/theme';
-
-const selectionSymbols = {
-  checked: {
-    ios: 'checkmark.circle.fill',
-    android: 'check_circle',
-    web: 'check_circle',
-  },
-  unchecked: {
-    ios: 'circle',
-    android: 'radio_button_unchecked',
-    web: 'radio_button_unchecked',
-  },
-} as const;
 
 type Props = Readonly<{
   status: 'loading' | 'error' | 'success';
@@ -100,8 +88,10 @@ export function PreferencesScreen({
     <View style={styles.page}>
       <FlatList
         testID="preferences-list"
+        columnWrapperStyle={styles.row}
         contentContainerStyle={styles.content}
         data={themes}
+        numColumns={2}
         keyExtractor={(theme) => theme.id}
         ListHeaderComponent={
           <View>
@@ -121,6 +111,7 @@ export function PreferencesScreen({
         }
         renderItem={({ item }) => {
           const selected = selectedIds.has(item.id);
+          const { Icon } = coverFor(item.name, item.name);
           return (
             <Pressable
               accessibilityLabel={item.name}
@@ -133,24 +124,21 @@ export function PreferencesScreen({
                 pressed && styles.optionPressed,
               ]}
             >
-              <View style={styles.optionText}>
-                <Text style={styles.optionTitle}>{item.name}</Text>
-                {item.description ? (
-                  <Text style={styles.optionDescription}>
-                    {item.description}
-                  </Text>
+              <View style={styles.optionTop}>
+                <Icon
+                  color={selected ? colors.brand : colors.textMuted}
+                  size={24}
+                />
+                {selected ? (
+                  <Check color={colors.brand} size={18} strokeWidth={3} />
                 ) : null}
               </View>
-              <AppSymbol
-                color={selected ? colors.brand : colors.disabled}
-                fallback={selected ? '✓' : '○'}
-                name={
-                  selected
-                    ? selectionSymbols.checked
-                    : selectionSymbols.unchecked
-                }
-                size={26}
-              />
+              <Text style={styles.optionTitle}>{item.name}</Text>
+              {item.description ? (
+                <Text numberOfLines={2} style={styles.optionDescription}>
+                  {item.description}
+                </Text>
+              ) : null}
             </Pressable>
           );
         }}
@@ -211,17 +199,24 @@ const styles = StyleSheet.create({
     fontSize: typography.bodySmall,
     fontWeight: typography.medium,
   },
+  row: { gap: spacing.sm },
   option: {
     ...shadows.card,
-    alignItems: 'center',
     backgroundColor: colors.surface,
     borderColor: colors.surface3,
     borderRadius: radii.xl,
     borderWidth: 1,
-    flexDirection: 'row',
+    flex: 1,
+    gap: spacing.xxs,
     marginBottom: spacing.sm,
-    minHeight: 64,
+    minHeight: 112,
     padding: spacing.md,
+  },
+  optionTop: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: spacing.xs,
   },
   optionSelected: {
     backgroundColor: colors.brandSubtle,
@@ -229,9 +224,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   optionPressed: { opacity: 0.7 },
-  optionText: {
-    flex: 1,
-  },
   optionTitle: {
     color: colors.text,
     fontFamily: typography.familyMedium,
@@ -241,7 +233,8 @@ const styles = StyleSheet.create({
   optionDescription: {
     color: colors.textMuted,
     fontFamily: typography.familyRegular,
-    marginTop: spacing.xxs,
+    fontSize: typography.caption,
+    lineHeight: 16,
   },
   footer: {
     ...shadows.card,

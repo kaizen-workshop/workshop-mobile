@@ -1,4 +1,6 @@
 import { router } from 'expo-router';
+import { adminHref } from '@/admin';
+import { canManage, useRole } from '@/auth/session';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { getEnvironment } from '@/core/config';
@@ -14,6 +16,7 @@ import {
 } from '@/profile';
 
 export default function ProfileRoute() {
+  const role = useRole();
   const gateway = useMemo(
     () =>
       createApiProfileGateway(
@@ -91,6 +94,9 @@ export default function ProfileRoute() {
       saving={saving}
       saveError={saveError}
       onRetry={load}
+      onOpenAdmin={
+        canManage(role) ? () => router.push(adminHref.home) : undefined
+      }
       onSave={async (input) => {
         if (saving) return;
         setSaving(true);

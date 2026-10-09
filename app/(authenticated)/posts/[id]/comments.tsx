@@ -111,6 +111,7 @@ export default function CommentsRoute() {
 
   return (
     <CommentsScreen
+      postTitle={getSelectedPost()?.title}
       items={items}
       currentUserId={currentUserId}
       status={status}

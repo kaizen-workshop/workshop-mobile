@@ -23,6 +23,8 @@ export type ManagedWorkshop = Readonly<{
   paymentMethod: PaymentMethod;
   championship: boolean;
   additionalInformation?: string | null;
+  /** Non-null when the workshop has an uploaded image. */
+  image?: string | null;
   status: WorkshopStatus;
   scheduledPublishAt?: string | null;
 }>;

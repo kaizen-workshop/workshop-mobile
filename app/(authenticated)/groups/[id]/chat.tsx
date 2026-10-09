@@ -184,8 +184,14 @@ export default function ChatRoute() {
             current.map((item) => (item.id === deleted.id ? deleted : item)),
           );
         } catch (cause) {
-          setLoadError(cause);
-          setStatus('error');
+          // Keep the conversation on screen and explain what failed.
+          setSendError(
+            describeError(cause, {
+              forbidden: 'Você não pode excluir esta mensagem.',
+              not_found: 'Esta mensagem não existe mais.',
+              conflict: 'Este grupo foi encerrado e não aceita alterações.',
+            }).message,
+          );
         }
       }}
     />

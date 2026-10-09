@@ -29,6 +29,7 @@ export function CommentsScreen({
   currentUserId,
   status,
   error,
+  postTitle,
   sending,
   sendError,
   actionError,
@@ -42,6 +43,8 @@ export function CommentsScreen({
   items: readonly PostComment[];
   currentUserId: string;
   status: 'loading' | 'error' | 'success';
+  /** Title of the post being discussed, shown for context. */
+  postTitle?: string;
   error?: unknown;
   sending: boolean;
   sendError: boolean | string;
@@ -70,6 +73,14 @@ export function CommentsScreen({
     <View style={styles.page}>
       <View style={styles.header}>
         <BackHeader eyebrow="Conversa" title="Comentários" />
+        {postTitle ? (
+          <View style={styles.postContext}>
+            <Text style={styles.postContextLabel}>Sobre o post</Text>
+            <Text numberOfLines={2} style={styles.postContextTitle}>
+              {postTitle}
+            </Text>
+          </View>
+        ) : null}
       </View>
       <FlatList
         data={items}
@@ -247,6 +258,25 @@ export function CommentsScreen({
   );
 }
 const styles = StyleSheet.create({
+  postContext: {
+    backgroundColor: colors.brandSubtle,
+    borderRadius: radii.xl,
+    marginBottom: spacing.sm,
+    padding: spacing.sm,
+  },
+  postContextLabel: {
+    color: colors.accent,
+    fontFamily: typography.familyMedium,
+    fontSize: typography.caption,
+    fontWeight: typography.medium,
+    textTransform: 'uppercase',
+  },
+  postContextTitle: {
+    color: colors.text,
+    fontFamily: typography.familyBold,
+    fontSize: typography.body,
+    fontWeight: typography.bold,
+  },
   page: { backgroundColor: colors.background, flex: 1 },
   header: {
     alignSelf: 'center',

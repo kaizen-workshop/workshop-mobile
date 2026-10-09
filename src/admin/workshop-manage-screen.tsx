@@ -61,6 +61,7 @@ export function WorkshopManageScreen({
   busy,
   feedback,
   onEdit,
+  onOpenMedia,
   onOpenParticipants,
   onTransition,
   workshop,
@@ -68,6 +69,7 @@ export function WorkshopManageScreen({
   busy: boolean;
   feedback?: { tone: 'danger' | 'success'; message: string };
   onEdit(): void;
+  onOpenMedia(): void;
   onOpenParticipants(): void;
   onTransition(action: WorkshopTransition): void;
   workshop: ManagedWorkshop;
@@ -145,6 +147,7 @@ export function WorkshopManageScreen({
                 Apenas rascunhos e workshops agendados podem ser editados.
               </Text>
             )}
+            <SecondaryButton label="Imagem e anexos" onPress={onOpenMedia} />
             <SecondaryButton
               label="Participantes e pagamentos"
               onPress={onOpenParticipants}

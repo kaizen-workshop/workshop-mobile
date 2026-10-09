@@ -1,4 +1,4 @@
-import { AppError } from '@/core/errors';
+import { AppError, toAppError } from '@/core/errors';
 import type { HttpClient } from '@/core/http';
 import type { TokenStorage } from '@/core/secure-storage';
 import type {
@@ -13,13 +13,45 @@ import type {
   WorkshopStatus,
   WorkshopTransition,
 } from './admin';
+import { guessType, type PickedFile, type WorkshopFile } from './media';
 
 type PageOf<T> = Readonly<{ content: T[]; number: number; last: boolean }>;
 
 export function createApiAdminGateway(
   http: HttpClient,
   tokenStorage: TokenStorage,
+  apiUrl?: string,
 ) {
+  /** Multipart upload; the JSON HTTP client cannot send a form body. */
+  const upload = async (path: string, file: PickedFile) => {
+    const tokens = await tokenStorage.read();
+    if (!tokens) throw new AppError({ category: 'unauthorized' });
+    if (!apiUrl) throw new AppError({ category: 'bad_request' });
+    const form = new FormData();
+    if (file.file) form.append('file', file.file, file.name);
+    else
+      form.append('file', {
+        uri: file.uri,
+        name: file.name,
+        type: file.mimeType ?? guessType(file.name),
+      } as unknown as Blob);
+    let response: Response;
+    try {
+      response = await fetch(`${apiUrl}${path}`, {
+        method: 'POST',
+        // No Content-Type: fetch adds the multipart boundary itself.
+        headers: { Authorization: `Bearer ${tokens.accessToken}` },
+        body: form,
+      });
+    } catch {
+      throw new AppError({ category: 'network' });
+    }
+    if (!response.ok)
+      throw toAppError(
+        new AppError({ category: 'unknown', status: response.status }),
+      );
+  };
+
   const request = async <T>(
     path: string,
     method = 'GET',
@@ -137,6 +169,54 @@ export function createApiAdminGateway(
         'PATCH',
       );
     },
+    async sendAnnouncement(input: {
+      userIds: readonly string[];
+      title: string;
+      message: string;
+      workshopId?: string;
+    }) {
+      await request<unknown>('/arweg/notifications', 'POST', {
+        userIds: input.userIds,
+        title: input.title,
+        message: input.message,
+        ...(input.workshopId ? { data: { workshopId: input.workshopId } } : {}),
+      });
+    },
+    async createTaxonomy(kind: 'themes' | 'categories', name: string) {
+      await request<unknown>(`/admin/${kind}`, 'POST', { name });
+    },
+    async updateTaxonomy(
+      kind: 'themes' | 'categories',
+      id: string,
+      changes: { name?: string; active?: boolean },
+    ) {
+      await request<unknown>(
+        `/admin/${kind}/${encodeId(id)}`,
+        'PATCH',
+        changes,
+      );
+    },
+    async attachments(id: string): Promise<WorkshopFile[]> {
+      const value = await request<unknown>(
+        `/workshops/${encodeId(id)}/attachments`,
+      );
+      if (!Array.isArray(value) || !value.every(isWorkshopFile))
+        throw invalidResponse('attachments');
+      return value;
+    },
+    uploadImage: (id: string, file: PickedFile) =>
+      upload(`/workshops/${encodeId(id)}/image`, file),
+    uploadAttachment: (id: string, file: PickedFile) =>
+      upload(`/workshops/${encodeId(id)}/attachments`, file),
+    async deleteImage(id: string) {
+      await request<unknown>(`/workshops/${encodeId(id)}/image`, 'DELETE');
+    },
+    async deleteAttachment(id: string, attachmentId: string) {
+      await request<unknown>(
+        `/workshops/${encodeId(id)}/attachments/${encodeId(attachmentId)}`,
+        'DELETE',
+      );
+    },
     async themes(): Promise<Taxonomy[]> {
       const value = await request<unknown>('/themes');
       if (!Array.isArray(value) || !value.every(isTaxonomy))
@@ -226,6 +306,14 @@ function isPayment(value: unknown): value is WorkshopPayment {
     typeof value.paymentId === 'string' &&
     typeof value.registrationId === 'string' &&
     typeof value.status === 'string'
+  );
+}
+function isWorkshopFile(value: unknown): value is WorkshopFile {
+  return (
+    isRecord(value) &&
+    typeof value.id === 'string' &&
+    typeof value.filename === 'string' &&
+    typeof value.sizeBytes === 'number'
   );
 }
 function isTaxonomy(value: unknown): value is Taxonomy {

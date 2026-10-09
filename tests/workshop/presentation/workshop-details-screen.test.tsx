@@ -456,3 +456,22 @@ it('shows the evaluation shortcut only when the caller passes it', () => {
   );
   expect(screen.getByRole('button', { name: 'Avaliar workshop' })).toBeTruthy();
 });
+
+it('highlights the waiting-list position', () => {
+  render(
+    <WorkshopDetailsScreen
+      registration={{
+        id: 'registration-1',
+        workshopId: workshop.id,
+        status: 'WAITING_LIST',
+        paymentStatus: 'PENDING',
+        waitingListPosition: 3,
+      }}
+      status="success"
+      workshop={workshop}
+    />,
+  );
+  expect(screen.getByLabelText('Posição 3 na lista de espera')).toBeTruthy();
+  expect(screen.getByText('03')).toBeTruthy();
+  expect(screen.getByText('2 pessoas à sua frente.')).toBeTruthy();
+});

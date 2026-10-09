@@ -44,7 +44,7 @@ const destinations = [
     href: '/(authenticated)/calendar',
     Icon: CalendarDays,
   },
-  { label: 'Grupos', href: '/(authenticated)/groups', Icon: Users },
+  { label: 'Conversas', href: '/(authenticated)/groups', Icon: Users },
   {
     label: 'Avisos',
     href: '/(authenticated)/(tabs)/notifications',

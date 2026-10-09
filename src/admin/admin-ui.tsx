@@ -314,6 +314,7 @@ const styles = StyleSheet.create({
     fontFamily: typography.familyRegular,
     fontSize: typography.body,
     minHeight: sizes.touchTarget,
+    outlineWidth: 0,
     paddingHorizontal: spacing.md,
   },
   inputMultiline: {

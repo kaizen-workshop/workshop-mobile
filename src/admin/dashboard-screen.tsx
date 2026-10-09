@@ -16,16 +16,21 @@ import { StatePage } from '@/navigation';
 export function DashboardScreen({
   dashboard,
   error,
+  onCreateAnnouncement,
   onCreatePost,
   onCreateWorkshop,
+  onManageTaxonomies,
   onOpenWorkshops,
   onRetry,
   status,
 }: Readonly<{
   dashboard?: Dashboard;
   error?: unknown;
+  onCreateAnnouncement(): void;
   onCreatePost(): void;
   onCreateWorkshop(): void;
+  /** Only for ADMIN accounts. */
+  onManageTaxonomies?: () => void;
   onOpenWorkshops(): void;
   onRetry(): void;
   status: 'loading' | 'error' | 'success';
@@ -73,6 +78,16 @@ export function DashboardScreen({
         <SectionTitle>Ações rápidas</SectionTitle>
         <PrimaryButton label="+ Criar workshop" onPress={onCreateWorkshop} />
         <SecondaryButton label="+ Criar post" onPress={onCreatePost} />
+        <SecondaryButton
+          label="Enviar comunicado"
+          onPress={onCreateAnnouncement}
+        />
+        {onManageTaxonomies ? (
+          <SecondaryButton
+            label="Categorias e temas"
+            onPress={onManageTaxonomies}
+          />
+        ) : null}
         <SecondaryButton
           label={`Meus workshops (${dashboard.workshops})`}
           onPress={onOpenWorkshops}

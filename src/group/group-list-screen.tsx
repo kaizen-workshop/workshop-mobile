@@ -1,4 +1,13 @@
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Search } from 'lucide-react-native';
+import { useMemo, useState } from 'react';
+import {
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import type { WorkshopGroup } from './group';
 import { AppHeader, StatePage } from '@/navigation';
 import {
@@ -25,19 +34,38 @@ const symbols = {
   },
 } as const;
 
+export type GroupPreview = Readonly<{
+  author: string;
+  text: string;
+  /** Already formatted, e.g. "09:42" or "09/10". */
+  time: string;
+}>;
+
 export function GroupListScreen({
   items,
   status,
   error,
   onRetry,
   onOpen,
+  previews = {},
 }: {
   items: readonly WorkshopGroup[];
+  /** Last message of each conversation, keyed by group id. */
+  previews?: Readonly<Record<string, GroupPreview>>;
   status: 'loading' | 'error' | 'success';
   error?: unknown;
   onRetry(): void;
   onOpen(group: WorkshopGroup): void;
 }) {
+  const [query, setQuery] = useState('');
+  const visible = useMemo(() => {
+    const needle = query.trim().toLocaleLowerCase('pt-BR');
+    return needle
+      ? items.filter((item) =>
+          item.workshopTitle.toLocaleLowerCase('pt-BR').includes(needle),
+        )
+      : items;
+  }, [items, query]);
   const frame = (node: React.ReactNode) => (
     <StatePage kind="menu" eyebrow={'Comunidade'} title={'Meus grupos'}>
       {node}
@@ -56,14 +84,33 @@ export function GroupListScreen({
   return (
     <View style={styles.page}>
       <FlatList
-        data={items}
+        data={visible}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={items.length ? styles.list : styles.empty}
+        contentContainerStyle={visible.length ? styles.list : styles.empty}
         ListHeaderComponent={
-          <AppHeader eyebrow="Comunidade" title="Meus grupos" />
+          <View>
+            <AppHeader eyebrow="Comunidade" title="Conversas" />
+            {items.length > 0 ? (
+              <View style={styles.search}>
+                <Search color={colors.textMuted} size={20} />
+                <TextInput
+                  accessibilityLabel="Pesquisar conversas"
+                  onChangeText={setQuery}
+                  placeholder="Pesquise por workshops..."
+                  placeholderTextColor={colors.placeholder}
+                  style={styles.searchInput}
+                  value={query}
+                />
+              </View>
+            ) : null}
+          </View>
         }
         ListEmptyComponent={
-          <EmptyState message="Você não participa de nenhum grupo acessível." />
+          items.length === 0 ? (
+            <EmptyState message="Você não participa de nenhum grupo acessível." />
+          ) : (
+            <EmptyState message="Nenhuma conversa com esse nome." />
+          )
         }
         renderItem={({ item }) => (
           <Pressable
@@ -87,10 +134,18 @@ export function GroupListScreen({
             </View>
             <View style={styles.cardContent}>
               <Text style={styles.cardTitle}>{item.workshopTitle}</Text>
+              {previews[item.id] ? (
+                <Text numberOfLines={1} style={styles.preview}>
+                  {previews[item.id].author}: {previews[item.id].text}
+                </Text>
+              ) : null}
               <Text style={[styles.status, item.active && styles.statusActive]}>
                 {item.active ? 'Grupo ativo' : 'Grupo encerrado'}
               </Text>
             </View>
+            {previews[item.id] ? (
+              <Text style={styles.time}>{previews[item.id].time}</Text>
+            ) : null}
             <AppSymbol
               color={colors.textMuted}
               fallback="›"
@@ -104,6 +159,34 @@ export function GroupListScreen({
   );
 }
 const styles = StyleSheet.create({
+  search: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radii.full,
+    flexDirection: 'row',
+    gap: spacing.xs,
+    marginBottom: spacing.md,
+    minHeight: sizes.touchTarget,
+    paddingHorizontal: spacing.md,
+  },
+  searchInput: {
+    color: colors.text,
+    flex: 1,
+    fontFamily: typography.familyRegular,
+    fontSize: typography.body,
+    minHeight: sizes.touchTarget,
+  },
+  preview: {
+    color: colors.textMuted,
+    fontFamily: typography.familyRegular,
+    fontSize: typography.bodySmall,
+    marginTop: 2,
+  },
+  time: {
+    color: colors.textMuted,
+    fontFamily: typography.familyRegular,
+    fontSize: typography.caption,
+  },
   page: { backgroundColor: colors.background, flex: 1 },
   list: {
     alignSelf: 'center',

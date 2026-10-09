@@ -11,6 +11,7 @@ export function useAdminGateway() {
       createApiAdminGateway(
         createAuthenticatedHttpClient(getEnvironment()),
         createTokenStorage(),
+        getEnvironment().apiUrl,
       ),
     [],
   );

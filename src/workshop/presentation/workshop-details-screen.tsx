@@ -36,6 +36,7 @@ import {
 } from '@/shared/theme';
 import type { WorkshopAttachment, WorkshopDetails } from '@/workshop/domain';
 import { useWorkshopImageSource } from './use-workshop-image-source';
+import { WorkshopCover } from './workshop-cover';
 
 type Props = Readonly<{
   status: 'loading' | 'error' | 'success';
@@ -156,18 +157,26 @@ export function WorkshopDetailsScreen({
         </Text>
       ) : null}
       <View style={styles.imageContainer}>
-        <Image
-          accessibilityLabel={`Imagem do workshop ${workshop.title}`}
-          contentFit="cover"
-          onError={() => {
-            setImageStatus('error');
-            refreshImage();
-          }}
-          onLoad={() => setImageStatus('loaded')}
-          source={imageSource}
-          style={styles.image}
-        />
-        {imageStatus !== 'loaded' ? (
+        {workshop.imageUrl ? (
+          <Image
+            accessibilityLabel={`Imagem do workshop ${workshop.title}`}
+            contentFit="cover"
+            onError={() => {
+              setImageStatus('error');
+              refreshImage();
+            }}
+            onLoad={() => setImageStatus('loaded')}
+            source={imageSource}
+            style={styles.image}
+          />
+        ) : (
+          <WorkshopCover
+            style={styles.image}
+            theme={workshop.theme}
+            title={workshop.title}
+          />
+        )}
+        {workshop.imageUrl && imageStatus !== 'loaded' ? (
           <Text accessibilityLiveRegion="polite" style={styles.imageStatus}>
             {imageStatus === 'error'
               ? 'Imagem indisponível'
@@ -219,6 +228,24 @@ export function WorkshopDetailsScreen({
           <Text style={styles.registrationMessage}>
             {registrationMessage(registration)}
           </Text>
+          {registration.status === 'WAITING_LIST' &&
+          registration.waitingListPosition ? (
+            <View
+              accessible
+              accessibilityLabel={`Posição ${registration.waitingListPosition} na lista de espera`}
+              style={styles.positionCard}
+            >
+              <Text style={styles.positionNumber}>
+                {String(registration.waitingListPosition).padStart(2, '0')}
+              </Text>
+              <Text style={styles.positionLabel}>Sua posição na lista</Text>
+              <Text style={styles.positionHint}>
+                {registration.waitingListPosition === 1
+                  ? 'Você é a próxima pessoa da fila.'
+                  : `${registration.waitingListPosition - 1} pessoas à sua frente.`}
+              </Text>
+            </View>
+          ) : null}
           {cancellationError ? (
             <Text accessibilityRole="alert" style={styles.registrationError}>
               {cancellationError}
@@ -645,6 +672,30 @@ function errorText(error: boolean | string, fallback: string) {
 }
 
 const styles = StyleSheet.create({
+  positionCard: {
+    alignItems: 'center',
+    backgroundColor: colors.brandSubtle,
+    borderRadius: radii.xl,
+    marginTop: spacing.sm,
+    padding: spacing.md,
+  },
+  positionNumber: {
+    color: colors.accent,
+    fontFamily: typography.familyBold,
+    fontSize: 44,
+    fontWeight: typography.bold,
+  },
+  positionLabel: {
+    color: colors.text,
+    fontFamily: typography.familyMedium,
+    fontWeight: typography.medium,
+  },
+  positionHint: {
+    color: colors.textMuted,
+    fontFamily: typography.familyRegular,
+    fontSize: typography.bodySmall,
+    marginTop: spacing.xxs,
+  },
   cancelConfirm: { gap: spacing.sm },
   refreshButton: {
     alignItems: 'center',

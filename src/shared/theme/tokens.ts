@@ -25,6 +25,8 @@ export const colors = {
   offline: '#6B5900',
   onBrand: '#FFFFFF',
   accent: '#3D56D6',
+  /** A liked heart is red; contrast 4.9:1 on white. */
+  likeActive: '#D92D20',
 } as const;
 
 export const spacing = {

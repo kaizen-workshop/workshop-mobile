@@ -10,6 +10,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
 
@@ -29,6 +30,7 @@ type Props = Readonly<{
 }>;
 
 export function FirstAccessScreen({ onBack, onRequestCode, onSubmit }: Props) {
+  const { height: viewportHeight } = useWindowDimensions();
   const [login, setLogin] = useState('');
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
@@ -91,7 +93,7 @@ export function FirstAccessScreen({ onBack, onRequestCode, onSubmit }: Props) {
     <ImageBackground
       resizeMode="cover"
       source={require('../../../assets/images/background-login.webp')}
-      style={styles.background}
+      style={[styles.background, { height: viewportHeight }]}
     >
       <View style={styles.overlay} />
       <ScrollView
@@ -126,25 +128,30 @@ export function FirstAccessScreen({ onBack, onRequestCode, onSubmit }: Props) {
               style={styles.input}
               value={login}
             />
-            <Pressable
-              accessibilityLabel="Enviar código"
-              accessibilityRole="button"
-              accessibilityState={{
-                busy: sendingCode,
-                disabled: sendingCode,
-              }}
-              disabled={sendingCode}
-              onPress={() => void requestCode()}
-              style={({ pressed }) => [
-                styles.sendButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={styles.sendButtonText}>
-                {sendingCode ? 'Enviando...' : 'Enviar'}
-              </Text>
-            </Pressable>
           </View>
+
+          <Pressable
+            accessibilityLabel="Enviar código"
+            accessibilityRole="button"
+            accessibilityState={{
+              busy: sendingCode,
+              disabled: sendingCode,
+            }}
+            disabled={sendingCode}
+            onPress={() => void requestCode()}
+            style={({ pressed }) => [
+              styles.sendButton,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={styles.sendButtonText}>
+              {sendingCode
+                ? 'Enviando código...'
+                : codeSent
+                  ? 'Reenviar código'
+                  : 'Enviar código'}
+            </Text>
+          </Pressable>
 
           <Text style={styles.label}>Código</Text>
           <View style={styles.field}>
@@ -193,7 +200,8 @@ export function FirstAccessScreen({ onBack, onRequestCode, onSubmit }: Props) {
 
           {codeSent ? (
             <Text accessibilityLiveRegion="polite" style={styles.success}>
-              Se a conta existir, o código será enviado para o e-mail informado.
+              Se existir uma conta para este e-mail, enviamos um código. Confira
+              a caixa de entrada e o spam. Ele vale por 1 hora.
             </Text>
           ) : null}
           {error ? (
@@ -218,7 +226,7 @@ export function FirstAccessScreen({ onBack, onRequestCode, onSubmit }: Props) {
               <ActivityIndicator color={colors.onBrand} size="small" />
             ) : null}
             <Text style={styles.buttonText}>
-              {submitting ? 'Concluindo...' : 'Entrar'}
+              {submitting ? 'Concluindo...' : 'Concluir primeiro acesso'}
             </Text>
           </Pressable>
 
@@ -306,18 +314,18 @@ const styles = StyleSheet.create({
   },
   sendButton: {
     alignItems: 'center',
-    alignSelf: 'stretch',
-    backgroundColor: colors.brand,
-    borderBottomRightRadius: radii.xl,
-    borderTopRightRadius: radii.xl,
+    backgroundColor: colors.brandSubtle,
+    borderRadius: radii.xl,
     justifyContent: 'center',
-    minWidth: 86,
-    paddingHorizontal: spacing.sm,
+    marginTop: spacing.xs,
+    minHeight: sizes.touchTarget,
+    paddingHorizontal: spacing.md,
   },
   sendButtonText: {
-    color: colors.onBrand,
-    fontFamily: typography.familyMedium,
+    color: colors.brand,
+    fontFamily: typography.familyBold,
     fontSize: typography.bodySmall,
+    fontWeight: typography.bold,
   },
   success: {
     color: colors.positive,

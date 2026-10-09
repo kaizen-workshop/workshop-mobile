@@ -1,4 +1,4 @@
-import { Search } from 'lucide-react-native';
+import { MessageCircle, Search } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -151,7 +151,7 @@ function FeedItem({
             ]}
           >
             <AppSymbol
-              color={item.likedByMe ? colors.brand : colors.textMuted}
+              color={item.likedByMe ? colors.likeActive : colors.textMuted}
               fallback={item.likedByMe ? '♥' : '♡'}
               name={item.likedByMe ? symbols.favorite : symbols.favoriteBorder}
               size={20}
@@ -163,15 +163,18 @@ function FeedItem({
             </Text>
           </Pressable>
           {onPress ? (
-            <View style={styles.openButton}>
-              <Text style={styles.openText}>Ver comentários</Text>
-              <AppSymbol
-                color={colors.brand}
-                fallback="›"
-                name={symbols.next}
-                size={18}
-              />
-            </View>
+            <Pressable
+              accessibilityLabel="Ver comentários do post"
+              accessibilityRole="button"
+              onPress={onPress}
+              style={({ pressed }) => [
+                styles.commentButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <MessageCircle color={colors.brand} size={18} />
+              <Text style={styles.commentText}>Comentários</Text>
+            </Pressable>
           ) : null}
         </View>
       ) : item.kind === 'workshop' && onPress ? (
@@ -526,7 +529,23 @@ const styles = StyleSheet.create({
     fontWeight: typography.medium,
   },
   likeTextActive: {
+    color: colors.likeActive,
+  },
+  commentButton: {
+    alignItems: 'center',
+    backgroundColor: colors.brandSubtle,
+    borderRadius: radii.full,
+    flexDirection: 'row',
+    gap: spacing.xs,
+    marginLeft: 'auto',
+    minHeight: 44,
+    paddingHorizontal: spacing.md,
+  },
+  commentText: {
     color: colors.brand,
+    fontFamily: typography.familyBold,
+    fontSize: typography.bodySmall,
+    fontWeight: typography.bold,
   },
   openButton: {
     alignItems: 'center',

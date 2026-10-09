@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import {
   Inter_400Regular,
@@ -19,7 +20,7 @@ import {
   createPushDeviceStorage,
   unregisterPushDevice,
 } from '@/notification/data';
-import { colors } from '@/shared/theme';
+import { colors, installWebFocusStyle } from '@/shared/theme';
 
 const variant = getAppVariant();
 const authMode =
@@ -79,6 +80,9 @@ function SessionRoutes() {
 }
 
 export default function RootLayout() {
+  useEffect(() => {
+    installWebFocusStyle();
+  }, []);
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,

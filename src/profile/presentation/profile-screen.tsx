@@ -2,6 +2,7 @@ import {
   CalendarDays,
   ChevronRight,
   History,
+  LayoutDashboard,
   type LucideIcon,
   Settings,
   Users,
@@ -48,6 +49,8 @@ type Props = Readonly<{
   onOpenHistory(): void;
   onOpenCalendar(): void;
   onOpenGroups(): void;
+  /** Only passed for ARWEG/ADMIN accounts. */
+  onOpenAdmin?: () => void;
 }>;
 
 const fallback = '/(authenticated)/(tabs)/feed';
@@ -231,6 +234,13 @@ function ProfileContent(props: Props & { profile: UserProfile }) {
       </View>
 
       <View style={styles.links}>
+        {props.onOpenAdmin ? (
+          <LinkRow
+            Icon={LayoutDashboard}
+            label="Painel de gestão"
+            onPress={props.onOpenAdmin}
+          />
+        ) : null}
         <LinkRow
           Icon={History}
           label="Histórico de workshops"
