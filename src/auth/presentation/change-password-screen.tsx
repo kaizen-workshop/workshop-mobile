@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 
+import { describeError } from '@/core/errors';
 import { colors, radii, sizes, spacing, typography } from '@/shared/theme';
 
 type Props = Readonly<{
@@ -15,9 +16,11 @@ type Props = Readonly<{
     currentPassword: string;
     newPassword: string;
   }): Promise<void> | void;
+  /** Present when the change is voluntary (from Configurações). */
+  onCancel?: () => void;
 }>;
 
-export function ChangePasswordScreen({ onSubmit }: Props) {
+export function ChangePasswordScreen({ onCancel, onSubmit }: Props) {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
@@ -42,8 +45,13 @@ export function ChangePasswordScreen({ onSubmit }: Props) {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmation('');
-    } catch {
-      setError('Não foi possível alterar a senha. Tente novamente.');
+    } catch (cause) {
+      setError(
+        describeError(cause, {
+          bad_request:
+            'A senha atual está incorreta ou a nova senha não atende aos requisitos.',
+        }).message,
+      );
     } finally {
       setLoading(false);
     }
@@ -59,7 +67,9 @@ export function ChangePasswordScreen({ onSubmit }: Props) {
           Crie uma nova senha
         </Text>
         <Text style={styles.description}>
-          Para continuar, substitua a senha temporária da sua conta.
+          {onCancel
+            ? 'Depois de alterar, você será desconectado e entrará novamente com a nova senha.'
+            : 'Para continuar, substitua a senha temporária da sua conta.'}
         </Text>
 
         <Text style={styles.label}>Senha atual</Text>
@@ -110,12 +120,32 @@ export function ChangePasswordScreen({ onSubmit }: Props) {
             {loading ? 'Alterando...' : 'Alterar senha'}
           </Text>
         </Pressable>
+        {onCancel ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={onCancel}
+            style={styles.cancel}
+          >
+            <Text style={styles.cancelText}>Cancelar</Text>
+          </Pressable>
+        ) : null}
       </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  cancel: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.sm,
+    minHeight: sizes.touchTarget,
+  },
+  cancelText: {
+    color: colors.brand,
+    fontFamily: typography.familyMedium,
+    fontWeight: typography.medium,
+  },
   page: {
     backgroundColor: colors.brand,
     flexGrow: 1,

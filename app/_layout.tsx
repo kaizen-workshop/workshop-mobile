@@ -1,10 +1,10 @@
 import { Stack } from 'expo-router';
 import {
-  Roboto_400Regular,
-  Roboto_500Medium,
-  Roboto_700Bold,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_700Bold,
   useFonts,
-} from '@expo-google-fonts/roboto';
+} from '@expo-google-fonts/inter';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -80,9 +80,9 @@ function SessionRoutes() {
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
-    Roboto_400Regular,
-    Roboto_500Medium,
-    Roboto_700Bold,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_700Bold,
   });
 
   if (!fontsLoaded && !fontError) {

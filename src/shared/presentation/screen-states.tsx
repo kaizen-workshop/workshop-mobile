@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native';
 
+import { describeError } from '@/core/errors';
 import { colors, radii, sizes, spacing, typography } from '@/shared/theme';
 import { AppSymbol } from './app-symbol';
 
@@ -90,15 +91,28 @@ export function LoadingState({
 }
 
 export function ErrorState({
-  message = 'Não foi possível carregar o conteúdo.',
+  error,
+  message,
   onRetry,
+  overrides,
   retryLabel,
-  title = 'Algo deu errado',
-}: RetryProps & Readonly<{ message?: string; title?: string }>) {
+  title,
+}: RetryProps &
+  Readonly<{
+    error?: unknown;
+    message?: string;
+    overrides?: Parameters<typeof describeError>[1];
+    title?: string;
+  }>) {
+  const described = describeError(error, overrides);
+  const shownTitle = title ?? (error ? described.title : 'Algo deu errado');
+  const shownMessage = error
+    ? described.message
+    : (message ?? 'Não foi possível carregar o conteúdo.');
   return (
     <View accessibilityRole="alert" style={styles.alertWrapper}>
-      <StateLayout icon="error" title={title}>
-        <Text style={styles.message}>{message}</Text>
+      <StateLayout icon="error" title={shownTitle}>
+        <Text style={styles.message}>{shownMessage}</Text>
         <RetryButton onRetry={onRetry} retryLabel={retryLabel} />
       </StateLayout>
     </View>

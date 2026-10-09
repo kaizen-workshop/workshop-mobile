@@ -9,6 +9,7 @@ import {
   type ChatMessage,
 } from '@/chat';
 import { getEnvironment } from '@/core/config';
+import { describeError } from '@/core/errors';
 import { createAuthenticatedHttpClient } from '@/core/http';
 import { createTokenStorage } from '@/core/secure-storage';
 import { createApiGroupGateway, type WorkshopGroup } from '@/group';
@@ -40,8 +41,9 @@ export default function ChatRoute() {
   const [status, setStatus] = useState<'loading' | 'error' | 'success'>(
     'loading',
   );
+  const [loadError, setLoadError] = useState<unknown>();
   const [sending, setSending] = useState(false);
-  const [sendError, setSendError] = useState(false);
+  const [sendError, setSendError] = useState<boolean | string>(false);
   const pendingSend = useRef<{ content: string; key: string } | undefined>(
     undefined,
   );
@@ -68,7 +70,8 @@ export default function ChatRoute() {
     setStatus('loading');
     try {
       await applyInitial(() => true);
-    } catch {
+    } catch (cause) {
+      setLoadError(cause);
       setStatus('error');
     }
   }, [applyInitial]);
@@ -85,8 +88,11 @@ export default function ChatRoute() {
         setHasMore(page.hasMore);
         setStatus('success');
       })
-      .catch(() => {
-        if (active) setStatus('error');
+      .catch((cause) => {
+        if (active) {
+          setLoadError(cause);
+          setStatus('error');
+        }
       });
     return () => {
       active = false;
@@ -124,6 +130,7 @@ export default function ChatRoute() {
       currentUserId={userId}
       messages={messages}
       status={status}
+      error={loadError}
       sending={sending}
       sendError={sendError}
       hasMore={hasMore}
@@ -157,8 +164,14 @@ export default function ChatRoute() {
           ]);
           pendingSend.current = undefined;
           return true;
-        } catch {
-          setSendError(true);
+        } catch (cause) {
+          setSendError(
+            describeError(cause, {
+              forbidden: 'Você não pode enviar mensagens neste grupo.',
+              conflict:
+                'Este grupo foi encerrado e não aceita novas mensagens.',
+            }).message,
+          );
           return false;
         } finally {
           setSending(false);
@@ -170,7 +183,8 @@ export default function ChatRoute() {
           setMessages((current) =>
             current.map((item) => (item.id === deleted.id ? deleted : item)),
           );
-        } catch {
+        } catch (cause) {
+          setLoadError(cause);
           setStatus('error');
         }
       }}

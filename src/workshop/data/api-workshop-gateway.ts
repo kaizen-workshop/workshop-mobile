@@ -253,6 +253,7 @@ function toDetails(
     description: workshop.description,
     ...(theme ? { theme } : {}),
     ...(category ? { category } : {}),
+    endDate: workshop.endDate,
     dateLabel:
       workshop.startDate === workshop.endDate
         ? formatDate(workshop.startDate)

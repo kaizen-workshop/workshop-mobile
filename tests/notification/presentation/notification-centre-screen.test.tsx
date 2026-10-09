@@ -42,6 +42,7 @@ it('renders loading, error and empty states', () => {
     <NotificationCentreScreen items={[]} onRetry={onRetry} status="success" />,
   );
   expect(screen.getByText('Nenhuma notificação')).toBeTruthy();
+  expect(screen.getByRole('link', { name: 'Voltar' })).toBeTruthy();
 });
 
 it('preserves API order and identifies unread notifications', () => {
@@ -55,7 +56,7 @@ it('preserves API order and identifies unread notifications', () => {
 
   expect(screen.getByTestId('notification-list').props.data).toBe(items);
   expect(screen.getByLabelText('Não lida')).toBeTruthy();
-  expect(screen.getByRole('button', { name: 'Abrir menu' })).toBeTruthy();
+  expect(screen.getByRole('link', { name: 'Voltar' })).toBeTruthy();
 });
 
 it('connects item selection and incremental loading callbacks', () => {
@@ -115,4 +116,22 @@ it('offers a retry after incremental loading fails', () => {
     }),
   );
   expect(onLoadMore).toHaveBeenCalledTimes(1);
+});
+
+it('summarises unread notifications and marks them all as read', () => {
+  const onMarkAllRead = jest.fn();
+  render(
+    <NotificationCentreScreen
+      items={items}
+      onMarkAllRead={onMarkAllRead}
+      onRetry={jest.fn()}
+      status="success"
+    />,
+  );
+
+  expect(screen.getByText(/não lida/)).toBeTruthy();
+  fireEvent.press(
+    screen.getByRole('button', { name: 'Marcar todas como lidas' }),
+  );
+  expect(onMarkAllRead).toHaveBeenCalledTimes(1);
 });

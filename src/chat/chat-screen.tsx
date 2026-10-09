@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import type { ChatMessage } from './message';
-import { BackHeader } from '@/navigation';
+import { BackHeader, StatePage } from '@/navigation';
 import {
   AppSymbol,
   EmptyState,
@@ -39,6 +39,7 @@ export function ChatScreen({
   currentUserId,
   messages,
   status,
+  error,
   sending,
   sendError,
   hasMore,
@@ -54,8 +55,9 @@ export function ChatScreen({
   currentUserId: string;
   messages: readonly ChatMessage[];
   status: 'loading' | 'error' | 'success';
+  error?: unknown;
   sending: boolean;
-  sendError?: boolean;
+  sendError?: boolean | string;
   hasMore: boolean;
   onRetry(): void;
   onLoadMore(): void;
@@ -63,14 +65,28 @@ export function ChatScreen({
   onDelete(message: ChatMessage): void;
 }) {
   const [content, setContent] = useState('');
+  const frame = (node: React.ReactNode) => (
+    <StatePage
+      kind="back"
+      eyebrow={'Grupo'}
+      title={title}
+      fallback={'/(authenticated)/groups'}
+    >
+      {node}
+    </StatePage>
+  );
   if (status === 'loading')
-    return <LoadingState message="Carregando mensagens..." />;
+    return frame(<LoadingState message="Carregando mensagens..." />);
   if (status === 'error')
-    return (
+    return frame(
       <ErrorState
+        error={error}
+        overrides={{
+          not_found: 'O grupo não está disponível ou foi encerrado.',
+          forbidden: 'Seu acesso a este grupo foi removido.',
+        }}
         onRetry={onRetry}
-        message="O grupo não está disponível ou seu acesso foi removido."
-      />
+      />,
     );
   return (
     <View style={styles.page}>
@@ -124,7 +140,11 @@ export function ChatScreen({
       {sendError ? (
         <View style={styles.notice}>
           <InlineNotice
-            message="Falha ao enviar. Verifique a conexão antes de tentar uma nova mensagem."
+            message={
+              typeof sendError === 'string'
+                ? sendError
+                : 'Falha ao enviar. Verifique a conexão antes de tentar uma nova mensagem.'
+            }
             tone="warning"
           />
         </View>

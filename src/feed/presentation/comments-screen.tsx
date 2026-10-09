@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import type { PostComment } from '@/feed/domain/post-comment';
-import { BackHeader } from '@/navigation';
+import { BackHeader, StatePage } from '@/navigation';
 import {
   AppSymbol,
   EmptyState,
@@ -28,6 +28,7 @@ export function CommentsScreen({
   items,
   currentUserId,
   status,
+  error,
   sending,
   sendError,
   actionError,
@@ -41,9 +42,10 @@ export function CommentsScreen({
   items: readonly PostComment[];
   currentUserId: string;
   status: 'loading' | 'error' | 'success';
+  error?: unknown;
   sending: boolean;
-  sendError: boolean;
-  actionError: boolean;
+  sendError: boolean | string;
+  actionError: boolean | string;
   loadingMore: boolean;
   onRetry(): void;
   onLoadMore?: () => void;
@@ -55,9 +57,15 @@ export function CommentsScreen({
   const [editingId, setEditingId] = useState<string>();
   const [editContent, setEditContent] = useState('');
   const [actingId, setActingId] = useState<string>();
+  const frame = (node: React.ReactNode) => (
+    <StatePage kind="back" eyebrow={'Conversa'} title={'Comentários'}>
+      {node}
+    </StatePage>
+  );
   if (status === 'loading')
-    return <LoadingState message="Carregando comentários..." />;
-  if (status === 'error') return <ErrorState onRetry={onRetry} />;
+    return frame(<LoadingState message="Carregando comentários..." />);
+  if (status === 'error')
+    return frame(<ErrorState error={error} onRetry={onRetry} />);
   return (
     <View style={styles.page}>
       <View style={styles.header}>
@@ -179,13 +187,21 @@ export function CommentsScreen({
         {sendError ? (
           <InlineNotice
             tone="warning"
-            message="Não foi possível publicar o comentário."
+            message={
+              typeof sendError === 'string'
+                ? sendError
+                : 'Não foi possível publicar o comentário.'
+            }
           />
         ) : null}
         {actionError ? (
           <InlineNotice
             tone="warning"
-            message="Não foi possível alterar o comentário."
+            message={
+              typeof actionError === 'string'
+                ? actionError
+                : 'Não foi possível alterar o comentário.'
+            }
           />
         ) : null}
       </View>

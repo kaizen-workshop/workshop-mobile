@@ -22,12 +22,14 @@ export default function GroupsRoute() {
   const [status, setStatus] = useState<'loading' | 'error' | 'success'>(
     'loading',
   );
+  const [loadError, setLoadError] = useState<unknown>();
   const load = useCallback(async () => {
     setStatus('loading');
     try {
       setItems((await gateway.loadPage()).items);
       setStatus('success');
-    } catch {
+    } catch (cause) {
+      setLoadError(cause);
       setStatus('error');
     }
   }, [gateway]);
@@ -40,8 +42,11 @@ export default function GroupsRoute() {
         setItems(page.items);
         setStatus('success');
       })
-      .catch(() => {
-        if (active) setStatus('error');
+      .catch((cause) => {
+        if (active) {
+          setLoadError(cause);
+          setStatus('error');
+        }
       });
     return () => {
       active = false;
@@ -51,6 +56,7 @@ export default function GroupsRoute() {
     <GroupListScreen
       items={items}
       status={status}
+      error={loadError}
       onRetry={load}
       onOpen={(group) => {
         selectGroup({ id: group.id, title: group.workshopTitle });

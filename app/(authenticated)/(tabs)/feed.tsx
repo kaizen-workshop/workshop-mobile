@@ -27,6 +27,7 @@ export default function FeedRoute() {
   const [status, setStatus] = useState<'loading' | 'error' | 'success'>(
     'loading',
   );
+  const [loadError, setLoadError] = useState<unknown>();
   const [items, setItems] = useState<readonly FeedCard[]>([]);
   const [source, setSource] = useState<'network' | 'cache'>('network');
   const [nextPage, setNextPage] = useState(1);
@@ -49,7 +50,8 @@ export default function FeedRoute() {
       setHasMore(result.hasMore);
       setCacheUserId(result.userId);
       setStatus('success');
-    } catch {
+    } catch (cause) {
+      setLoadError(cause);
       setStatus('error');
     }
   }, [gateway]);
@@ -130,8 +132,11 @@ export default function FeedRoute() {
         setCacheUserId(result.userId);
         setStatus('success');
       })
-      .catch(() => {
-        if (active) setStatus('error');
+      .catch((cause) => {
+        if (active) {
+          setLoadError(cause);
+          setStatus('error');
+        }
       });
     return () => {
       active = false;
@@ -158,6 +163,7 @@ export default function FeedRoute() {
       onToggleLike={toggleLike}
       source={source}
       status={status}
+      error={loadError}
       refreshing={refreshing}
     />
   );

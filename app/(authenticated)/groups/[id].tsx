@@ -9,6 +9,7 @@ import {
   getSelectedGroup,
   selectGroup,
   selectWorkshop,
+  StatePage,
 } from '@/navigation';
 import { createApiGroupGateway, type WorkshopGroup } from '@/group';
 import { ErrorState, LoadingState } from '@/shared/presentation';
@@ -28,12 +29,14 @@ export default function GroupRoute() {
   const [status, setStatus] = useState<'loading' | 'error' | 'success'>(
     'loading',
   );
+  const [loadError, setLoadError] = useState<unknown>();
   const load = useCallback(async () => {
     setStatus('loading');
     try {
       setGroup(await gateway.load(id));
       setStatus('success');
-    } catch {
+    } catch (cause) {
+      setLoadError(cause);
       setStatus('error');
     }
   }, [gateway, id]);
@@ -46,20 +49,32 @@ export default function GroupRoute() {
         setGroup(value);
         setStatus('success');
       })
-      .catch(() => {
-        if (active) setStatus('error');
+      .catch((cause) => {
+        if (active) {
+          setLoadError(cause);
+          setStatus('error');
+        }
       });
     return () => {
       active = false;
     };
   }, [gateway, id]);
-  if (status === 'loading') return <LoadingState />;
+  const frame = (node: React.ReactNode) => (
+    <StatePage eyebrow="Comunidade" kind="back" title="Detalhes do grupo">
+      {node}
+    </StatePage>
+  );
+  if (status === 'loading') return frame(<LoadingState />);
   if (status === 'error' || !group)
-    return (
+    return frame(
       <ErrorState
+        error={loadError}
+        overrides={{
+          not_found: 'O grupo não está disponível ou foi encerrado.',
+          forbidden: 'Seu acesso a este grupo foi removido.',
+        }}
         onRetry={load}
-        message="O grupo não está disponível ou seu acesso foi removido."
-      />
+      />,
     );
   return (
     <View style={styles.page}>

@@ -199,7 +199,7 @@ it('shows registration success, waiting list and conflict outcomes', () => {
   rerender(
     <WorkshopDetailsScreen
       onRegister={jest.fn()}
-      registrationError="conflict"
+      registrationError="Você já possui uma inscrição válida ou este workshop não aceita novas inscrições."
       status="success"
       workshop={workshop}
     />,
@@ -211,9 +211,8 @@ it('shows registration success, waiting list and conflict outcomes', () => {
   ).toBeTruthy();
 });
 
-it('confirms cancellation before invoking the action', () => {
+it('asks for confirmation inline before cancelling (Alert is a no-op on web)', () => {
   const onCancelRegistration = jest.fn();
-  const alert = jest.spyOn(Alert, 'alert').mockImplementation(jest.fn());
   render(
     <WorkshopDetailsScreen
       onCancelRegistration={onCancelRegistration}
@@ -230,15 +229,20 @@ it('confirms cancellation before invoking the action', () => {
 
   fireEvent.press(screen.getByRole('button', { name: 'Cancelar inscrição' }));
   expect(onCancelRegistration).not.toHaveBeenCalled();
-  expect(alert).toHaveBeenCalledWith(
-    'Cancelar inscrição',
-    'Tem certeza de que deseja cancelar esta inscrição?',
-    expect.any(Array),
+  expect(screen.getByText('Deseja cancelar sua inscrição?')).toBeTruthy();
+  expect(screen.getByText(/48 horas/)).toBeTruthy();
+
+  fireEvent.press(
+    screen.getByRole('button', { name: 'Manter minha inscrição' }),
   );
-  const actions = alert.mock.calls[0][2];
-  actions?.[1]?.onPress?.();
+  expect(onCancelRegistration).not.toHaveBeenCalled();
+  expect(screen.queryByText('Deseja cancelar sua inscrição?')).toBeNull();
+
+  fireEvent.press(screen.getByRole('button', { name: 'Cancelar inscrição' }));
+  fireEvent.press(
+    screen.getByRole('button', { name: 'Confirmar cancelamento' }),
+  );
   expect(onCancelRegistration).toHaveBeenCalledTimes(1);
-  alert.mockRestore();
 });
 
 it('explains cancellation refund outcomes and allows a new registration', () => {
@@ -329,9 +333,7 @@ it('starts payment only for a pending paid registration and shows its state', ()
     />,
   );
   expect(screen.getByText('Pagamento pendente')).toBeTruthy();
-  expect(
-    screen.getByText('A solicitação foi criada e aguarda confirmação.'),
-  ).toBeTruthy();
+  expect(screen.getByText(/vaga está reservada/)).toBeTruthy();
   expect(screen.queryByText('simulated-reference')).toBeNull();
 });
 
@@ -372,4 +374,85 @@ it('shows workshop comments in the detail scroll and publishes a new comment', a
   await waitFor(() =>
     expect(screen.getByLabelText('Novo comentário').props.value).toBe(''),
   );
+});
+
+it('lets the participant refresh a pending payment and follows the registration once it is paid', () => {
+  const onRefreshRegistration = jest.fn();
+  const payment = {
+    id: 'payment-1',
+    registrationId: 'registration-1',
+    amount: 40,
+    status: 'PENDING' as const,
+    method: 'PIX',
+  };
+  const registration = {
+    id: 'registration-1',
+    workshopId: workshop.id,
+    status: 'PENDING' as const,
+    paymentStatus: 'PENDING' as const,
+  };
+  const { rerender } = render(
+    <WorkshopDetailsScreen
+      onRefreshRegistration={onRefreshRegistration}
+      payment={payment}
+      registration={registration}
+      status="success"
+      workshop={workshop}
+    />,
+  );
+
+  fireEvent.press(screen.getByRole('button', { name: 'Atualizar situação' }));
+  expect(onRefreshRegistration).toHaveBeenCalledTimes(1);
+
+  rerender(
+    <WorkshopDetailsScreen
+      onRefreshRegistration={onRefreshRegistration}
+      payment={payment}
+      registration={{
+        ...registration,
+        status: 'CONFIRMED',
+        paymentStatus: 'PAID',
+      }}
+      status="success"
+      workshop={workshop}
+    />,
+  );
+  expect(screen.getByText('Pagamento confirmado')).toBeTruthy();
+  expect(screen.getByText(/inscrição está garantida/)).toBeTruthy();
+  expect(
+    screen.queryByRole('button', { name: 'Atualizar situação' }),
+  ).toBeNull();
+});
+
+it('tells the participant when a cancelled registration was refunded', () => {
+  render(
+    <WorkshopDetailsScreen
+      registration={{
+        id: 'registration-1',
+        workshopId: workshop.id,
+        status: 'CANCELLED',
+        paymentStatus: 'REFUNDED',
+      }}
+      status="success"
+      workshop={workshop}
+    />,
+  );
+  expect(
+    screen.getByText('A inscrição foi cancelada e o reembolso foi processado.'),
+  ).toBeTruthy();
+});
+
+it('shows the evaluation shortcut only when the caller passes it', () => {
+  const { rerender } = render(
+    <WorkshopDetailsScreen status="success" workshop={workshop} />,
+  );
+  expect(screen.queryByRole('button', { name: 'Avaliar workshop' })).toBeNull();
+  rerender(
+    <WorkshopDetailsScreen
+      onEvaluate={jest.fn()}
+      status="success"
+      workshop={workshop}
+    />,
+  );
+  expect(screen.getByRole('button', { name: 'Avaliar workshop' })).toBeTruthy();
 });

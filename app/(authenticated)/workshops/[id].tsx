@@ -3,7 +3,7 @@ import * as Crypto from 'expo-crypto';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { getEnvironment } from '@/core/config';
-import { AppError } from '@/core/errors';
+import { describeError } from '@/core/errors';
 import { createAuthenticatedHttpClient } from '@/core/http';
 import { createTokenStorage } from '@/core/secure-storage';
 import { createApiCommentGateway, createApiFeedGateway } from '@/feed/data';
@@ -76,14 +76,15 @@ export default function WorkshopDetailsRoute() {
   const [status, setStatus] = useState<'loading' | 'error' | 'success'>(
     'loading',
   );
+  const [loadError, setLoadError] = useState<unknown>();
   const [workshop, setWorkshop] = useState<WorkshopDetails>();
   const [source, setSource] = useState<'network' | 'cache'>('network');
   const [openingAttachmentId, setOpeningAttachmentId] = useState<string>();
-  const [attachmentError, setAttachmentError] = useState(false);
+  const [attachmentError, setAttachmentError] = useState<boolean | string>(
+    false,
+  );
   const [registration, setRegistration] = useState<RegistrationResult>();
-  const [registrationError, setRegistrationError] = useState<
-    'conflict' | 'error'
-  >();
+  const [registrationError, setRegistrationError] = useState<string>();
   const [registering, setRegistering] = useState(false);
   const [registrationKey, setRegistrationKey] = useState(() =>
     Crypto.randomUUID(),
@@ -92,15 +93,13 @@ export default function WorkshopDetailsRoute() {
   const [cancellationKey, setCancellationKey] = useState(() =>
     Crypto.randomUUID(),
   );
-  const [cancellationError, setCancellationError] = useState<
-    'conflict' | 'error'
-  >();
+  const [cancellationError, setCancellationError] = useState<string>();
   const registeringRef = useRef(false);
   const cancellingRef = useRef(false);
   const [payment, setPayment] = useState<PaymentResult>();
   const [paymentKey, setPaymentKey] = useState(() => Crypto.randomUUID());
   const [paying, setPaying] = useState(false);
-  const [paymentError, setPaymentError] = useState(false);
+  const [paymentError, setPaymentError] = useState<boolean | string>(false);
   const payingRef = useRef(false);
   const [discussionStatus, setDiscussionStatus] = useState<
     'loading' | 'error' | 'success' | 'unavailable'
@@ -109,7 +108,7 @@ export default function WorkshopDetailsRoute() {
   const [comments, setComments] = useState<readonly PostComment[]>([]);
   const [commentUserId, setCommentUserId] = useState('');
   const [commentSending, setCommentSending] = useState(false);
-  const [commentError, setCommentError] = useState(false);
+  const [commentError, setCommentError] = useState<boolean | string>(false);
   const pendingComment = useRef<{ content: string; key: string } | undefined>(
     undefined,
   );
@@ -125,7 +124,8 @@ export default function WorkshopDetailsRoute() {
       setWorkshop(result.data);
       setSource(result.source);
       setStatus('success');
-    } catch {
+    } catch (cause) {
+      setLoadError(cause);
       setStatus('error');
     }
   }, [gateway, id]);
@@ -137,8 +137,12 @@ export default function WorkshopDetailsRoute() {
       setAttachmentError(false);
       try {
         await attachmentOpener.open(id, attachment);
-      } catch {
-        setAttachmentError(true);
+      } catch (cause) {
+        setAttachmentError(
+          describeError(cause, {
+            not_found: 'Este anexo não está mais disponível.',
+          }).message,
+        );
       } finally {
         setOpeningAttachmentId(undefined);
       }
@@ -163,9 +167,11 @@ export default function WorkshopDetailsRoute() {
       setPaymentKey(Crypto.randomUUID());
     } catch (error) {
       setRegistrationError(
-        error instanceof AppError && error.category === 'conflict'
-          ? 'conflict'
-          : 'error',
+        describeError(error, {
+          conflict:
+            'Você já possui uma inscrição válida ou este workshop não aceita novas inscrições.',
+          not_found: 'Este workshop não está mais disponível para inscrição.',
+        }).message,
       );
     } finally {
       registeringRef.current = false;
@@ -188,9 +194,11 @@ export default function WorkshopDetailsRoute() {
       setPaymentKey(Crypto.randomUUID());
     } catch (error) {
       setCancellationError(
-        error instanceof AppError && error.category === 'conflict'
-          ? 'conflict'
-          : 'error',
+        describeError(error, {
+          conflict:
+            'O cancelamento não é permitido no estado atual da inscrição.',
+          not_found: 'Não encontramos esta inscrição. Atualize a tela.',
+        }).message,
       );
     } finally {
       cancellingRef.current = false;
@@ -205,13 +213,31 @@ export default function WorkshopDetailsRoute() {
     setPaymentError(false);
     try {
       setPayment(await paymentGateway.create(registration.id, paymentKey));
-    } catch {
-      setPaymentError(true);
+    } catch (cause) {
+      setPaymentError(
+        describeError(cause, {
+          conflict: 'O pagamento desta inscrição já foi iniciado ou concluído.',
+        }).message,
+      );
     } finally {
       payingRef.current = false;
       setPaying(false);
     }
   }, [payment, paymentGateway, paymentKey, registration]);
+
+  const [refreshingRegistration, setRefreshingRegistration] = useState(false);
+  const refreshRegistration = useCallback(async () => {
+    if (!id || refreshingRegistration) return;
+    setRefreshingRegistration(true);
+    try {
+      const current = await registrationGateway.loadCurrent(id);
+      if (current) setRegistration(current);
+    } catch {
+      // Keeping the last known state is better than replacing it with an error.
+    } finally {
+      setRefreshingRegistration(false);
+    }
+  }, [id, refreshingRegistration, registrationGateway]);
 
   const loadDiscussion = useCallback(async () => {
     if (!id) return;
@@ -248,8 +274,11 @@ export default function WorkshopDetailsRoute() {
         setSource(result.source);
         setStatus('success');
       })
-      .catch(() => {
-        if (active) setStatus('error');
+      .catch((cause) => {
+        if (active) {
+          setLoadError(cause);
+          setStatus('error');
+        }
       });
     return () => {
       active = false;
@@ -316,8 +345,14 @@ export default function WorkshopDetailsRoute() {
       onOpenAttachment={openAttachment}
       onCancelRegistration={cancelRegistration}
       onCreatePayment={createPayment}
+      onRefreshRegistration={() => void refreshRegistration()}
+      refreshingRegistration={refreshingRegistration}
       onEvaluate={
-        workshop
+        // Rule: only a confirmed participant, once the workshop has ended.
+        workshop &&
+        registration?.status === 'CONFIRMED' &&
+        workshop.endDate &&
+        workshop.endDate <= toLocalIsoDate(new Date())
           ? () => {
               selectWorkshop({ id: workshop.id, title: workshop.title });
               router.push('/(authenticated)/evaluation');
@@ -348,8 +383,15 @@ export default function WorkshopDetailsRoute() {
                 setComments((current) => [created, ...current]);
                 pendingComment.current = undefined;
                 return true;
-              } catch {
-                setCommentError(true);
+              } catch (cause) {
+                setCommentError(
+                  describeError(cause, {
+                    forbidden: 'Você não pode comentar neste workshop.',
+                    conflict: 'Este comentário já foi enviado.',
+                    bad_request:
+                      'O comentário não foi aceito. Revise o texto e tente de novo.',
+                  }).message,
+                );
                 return false;
               } finally {
                 setCommentSending(false);
@@ -365,6 +407,7 @@ export default function WorkshopDetailsRoute() {
       paying={paying}
       source={source}
       status={id ? status : 'error'}
+      error={loadError}
       workshop={workshop}
     />
   );
@@ -380,4 +423,9 @@ async function loadDetails(
     cache: createWorkshopCache({ userId }),
     loadRemote: () => gateway.loadDetails(id),
   });
+}
+
+function toLocalIsoDate(date: Date) {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }

@@ -1,3 +1,4 @@
+import { describeError } from '@/core/errors';
 import { useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -33,6 +34,7 @@ const selectionSymbols = {
 
 type Props = Readonly<{
   status: 'loading' | 'error' | 'success';
+  error?: unknown;
   themes: readonly ThemeOption[];
   selectedIds: ReadonlySet<string>;
   onToggle(themeId: string): void;
@@ -49,6 +51,7 @@ export function PreferencesScreen({
   onToggle,
   selectedIds,
   status,
+  error,
   submitLabel = 'Continuar',
   subtitle = 'Selecione um ou mais temas para personalizar seu feed.',
   themes,
@@ -62,6 +65,7 @@ export function PreferencesScreen({
     return (
       <ErrorState
         message="Não foi possível carregar os temas."
+        error={error}
         onRetry={onRetry}
       />
     );
@@ -81,8 +85,12 @@ export function PreferencesScreen({
     setSaveError(null);
     try {
       await onSubmit([...selectedIds]);
-    } catch {
-      setSaveError('Não foi possível salvar suas preferências.');
+    } catch (cause) {
+      setSaveError(
+        describeError(cause, {
+          unknown: 'Não foi possível salvar suas preferências.',
+        }).message,
+      );
     } finally {
       setSaving(false);
     }

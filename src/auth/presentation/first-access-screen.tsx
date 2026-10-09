@@ -1,6 +1,7 @@
 import { Image } from 'expo-image';
 import { KeyRound, LockKeyhole, Mail } from 'lucide-react-native';
 import { useState } from 'react';
+import { describeError } from '@/core/errors';
 import {
   ActivityIndicator,
   ImageBackground,
@@ -47,8 +48,13 @@ export function FirstAccessScreen({ onBack, onRequestCode, onSubmit }: Props) {
     try {
       await onRequestCode(login.trim());
       setCodeSent(true);
-    } catch {
-      setError('Não foi possível enviar o código. Tente novamente.');
+    } catch (cause) {
+      setError(
+        describeError(cause, {
+          not_found: 'Não encontramos uma conta com este e-mail.',
+          bad_request: 'Informe um e-mail válido.',
+        }).message,
+      );
     } finally {
       setSendingCode(false);
     }
@@ -68,8 +74,14 @@ export function FirstAccessScreen({ onBack, onRequestCode, onSubmit }: Props) {
     setError(null);
     try {
       await onSubmit({ code: code.trim(), password });
-    } catch {
-      setError('Não foi possível concluir o primeiro acesso.');
+    } catch (cause) {
+      setError(
+        describeError(cause, {
+          bad_request:
+            'Código inválido ou expirado, ou senha fora do padrão. Confira os dados.',
+          not_found: 'Código inválido ou expirado. Peça um novo código.',
+        }).message,
+      );
     } finally {
       setSubmitting(false);
     }

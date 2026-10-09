@@ -3,6 +3,7 @@ import * as Crypto from 'expo-crypto';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { getEnvironment } from '@/core/config';
+import { describeError } from '@/core/errors';
 import { createAuthenticatedHttpClient } from '@/core/http';
 import { createTokenStorage } from '@/core/secure-storage';
 import { createApiCommentGateway } from '@/feed/data';
@@ -26,9 +27,10 @@ export default function CommentsRoute() {
   const [status, setStatus] = useState<'loading' | 'error' | 'success'>(
     'loading',
   );
+  const [loadError, setLoadError] = useState<unknown>();
   const [sending, setSending] = useState(false);
-  const [sendError, setSendError] = useState(false);
-  const [actionError, setActionError] = useState(false);
+  const [sendError, setSendError] = useState<boolean | string>(false);
+  const [actionError, setActionError] = useState<boolean | string>(false);
   const [nextPage, setNextPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -52,7 +54,8 @@ export default function CommentsRoute() {
       setNextPage(page.page + 1);
       setHasMore(page.hasMore);
       setStatus('success');
-    } catch {
+    } catch (cause) {
+      setLoadError(cause);
       setStatus('error');
     }
   }, [loadInitial]);
@@ -68,8 +71,11 @@ export default function CommentsRoute() {
         setHasMore(page.hasMore);
         setStatus('success');
       })
-      .catch(() => {
-        if (active) setStatus('error');
+      .catch((cause) => {
+        if (active) {
+          setLoadError(cause);
+          setStatus('error');
+        }
       });
     return () => {
       active = false;
@@ -90,8 +96,13 @@ export default function CommentsRoute() {
       ]);
       setNextPage(page.page + 1);
       setHasMore(page.hasMore);
-    } catch {
-      setActionError(true);
+    } catch (cause) {
+      setActionError(
+        describeError(cause, {
+          forbidden: 'Você não pode alterar este comentário.',
+          not_found: 'Este comentário não existe mais. Atualize a tela.',
+        }).message,
+      );
     } finally {
       loadingMoreRef.current = false;
       setLoadingMore(false);
@@ -103,6 +114,7 @@ export default function CommentsRoute() {
       items={items}
       currentUserId={currentUserId}
       status={status}
+      error={loadError}
       sending={sending}
       sendError={sendError}
       actionError={actionError}
@@ -124,8 +136,13 @@ export default function CommentsRoute() {
           setItems((current) => [created, ...current]);
           pendingCreate.current = undefined;
           return true;
-        } catch {
-          setSendError(true);
+        } catch (cause) {
+          setSendError(
+            describeError(cause, {
+              forbidden: 'Você não pode comentar nesta publicação.',
+              not_found: 'Esta publicação não está mais disponível.',
+            }).message,
+          );
           return false;
         } finally {
           setSending(false);
@@ -139,8 +156,13 @@ export default function CommentsRoute() {
             current.map((item) => (item.id === updated.id ? updated : item)),
           );
           return true;
-        } catch {
-          setActionError(true);
+        } catch (cause) {
+          setActionError(
+            describeError(cause, {
+              forbidden: 'Você não pode alterar este comentário.',
+              not_found: 'Este comentário não existe mais. Atualize a tela.',
+            }).message,
+          );
           return false;
         }
       }}
@@ -151,8 +173,13 @@ export default function CommentsRoute() {
           setItems((current) =>
             current.filter((item) => item.id !== comment.id),
           );
-        } catch {
-          setActionError(true);
+        } catch (cause) {
+          setActionError(
+            describeError(cause, {
+              forbidden: 'Você não pode alterar este comentário.',
+              not_found: 'Este comentário não existe mais. Atualize a tela.',
+            }).message,
+          );
         }
       }}
     />

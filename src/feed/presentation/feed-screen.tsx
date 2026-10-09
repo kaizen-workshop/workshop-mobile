@@ -1,16 +1,20 @@
+import { Search } from 'lucide-react-native';
+import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
   Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { Image } from 'expo-image';
 
 import type { FeedCard } from '@/feed/domain';
-import { AppHeader } from '@/navigation';
+import { AppHeader, StatePage } from '@/navigation';
 import {
   AppSymbol,
   EmptyState,
@@ -29,6 +33,7 @@ import {
 
 type Props = Readonly<{
   status: 'loading' | 'error' | 'success';
+  error?: unknown;
   items: readonly FeedCard[];
   refreshing?: boolean;
   loadingMore?: boolean;
@@ -40,6 +45,14 @@ type Props = Readonly<{
   onItemPress?: (item: FeedCard) => void;
   onToggleLike?: (item: FeedCard) => void;
 }>;
+
+type KindFilter = 'all' | 'workshop' | 'post';
+
+const kindFilters: readonly { value: KindFilter; label: string }[] = [
+  { value: 'all', label: 'Para você' },
+  { value: 'workshop', label: 'Workshops' },
+  { value: 'post', label: 'Publicações' },
+];
 
 const symbols = {
   article: { ios: 'doc.text.fill', android: 'article', web: 'article' },
@@ -103,7 +116,9 @@ function FeedItem({
           {item.summary}
         </Text>
       ) : null}
-      {item.context ? <Text style={styles.context}>{item.context}</Text> : null}
+      {item.context ? (
+        <Text style={styles.context}>{friendlyContext(item.context)}</Text>
+      ) : null}
     </>
   );
 
@@ -162,7 +177,7 @@ function FeedItem({
       ) : item.kind === 'workshop' && onPress ? (
         <View style={styles.cardFooter}>
           <View style={styles.openButton}>
-            <Text style={styles.openText}>Ver detalhes</Text>
+            <Text style={styles.openText}>Ver workshop</Text>
             <AppSymbol
               color={colors.brand}
               fallback="›"
@@ -188,35 +203,105 @@ export function FeedScreen({
   refreshing = false,
   source = 'network',
   status,
+  error,
 }: Props) {
+  const [query, setQuery] = useState('');
+  const [kindFilter, setKindFilter] = useState<KindFilter>('all');
+  const visible = useMemo(() => {
+    const needle = query.trim().toLocaleLowerCase('pt-BR');
+    if (!needle && kindFilter === 'all') return items;
+    return items.filter(
+      (item) =>
+        (kindFilter === 'all' || item.kind === kindFilter) &&
+        (!needle ||
+          `${item.title} ${item.summary ?? ''}`
+            .toLocaleLowerCase('pt-BR')
+            .includes(needle)),
+    );
+  }, [items, kindFilter, query]);
+  const frame = (node: React.ReactNode) => (
+    <StatePage kind="menu" eyebrow={'Kaizen Workshop'} title={'Feed'}>
+      {node}
+    </StatePage>
+  );
   if (status === 'loading' && items.length === 0)
-    return <LoadingState message="Carregando feed" />;
+    return frame(<LoadingState message="Carregando feed" />);
   if (status === 'error' && items.length === 0)
-    return (
+    return frame(
       <ErrorState
         message="Não foi possível carregar o feed."
+        error={error}
         onRetry={onRetry}
-      />
+      />,
     );
   if (items.length === 0)
-    return (
+    return frame(
       <EmptyState
         actionLabel="Atualizar feed"
         message="Novos workshops e publicações aparecerão aqui."
         onAction={onRefresh}
         title="Seu feed está vazio"
-      />
+      />,
     );
 
   return (
     <FlatList
       testID="feed-list"
       contentContainerStyle={styles.list}
-      data={items}
+      data={visible}
       keyExtractor={(item) => `${item.kind}:${item.id}`}
       ListHeaderComponent={
         <View>
           <AppHeader eyebrow="Kaizen Workshop" title="Feed" />
+          <Text accessibilityRole="header" style={styles.heading}>
+            Seu próximo aprendizado
+          </Text>
+          <Text style={styles.subheading}>
+            Encontre experiências que combinam com você.
+          </Text>
+          <View style={styles.search}>
+            <Search color={colors.textMuted} size={20} />
+            <TextInput
+              accessibilityLabel="Pesquisar no feed"
+              onChangeText={setQuery}
+              placeholder="Pesquise por workshops..."
+              placeholderTextColor={colors.placeholder}
+              returnKeyType="search"
+              style={styles.searchInput}
+              value={query}
+            />
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.chips}
+          >
+            {kindFilters.map((filter) => {
+              const selected = filter.value === kindFilter;
+              return (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  key={filter.value}
+                  onPress={() => setKindFilter(filter.value)}
+                  style={({ pressed }) => [
+                    styles.chip,
+                    selected && styles.chipSelected,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.chipText,
+                      selected && styles.chipTextSelected,
+                    ]}
+                  >
+                    {filter.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
           {source === 'cache' ? (
             <InlineNotice
               message="Sem conexão. Exibindo conteúdo salvo neste dispositivo."
@@ -224,6 +309,12 @@ export function FeedScreen({
             />
           ) : null}
         </View>
+      }
+      ListEmptyComponent={
+        <Text style={styles.noResults}>
+          Nada encontrado para esta busca. Tente outras palavras ou limpe o
+          filtro.
+        </Text>
       }
       ListFooterComponent={
         loadingMore ? (
@@ -272,7 +363,66 @@ export function FeedScreen({
   );
 }
 
+function friendlyContext(value: string) {
+  // Posts carry their ISO publication time as context; never show it raw.
+  if (!/^\d{4}-\d{2}-\d{2}T/.test(value)) return value;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return `Publicado em ${new Intl.DateTimeFormat('pt-BR').format(date)}`;
+}
+
 const styles = StyleSheet.create({
+  heading: {
+    color: colors.text,
+    fontFamily: typography.familyBold,
+    fontSize: typography.heading,
+    fontWeight: typography.bold,
+  },
+  subheading: {
+    color: colors.textMuted,
+    fontFamily: typography.familyRegular,
+    fontSize: typography.bodySmall,
+    marginTop: spacing.xxs,
+  },
+  search: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radii.full,
+    flexDirection: 'row',
+    gap: spacing.xs,
+    marginTop: spacing.md,
+    minHeight: sizes.touchTarget,
+    paddingHorizontal: spacing.md,
+  },
+  searchInput: {
+    color: colors.text,
+    flex: 1,
+    fontFamily: typography.familyRegular,
+    fontSize: typography.body,
+    minHeight: sizes.touchTarget,
+  },
+  chips: { gap: spacing.xs, paddingVertical: spacing.md },
+  chip: {
+    backgroundColor: colors.surface,
+    borderRadius: radii.full,
+    justifyContent: 'center',
+    minHeight: 40,
+    paddingHorizontal: spacing.md,
+  },
+  chipSelected: { backgroundColor: colors.brand },
+  chipText: {
+    color: colors.text,
+    fontFamily: typography.familyMedium,
+    fontSize: typography.bodySmall,
+  },
+  chipTextSelected: { color: colors.onBrand },
+  noResults: {
+    color: colors.textMuted,
+    fontFamily: typography.familyRegular,
+    lineHeight: 22,
+    paddingVertical: spacing.lg,
+    textAlign: 'center',
+  },
   page: {
     backgroundColor: colors.background,
   },

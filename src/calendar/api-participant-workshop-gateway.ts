@@ -22,7 +22,10 @@ export function createParticipantWorkshopGateway(
   http: HttpClient,
   tokenStorage: TokenStorage,
 ) {
-  const load = async (path: string): Promise<ParticipantWorkshopPage> => {
+  const load = async (
+    path: string,
+    historyStatus?: ParticipantWorkshopFilter,
+  ): Promise<ParticipantWorkshopPage> => {
     const tokens = await tokenStorage.read();
     if (!tokens) throw new AppError({ category: 'unauthorized' });
     const response = await http.request<unknown>({
@@ -31,7 +34,9 @@ export function createParticipantWorkshopGateway(
     });
     if (!isPage(response)) throw invalidResponse();
     return {
-      items: response.content,
+      items: historyStatus
+        ? response.content.map((item) => ({ ...item, historyStatus }))
+        : response.content,
       page: response.number,
       hasMore: !response.last,
     };
@@ -44,6 +49,7 @@ export function createParticipantWorkshopGateway(
     ) {
       return load(
         `/users/me/workshops/history?filter=${filter}&page=${page}&size=${size}`,
+        filter,
       );
     },
     loadCalendar(

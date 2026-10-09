@@ -1,5 +1,5 @@
 import type { EnvironmentConfig } from '@/core/config';
-import { AppError, toAppError } from '@/core/errors';
+import { AppError, toAppError, type FieldError } from '@/core/errors';
 
 export type HttpRequest = Readonly<{
   path: string;
@@ -56,6 +56,7 @@ export function createHttpClient(
             category: 'unknown',
             status: response.status,
             code,
+            fieldErrors: readFieldErrors(payload),
           });
         }
         if (response.status === 204 || response.status === 205)
@@ -86,4 +87,24 @@ export function createHttpClient(
       }
     },
   };
+}
+
+function readFieldErrors(payload: unknown): FieldError[] {
+  if (!payload || typeof payload !== 'object' || !('errors' in payload))
+    return [];
+  const errors = (payload as { errors: unknown }).errors;
+  if (!Array.isArray(errors)) return [];
+  return errors.flatMap((item) =>
+    item &&
+    typeof item === 'object' &&
+    typeof (item as FieldError).field === 'string' &&
+    typeof (item as FieldError).message === 'string'
+      ? [
+          {
+            field: (item as FieldError).field,
+            message: (item as FieldError).message,
+          },
+        ]
+      : [],
+  );
 }

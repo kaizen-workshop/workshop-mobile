@@ -11,6 +11,8 @@ export type WorkshopDetails = Readonly<{
   description?: string;
   theme?: string;
   category?: string;
+  /** yyyy-MM-dd, last day of the workshop. */
+  endDate?: string;
   dateLabel?: string;
   timeLabel?: string;
   location?: string;

@@ -1,9 +1,10 @@
-import { router, usePathname } from 'expo-router';
+import { router, usePathname, type Href } from 'expo-router';
 import {
   Bell,
   CalendarDays,
   ChevronRight,
   Home,
+  LayoutDashboard,
   Menu,
   Settings,
   UserRound,
@@ -21,6 +22,7 @@ import {
   View,
 } from 'react-native';
 
+import { canManage, useRole } from '@/auth/session';
 import {
   colors,
   radii,
@@ -63,6 +65,17 @@ export function AppHeader({
 }>) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const role = useRole();
+  const items = canManage(role)
+    ? [
+        ...destinations,
+        {
+          label: 'Gestão',
+          href: '/admin',
+          Icon: LayoutDashboard,
+        } as const,
+      ]
+    : destinations;
 
   return (
     <>
@@ -112,7 +125,7 @@ export function AppHeader({
               </Pressable>
             </View>
             <ScrollView contentContainerStyle={styles.destinations}>
-              {destinations.map(({ href, Icon, label }) => {
+              {items.map(({ href, Icon, label }) => {
                 const active = pathname.includes(routeSegment(href));
                 return (
                   <Pressable
@@ -120,7 +133,7 @@ export function AppHeader({
                     key={href}
                     onPress={() => {
                       setOpen(false);
-                      router.replace(href);
+                      router.replace(href as Href);
                     }}
                     style={({ pressed }) => [
                       styles.destination,
@@ -186,12 +199,51 @@ export function BackHeader({
   );
 }
 
+/**
+ * Keeps the screen header (menu or back button) visible while content is
+ * loading, failed or empty, so the person is never left without a way out.
+ */
+export function StatePage({
+  children,
+  eyebrow,
+  fallback,
+  kind,
+  title,
+}: Readonly<{
+  children: React.ReactNode;
+  eyebrow?: string;
+  fallback?: string;
+  kind: 'menu' | 'back';
+  title: string;
+}>) {
+  return (
+    <View style={styles.statePage}>
+      <View style={styles.stateHeader}>
+        {kind === 'back' ? (
+          <BackHeader eyebrow={eyebrow} fallback={fallback} title={title} />
+        ) : (
+          <AppHeader eyebrow={eyebrow} title={title} />
+        )}
+      </View>
+      {children}
+    </View>
+  );
+}
+
 function routeSegment(href: string) {
   const parts = href.split('/');
   return parts.at(-1) ?? href;
 }
 
 const styles = StyleSheet.create({
+  statePage: { flex: 1 },
+  stateHeader: {
+    alignSelf: 'center',
+    maxWidth: sizes.contentMaxWidth,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    width: '100%',
+  },
   header: {
     alignItems: 'center',
     flexDirection: 'row',
