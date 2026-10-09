@@ -8,11 +8,14 @@ export type ErrorCategory =
   | 'conflict'
   | 'server'
   | 'unknown';
+export type FieldError = Readonly<{ field: string; message: string }>;
+
 type AppErrorInput = Readonly<{
   category: ErrorCategory;
   status?: number;
   code?: string;
   technicalMessage?: string;
+  fieldErrors?: readonly FieldError[];
 }>;
 
 export class AppError extends Error {
@@ -20,6 +23,8 @@ export class AppError extends Error {
   readonly status?: number;
   readonly code?: string;
   readonly technicalMessage?: string;
+  /** Per-field validation messages the API returned (HTTP 400). */
+  readonly fieldErrors: readonly FieldError[];
   readonly userMessage =
     'Não foi possível concluir esta ação. Tente novamente.';
 
@@ -29,6 +34,7 @@ export class AppError extends Error {
     this.status = input.status;
     this.code = input.code;
     this.technicalMessage = input.technicalMessage;
+    this.fieldErrors = input.fieldErrors ?? [];
   }
 }
 

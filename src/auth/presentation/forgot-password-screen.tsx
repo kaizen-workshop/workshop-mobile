@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Mail } from 'lucide-react-native';
+import { AlertCircle, ArrowLeft, Mail, Send } from 'lucide-react-native';
 import {
   ActivityIndicator,
   ImageBackground,
@@ -12,15 +12,20 @@ import {
   View,
 } from 'react-native';
 
+import { describeError } from '@/core/errors';
+import { maskEmail } from './mask-email';
 import { colors, radii, sizes, spacing, typography } from '@/shared/theme';
 
 export function ForgotPasswordScreen({
   onBack,
+  onContinue,
   onSubmit,
 }: {
   onBack?: () => void;
+  onContinue?: () => void;
   onSubmit(login: string): Promise<void> | void;
 }) {
+  const [sentTo, setSentTo] = useState<string | null>(null);
   const { height: viewportHeight } = useWindowDimensions();
   const [login, setLogin] = useState('');
   const [loading, setLoading] = useState(false);
@@ -31,8 +36,14 @@ export function ForgotPasswordScreen({
     setError(null);
     try {
       await onSubmit(login);
-    } catch {
-      setError('Não foi possível enviar o código.');
+      setSentTo(login.trim());
+    } catch (cause) {
+      setError(
+        describeError(cause, {
+          not_found: 'Não encontramos uma conta com este e-mail.',
+          bad_request: 'Informe um e-mail válido.',
+        }).message,
+      );
     } finally {
       setLoading(false);
     }
@@ -58,52 +69,88 @@ export function ForgotPasswordScreen({
             <ArrowLeft color={colors.onBrand} size={24} />
           </Pressable>
         ) : null}
-        <View style={styles.card}>
-          <Text accessibilityRole="header" style={styles.title}>
-            Informe o Email
-          </Text>
-          <Text style={styles.description}>
-            Informe o e-mail vinculado à sua conta para receber as instruções de
-            recuperação.
-          </Text>
-          <Text style={styles.label}>Usuário / Email</Text>
-          <View style={styles.field}>
-            <Mail color={colors.textMuted} size={20} />
-            <TextInput
-              accessibilityLabel="E-mail"
-              autoCapitalize="none"
-              autoComplete="email"
-              keyboardType="email-address"
-              onChangeText={setLogin}
-              placeholder="email@gmail.com"
-              placeholderTextColor={colors.placeholder}
-              style={styles.input}
-              value={login}
-            />
+        {sentTo ? (
+          <View style={styles.card}>
+            <View style={styles.sentIcon}>
+              <Send color={colors.brand} size={56} strokeWidth={2.2} />
+            </View>
+            <Text accessibilityRole="header" style={styles.sentTitle}>
+              Enviamos um código para {maskEmail(sentTo)}
+            </Text>
+            <View accessibilityRole="alert" style={styles.expiry}>
+              <AlertCircle color={colors.textMuted} size={20} />
+              <Text style={styles.expiryText}>
+                O código irá expirar em 1 hora
+              </Text>
+            </View>
+            {onContinue ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={onContinue}
+                style={({ pressed }) => [
+                  styles.button,
+                  pressed && styles.buttonPressed,
+                ]}
+              >
+                <Text style={styles.buttonText}>Inserir código</Text>
+              </Pressable>
+            ) : null}
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setSentTo(null)}
+              style={styles.linkButton}
+            >
+              <Text style={styles.linkText}>Usar outro e-mail</Text>
+            </Pressable>
           </View>
-          {error ? (
-            <Text accessibilityRole="alert" style={styles.error}>
-              {error}
+        ) : (
+          <View style={styles.card}>
+            <Text accessibilityRole="header" style={styles.title}>
+              Informe o Email
             </Text>
-          ) : null}
-          <Pressable
-            accessibilityState={{ busy: loading, disabled: loading }}
-            accessibilityRole="button"
-            accessibilityLabel="Enviar recuperação"
-            disabled={loading}
-            onPress={submit}
-            style={({ pressed }) => [
-              styles.button,
-              pressed && styles.buttonPressed,
-              loading && styles.buttonDisabled,
-            ]}
-          >
-            {loading ? <ActivityIndicator color={colors.onBrand} /> : null}
-            <Text style={styles.buttonText}>
-              {loading ? 'Enviando...' : 'Enviar'}
+            <Text style={styles.description}>
+              Informe o e-mail vinculado à sua conta para receber as instruções
+              de recuperação.
             </Text>
-          </Pressable>
-        </View>
+            <Text style={styles.label}>Usuário / Email</Text>
+            <View style={styles.field}>
+              <Mail color={colors.textMuted} size={20} />
+              <TextInput
+                accessibilityLabel="E-mail"
+                autoCapitalize="none"
+                autoComplete="email"
+                keyboardType="email-address"
+                onChangeText={setLogin}
+                placeholder="email@gmail.com"
+                placeholderTextColor={colors.placeholder}
+                style={styles.input}
+                value={login}
+              />
+            </View>
+            {error ? (
+              <Text accessibilityRole="alert" style={styles.error}>
+                {error}
+              </Text>
+            ) : null}
+            <Pressable
+              accessibilityState={{ busy: loading, disabled: loading }}
+              accessibilityRole="button"
+              accessibilityLabel="Enviar recuperação"
+              disabled={loading}
+              onPress={submit}
+              style={({ pressed }) => [
+                styles.button,
+                pressed && styles.buttonPressed,
+                loading && styles.buttonDisabled,
+              ]}
+            >
+              {loading ? <ActivityIndicator color={colors.onBrand} /> : null}
+              <Text style={styles.buttonText}>
+                {loading ? 'Enviando...' : 'Enviar'}
+              </Text>
+            </Pressable>
+          </View>
+        )}
         <Text style={styles.footer}>
           © 2026 WEG S.A. Todos os direitos reservados.
         </Text>
@@ -113,6 +160,40 @@ export function ForgotPasswordScreen({
 }
 
 const styles = StyleSheet.create({
+  sentIcon: { alignItems: 'center', marginTop: spacing.md },
+  sentTitle: {
+    color: colors.brand,
+    fontFamily: typography.familyBold,
+    fontSize: typography.body,
+    fontWeight: typography.bold,
+    marginTop: spacing.md,
+    textAlign: 'center',
+  },
+  expiry: {
+    alignItems: 'center',
+    backgroundColor: colors.surface2,
+    borderRadius: radii.xl,
+    flexDirection: 'row',
+    gap: spacing.xs,
+    marginVertical: spacing.md,
+    padding: spacing.sm,
+  },
+  expiryText: {
+    color: colors.textMuted,
+    fontFamily: typography.familyMedium,
+    fontSize: typography.bodySmall,
+  },
+  linkButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: sizes.touchTarget,
+  },
+  linkText: {
+    color: colors.brand,
+    fontFamily: typography.familyMedium,
+    fontWeight: typography.medium,
+    textDecorationLine: 'underline',
+  },
   background: { flex: 1, width: '100%' },
   overlay: {
     backgroundColor: 'rgba(0, 4, 35, 0.28)',

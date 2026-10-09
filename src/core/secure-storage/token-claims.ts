@@ -5,6 +5,7 @@ import type { TokenStorage } from './token-storage';
 type JwtPayload = Readonly<{
   sub?: unknown;
   exp?: unknown;
+  role?: unknown;
   mustChangePassword?: unknown;
   requiresOnboarding?: unknown;
 }>;
@@ -26,6 +27,16 @@ export function readJwtSubject(accessToken: string): string | null {
   const payload = readJwtPayload(accessToken);
   return typeof payload?.sub === 'string' && payload.sub.trim()
     ? payload.sub
+    : null;
+}
+
+export type UserRole = 'PARTICIPANT' | 'ARWEG' | 'ADMIN';
+
+/** Reads the role claim for UI gating only; the API enforces every permission. */
+export function readJwtRole(accessToken: string): UserRole | null {
+  const role = readJwtPayload(accessToken)?.role;
+  return role === 'PARTICIPANT' || role === 'ARWEG' || role === 'ADMIN'
+    ? role
     : null;
 }
 

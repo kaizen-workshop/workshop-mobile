@@ -202,6 +202,7 @@ it('loads workshop details with taxonomy names and attachments', async () => {
     description: 'Melhoria contínua',
     theme: 'Excelência operacional',
     category: 'Indústria',
+    endDate: '2026-10-10',
     dateLabel: '10/10/2026',
     timeLabel: '09:00–12:00',
     location: 'Auditório',

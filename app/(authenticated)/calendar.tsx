@@ -1,8 +1,12 @@
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+
 import {
+  CalendarScreen,
   createParticipantWorkshopGateway,
-  ParticipantWorkshopScreen,
+  monthRange,
+  toIsoDate,
+  type CalendarMonth,
   type ParticipantWorkshop,
 } from '@/calendar';
 import { getEnvironment } from '@/core/config';
@@ -19,47 +23,67 @@ export default function CalendarRoute() {
       ),
     [],
   );
+  const today = toIsoDate(new Date());
+  const [month, setMonth] = useState<CalendarMonth>(() => {
+    const now = new Date();
+    return { year: now.getFullYear(), month: now.getMonth() };
+  });
+  const [selectedDate, setSelectedDate] = useState(today);
   const [status, setStatus] = useState<'loading' | 'error' | 'success'>(
     'loading',
   );
+  const [loadError, setLoadError] = useState<unknown>();
   const [items, setItems] = useState<readonly ParticipantWorkshop[]>([]);
-  const load = useCallback(async () => {
-    setStatus('loading');
-    try {
-      const page = await gateway.loadCalendar();
-      setItems(page.items);
-      setStatus('success');
-    } catch {
-      setStatus('error');
-    }
-  }, [gateway]);
+  const [attempt, setAttempt] = useState(0);
+
   useEffect(() => {
     let active = true;
+    const { from, to } = monthRange(month.year, month.month);
     void gateway
-      .loadCalendar()
+      .loadCalendar({ from, to, size: 100 })
       .then((page) => {
         if (!active) return;
         setItems(page.items);
         setStatus('success');
       })
-      .catch(() => {
-        if (active) setStatus('error');
+      .catch((cause) => {
+        if (!active) return;
+        setLoadError(cause);
+        setStatus('error');
       });
     return () => {
       active = false;
     };
-  }, [gateway]);
+  }, [attempt, gateway, month]);
+
+  const changeMonth = useCallback((delta: -1 | 1) => {
+    setStatus('loading');
+    setItems([]);
+    setMonth((current) => {
+      const next = new Date(current.year, current.month + delta, 1);
+      setSelectedDate(toIsoDate(next));
+      return { year: next.getFullYear(), month: next.getMonth() };
+    });
+  }, []);
+
   return (
-    <ParticipantWorkshopScreen
-      title="Meu calendário"
-      emptyMessage="Nenhum workshop agendado."
+    <CalendarScreen
+      error={loadError}
       items={items}
-      status={status}
-      onRetry={load}
+      month={month}
+      onChangeMonth={changeMonth}
       onOpen={(item) => {
         selectWorkshop({ id: item.id, title: item.title });
         router.push('/(authenticated)/workshop');
       }}
+      onRetry={() => {
+        setStatus('loading');
+        setAttempt((value) => value + 1);
+      }}
+      onSelectDate={setSelectedDate}
+      selectedDate={selectedDate}
+      status={status}
+      today={today}
     />
   );
 }

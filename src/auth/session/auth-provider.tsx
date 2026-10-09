@@ -132,3 +132,8 @@ export function useAuth() {
   if (!value) throw new Error('useAuth must be used within AuthProvider');
   return value;
 }
+
+/** Like useAuth, but returns null outside an AuthProvider (e.g. isolated screens). */
+export function useOptionalAuth() {
+  return useContext(AuthContext);
+}

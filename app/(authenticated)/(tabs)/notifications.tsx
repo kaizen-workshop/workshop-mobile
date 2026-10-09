@@ -6,6 +6,7 @@ import { createAuthenticatedHttpClient } from '@/core/http';
 import { createTokenStorage } from '@/core/secure-storage';
 import {
   createApiNotificationGateway,
+  markAllNotificationsRead,
   mergeNotifications,
   updateNotificationRead,
 } from '@/notification/data';
@@ -28,6 +29,7 @@ export default function NotificationsRoute() {
   const [status, setStatus] = useState<'loading' | 'error' | 'success'>(
     'loading',
   );
+  const [loadError, setLoadError] = useState<unknown>();
   const [items, setItems] = useState<readonly NotificationItem[]>([]);
   const [nextPage, setNextPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -44,7 +46,8 @@ export default function NotificationsRoute() {
       setNextPage(page.page + 1);
       setHasMore(page.hasMore);
       setStatus('success');
-    } catch {
+    } catch (cause) {
+      setLoadError(cause);
       setStatus('error');
     }
   }, [gateway]);
@@ -66,6 +69,16 @@ export default function NotificationsRoute() {
       setLoadingMore(false);
     }
   }, [gateway, hasMore, nextPage]);
+
+  const markAllRead = useCallback(async () => {
+    const previous = items;
+    setItems(markAllNotificationsRead(previous));
+    try {
+      await gateway.markAllRead();
+    } catch {
+      setItems(previous);
+    }
+  }, [gateway, items]);
 
   const markRead = useCallback(
     async (item: NotificationItem) => {
@@ -94,8 +107,11 @@ export default function NotificationsRoute() {
         setHasMore(page.hasMore);
         setStatus('success');
       })
-      .catch(() => {
-        if (active) setStatus('error');
+      .catch((cause) => {
+        if (active) {
+          setLoadError(cause);
+          setStatus('error');
+        }
       });
     return () => {
       active = false;
@@ -108,6 +124,7 @@ export default function NotificationsRoute() {
       loadingMore={loadingMore}
       loadMoreError={loadMoreError}
       onLoadMore={hasMore ? loadMore : undefined}
+      onMarkAllRead={markAllRead}
       onPress={async (item) => {
         await markRead(item);
         const target = resolveNotificationRoute(item);
@@ -126,6 +143,7 @@ export default function NotificationsRoute() {
       }}
       onRetry={load}
       status={status}
+      error={loadError}
     />
   );
 }

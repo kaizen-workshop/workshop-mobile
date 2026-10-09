@@ -13,7 +13,7 @@ import {
   View,
 } from 'react-native';
 
-import { AppError } from '@/core/errors';
+import { AppError, describeError } from '@/core/errors';
 import {
   colors,
   radii,
@@ -54,11 +54,14 @@ export function LoginScreen({
       await onSubmit({ login: login.trim(), password });
     } catch (submitError) {
       logDevelopmentError(submitError);
+      const invalid =
+        'Usuário/e-mail ou senha inválidos. Confira os dados ou toque em "Esqueci minha senha".';
       setError(
-        submitError instanceof AppError &&
-          ['unauthorized', 'forbidden'].includes(submitError.category)
-          ? 'Usuário/e-mail ou senha inválidos.'
-          : 'Não foi possível entrar. Tente novamente.',
+        describeError(submitError, {
+          unauthorized: invalid,
+          forbidden: invalid,
+          bad_request: 'Informe um usuário ou e-mail e a senha válidos.',
+        }).message,
       );
     } finally {
       setLoading(false);
@@ -280,7 +283,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   title: {
-    color: colors.text,
+    color: colors.brand,
     fontFamily: typography.familyBold,
     fontSize: typography.title,
     fontWeight: typography.bold,
@@ -295,8 +298,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   label: {
-    color: colors.text,
-    fontFamily: typography.familyMedium,
+    color: colors.brand,
+    fontFamily: typography.familyBold,
     fontSize: typography.bodySmall,
     fontWeight: typography.medium,
     marginBottom: spacing.xs,

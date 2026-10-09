@@ -21,6 +21,7 @@ export default function OnboardingPreferencesRoute() {
   const [status, setStatus] = useState<'loading' | 'error' | 'success'>(
     'loading',
   );
+  const [loadError, setLoadError] = useState<unknown>();
   const [themes, setThemes] = useState<readonly ThemeOption[]>([]);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(
     new Set(),
@@ -30,7 +31,8 @@ export default function OnboardingPreferencesRoute() {
     try {
       setThemes(await gateway.listThemes());
       setStatus('success');
-    } catch {
+    } catch (cause) {
+      setLoadError(cause);
       setStatus('error');
     }
   }, [gateway]);
@@ -44,8 +46,11 @@ export default function OnboardingPreferencesRoute() {
         setThemes(loadedThemes);
         setStatus('success');
       })
-      .catch(() => {
-        if (active) setStatus('error');
+      .catch((cause) => {
+        if (active) {
+          setLoadError(cause);
+          setStatus('error');
+        }
       });
     return () => {
       active = false;
@@ -69,6 +74,7 @@ export default function OnboardingPreferencesRoute() {
       }}
       selectedIds={selectedIds}
       status={status}
+      error={loadError}
       themes={themes}
     />
   );

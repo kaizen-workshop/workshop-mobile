@@ -21,6 +21,7 @@ export default function EditPreferencesRoute() {
   const [status, setStatus] = useState<'loading' | 'error' | 'success'>(
     'loading',
   );
+  const [loadError, setLoadError] = useState<unknown>();
   const [themes, setThemes] = useState<readonly ThemeOption[]>([]);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(
     new Set(),
@@ -36,7 +37,8 @@ export default function EditPreferencesRoute() {
       setThemes(available);
       setSelectedIds(selected);
       setStatus('success');
-    } catch {
+    } catch (cause) {
+      setLoadError(cause);
       setStatus('error');
     }
   }, [gateway]);
@@ -50,8 +52,11 @@ export default function EditPreferencesRoute() {
         setSelectedIds(selected);
         setStatus('success');
       })
-      .catch(() => {
-        if (active) setStatus('error');
+      .catch((cause) => {
+        if (active) {
+          setLoadError(cause);
+          setStatus('error');
+        }
       });
     return () => {
       active = false;
@@ -75,6 +80,7 @@ export default function EditPreferencesRoute() {
       }}
       selectedIds={selectedIds}
       status={status}
+      error={loadError}
       submitLabel="Salvar preferências"
       subtitle="Atualize os temas usados para personalizar seu conteúdo."
       themes={themes}

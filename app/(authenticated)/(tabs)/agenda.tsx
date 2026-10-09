@@ -31,6 +31,7 @@ export default function AgendaRoute() {
   const [status, setStatus] = useState<'loading' | 'error' | 'success'>(
     'loading',
   );
+  const [loadError, setLoadError] = useState<unknown>();
   const [workshops, setWorkshops] = useState<readonly WorkshopSummary[]>([]);
   const [filters, setFilters] = useState<WorkshopFilters>({
     status: 'PUBLISHED',
@@ -58,7 +59,8 @@ export default function AgendaRoute() {
       setHasMore(result.hasMore);
       setLoadMoreError(false);
       setStatus('success');
-    } catch {
+    } catch (cause) {
+      setLoadError(cause);
       setStatus('error');
     }
   }, [filters, gateway]);
@@ -126,8 +128,11 @@ export default function AgendaRoute() {
         setLoadMoreError(false);
         setStatus('success');
       })
-      .catch(() => {
-        if (active) setStatus('error');
+      .catch((cause) => {
+        if (active) {
+          setLoadError(cause);
+          setStatus('error');
+        }
       });
     return () => {
       active = false;
@@ -156,6 +161,7 @@ export default function AgendaRoute() {
       refreshing={refreshing}
       source={source}
       status={status}
+      error={loadError}
       workshops={workshops}
     />
   );

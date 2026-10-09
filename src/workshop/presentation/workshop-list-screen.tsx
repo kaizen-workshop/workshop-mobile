@@ -11,7 +11,7 @@ import {
 import { SlidersHorizontal } from 'lucide-react-native';
 import { useState } from 'react';
 
-import { AppHeader } from '@/navigation';
+import { AppHeader, StatePage } from '@/navigation';
 import {
   EmptyState,
   ErrorState,
@@ -37,6 +37,7 @@ import { WorkshopCard } from './workshop-card';
 
 type Props = Readonly<{
   status: 'loading' | 'error' | 'success';
+  error?: unknown;
   workshops: readonly WorkshopSummary[];
   refreshing?: boolean;
   filtering?: boolean;
@@ -65,20 +66,27 @@ export function WorkshopListScreen({
   refreshing = false,
   source = 'network',
   status,
+  error,
   workshops,
   hasMore = false,
   loadingMore = false,
   loadMoreError = false,
 }: Props) {
   const [filtersVisible, setFiltersVisible] = useState(false);
+  const frame = (node: React.ReactNode) => (
+    <StatePage kind="menu" eyebrow={'Descubra e aprenda'} title={'Workshops'}>
+      {node}
+    </StatePage>
+  );
   if (status === 'loading' && workshops.length === 0)
-    return <LoadingState message="Carregando workshops" />;
+    return frame(<LoadingState message="Carregando workshops" />);
   if (status === 'error' && workshops.length === 0)
-    return (
+    return frame(
       <ErrorState
         message="Não foi possível carregar os workshops."
+        error={error}
         onRetry={onRetry}
-      />
+      />,
     );
   return (
     <FlatList

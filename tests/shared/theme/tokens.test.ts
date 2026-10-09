@@ -22,11 +22,11 @@ function contrastRatio(foreground: string, background: string) {
 }
 
 it('exposes the small shared visual token set', () => {
-  expect(colors.brand).toBe('#00579D');
+  expect(colors.brand).toBe('#002096');
   expect(spacing.md).toBe(16);
   expect(radii.md).toBe(6);
   expect(typography.body).toBe(16);
-  expect(typography.familyRegular).toBe('Roboto_400Regular');
+  expect(typography.familyRegular).toBe('Inter_400Regular');
   expect(sizes.touchTarget).toBeGreaterThanOrEqual(44);
 });
 

@@ -44,6 +44,7 @@ it('preserves item order and identifies highlighted content', () => {
     .map((node) => node.props.children);
   expect(headers).toEqual([
     'Feed',
+    'Seu próximo aprendizado',
     'Lean Manufacturing',
     'Novidades da semana',
   ]);
@@ -114,4 +115,39 @@ it('reports the selected post when the like action is pressed', () => {
   fireEvent.press(screen.getByRole('button', { name: 'Curtir' }));
 
   expect(onToggleLike).toHaveBeenCalledWith(items[1]);
+});
+
+it('filters the loaded items by search text and by kind', () => {
+  render(<FeedScreen {...baseProps} />);
+
+  fireEvent.changeText(screen.getByLabelText('Pesquisar no feed'), 'novidades');
+  expect(screen.queryByText('Lean Manufacturing')).toBeNull();
+  expect(screen.getByText('Novidades da semana')).toBeTruthy();
+
+  fireEvent.changeText(screen.getByLabelText('Pesquisar no feed'), 'xyz');
+  expect(screen.getByText(/Nada encontrado/)).toBeTruthy();
+
+  fireEvent.changeText(screen.getByLabelText('Pesquisar no feed'), '');
+  fireEvent.press(screen.getByRole('button', { name: 'Workshops' }));
+  expect(screen.getByText('Lean Manufacturing')).toBeTruthy();
+  expect(screen.queryByText('Novidades da semana')).toBeNull();
+});
+
+it('never shows a raw ISO timestamp as post context', () => {
+  render(
+    <FeedScreen
+      {...baseProps}
+      items={[
+        {
+          id: 'post-2',
+          kind: 'post' as const,
+          title: 'Semana da Segurança',
+          context: '2026-10-08T10:43:28.645298Z',
+        },
+      ]}
+    />,
+  );
+
+  expect(screen.queryByText(/T10:43/)).toBeNull();
+  expect(screen.getByText(/Publicado em/)).toBeTruthy();
 });

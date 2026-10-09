@@ -1,6 +1,6 @@
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { WorkshopGroup } from './group';
-import { AppHeader } from '@/navigation';
+import { AppHeader, StatePage } from '@/navigation';
 import {
   AppSymbol,
   EmptyState,
@@ -28,22 +28,30 @@ const symbols = {
 export function GroupListScreen({
   items,
   status,
+  error,
   onRetry,
   onOpen,
 }: {
   items: readonly WorkshopGroup[];
   status: 'loading' | 'error' | 'success';
+  error?: unknown;
   onRetry(): void;
   onOpen(group: WorkshopGroup): void;
 }) {
+  const frame = (node: React.ReactNode) => (
+    <StatePage kind="menu" eyebrow={'Comunidade'} title={'Meus grupos'}>
+      {node}
+    </StatePage>
+  );
   if (status === 'loading')
-    return <LoadingState message="Carregando grupos..." />;
+    return frame(<LoadingState message="Carregando grupos..." />);
   if (status === 'error')
-    return (
+    return frame(
       <ErrorState
-        onRetry={onRetry}
         message="Não foi possível carregar seus grupos."
-      />
+        error={error}
+        onRetry={onRetry}
+      />,
     );
   return (
     <View style={styles.page}>

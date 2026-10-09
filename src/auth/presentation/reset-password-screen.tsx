@@ -18,13 +18,16 @@ import {
   View,
 } from 'react-native';
 
+import { describeError } from '@/core/errors';
 import { colors, radii, sizes, spacing, typography } from '@/shared/theme';
 
 export function ResetPasswordScreen({
   onBack,
+  onResend,
   onSubmit,
 }: {
   onBack?: () => void;
+  onResend?: () => void;
   onSubmit(input: { code: string; password: string }): Promise<void> | void;
 }) {
   const { height: viewportHeight } = useWindowDimensions();
@@ -41,8 +44,14 @@ export function ResetPasswordScreen({
       await onSubmit({ code, password });
       setCode('');
       setPassword('');
-    } catch {
-      setError('Não foi possível redefinir a senha.');
+    } catch (cause) {
+      setError(
+        describeError(cause, {
+          bad_request:
+            'Código inválido ou expirado, ou senha fora do padrão. Confira os dados.',
+          not_found: 'Código inválido ou expirado. Peça um novo código.',
+        }).message,
+      );
     } finally {
       setLoading(false);
     }
@@ -73,7 +82,7 @@ export function ResetPasswordScreen({
             Confirme o código
           </Text>
           <Text style={styles.description}>
-            Informe o código recebido e escolha sua nova senha.
+            Cole o código enviado ao seu e-mail e escolha sua nova senha.
           </Text>
           <Text style={styles.label}>Código de recuperação</Text>
           <View style={styles.field}>
@@ -131,6 +140,14 @@ export function ResetPasswordScreen({
               {loading ? 'Redefinindo...' : 'Redefinir senha'}
             </Text>
           </Pressable>
+          {onResend ? (
+            <View style={styles.resend}>
+              <Text style={styles.resendLabel}>Não recebeu o código?</Text>
+              <Pressable accessibilityRole="link" onPress={onResend}>
+                <Text style={styles.resendLink}>Reenviar código</Text>
+              </Pressable>
+            </View>
+          ) : null}
         </View>
         <Text style={styles.footer}>
           © 2026 WEG S.A. Todos os direitos reservados.
@@ -141,6 +158,18 @@ export function ResetPasswordScreen({
 }
 
 const styles = StyleSheet.create({
+  resend: { alignItems: 'center', gap: spacing.xxs, marginTop: spacing.md },
+  resendLabel: {
+    color: colors.text,
+    fontFamily: typography.familyMedium,
+    fontSize: typography.bodySmall,
+  },
+  resendLink: {
+    color: colors.brand,
+    fontFamily: typography.familyBold,
+    fontSize: typography.bodySmall,
+    textDecorationLine: 'underline',
+  },
   background: { flex: 1, width: '100%' },
   overlay: {
     backgroundColor: 'rgba(0, 4, 35, 0.28)',

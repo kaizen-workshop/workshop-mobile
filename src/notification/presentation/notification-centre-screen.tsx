@@ -1,4 +1,13 @@
 import {
+  AlertCircle,
+  Bell,
+  CalendarDays,
+  Check,
+  Clock,
+  CreditCard,
+  type LucideIcon,
+} from 'lucide-react-native';
+import {
   ActivityIndicator,
   FlatList,
   Pressable,
@@ -7,14 +16,16 @@ import {
   View,
 } from 'react-native';
 
+import { router } from 'expo-router';
+
 import type { NotificationItem } from '@/notification/domain';
-import { AppHeader } from '@/navigation';
 import {
-  AppSymbol,
-  EmptyState,
-  ErrorState,
-  LoadingState,
-} from '@/shared/presentation';
+  notificationDayLabel,
+  notificationTimeLabel,
+  showsDayHeading,
+} from './notification-time';
+import { BackHeader, StatePage } from '@/navigation';
+import { EmptyState, ErrorState, LoadingState } from '@/shared/presentation';
 import {
   colors,
   radii,
@@ -24,20 +35,25 @@ import {
   typography,
 } from '@/shared/theme';
 
-const notificationSymbol = {
-  ios: 'bell.fill',
-  android: 'notifications',
-  web: 'notifications',
-} as const;
+const typeIcons: Record<string, LucideIcon> = {
+  REGISTRATION_CREATED: Check,
+  WAITING_LIST_JOINED: Clock,
+  WAITING_LIST_PROMOTED: Check,
+  PAYMENT_CONFIRMED: CreditCard,
+  PAYMENT_DECLINED: AlertCircle,
+  MANUAL: CalendarDays,
+};
 
 type Props = Readonly<{
   status: 'loading' | 'error' | 'success';
+  error?: unknown;
   items: readonly NotificationItem[];
   loadingMore?: boolean;
   loadMoreError?: boolean;
   onRetry(): void;
   onLoadMore?: () => void;
   onPress?: (item: NotificationItem) => void;
+  onMarkAllRead?: () => void;
 }>;
 
 function NotificationCard({
@@ -47,15 +63,11 @@ function NotificationCard({
   item: NotificationItem;
   onPress?: () => void;
 }>) {
+  const Icon = typeIcons[item.type] ?? Bell;
   const content = (
     <View style={styles.cardContent}>
       <View style={[styles.icon, !item.read && styles.iconUnread]}>
-        <AppSymbol
-          color={!item.read ? colors.brand : colors.textMuted}
-          fallback="•"
-          name={notificationSymbol}
-          size={20}
-        />
+        <Icon color={!item.read ? colors.brand : colors.textMuted} size={20} />
       </View>
       <View style={styles.cardText}>
         <View style={styles.header}>
@@ -67,7 +79,7 @@ function NotificationCard({
           ) : null}
         </View>
         <Text style={styles.message}>{item.message}</Text>
-        <Text style={styles.date}>{formatDate(item.createdAt)}</Text>
+        <Text style={styles.date}>{notificationTimeLabel(item.createdAt)}</Text>
       </View>
     </View>
   );
@@ -94,31 +106,89 @@ function NotificationCard({
 
 export function NotificationCentreScreen({
   status,
+  error,
   items,
   loadingMore = false,
   loadMoreError = false,
   onRetry,
   onLoadMore,
+  onMarkAllRead,
   onPress,
 }: Props) {
-  if (status === 'loading' && items.length === 0)
-    return <LoadingState message="Carregando notificações" />;
-  if (status === 'error' && items.length === 0)
-    return (
-      <ErrorState
-        message="Não foi possível carregar as notificações."
-        onRetry={onRetry}
+  const unread = items.filter((item) => !item.read).length;
+  const header = (
+    <View>
+      <BackHeader
+        fallback="/(authenticated)/(tabs)/feed"
+        title="Notificações"
       />
-    );
+      <View style={styles.summary}>
+        <View style={styles.unreadChip}>
+          <Text style={styles.unreadChipText}>
+            {unread === 0
+              ? 'Tudo lido'
+              : `${unread} ${unread === 1 ? 'não lida' : 'não lidas'}`}
+          </Text>
+        </View>
+        {unread > 0 && onMarkAllRead ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={onMarkAllRead}
+            style={({ pressed }) => [styles.markAll, pressed && styles.pressed]}
+          >
+            <Text style={styles.markAllText}>Marcar todas como lidas</Text>
+          </Pressable>
+        ) : null}
+      </View>
+    </View>
+  );
+
   if (items.length === 0)
     return (
-      <EmptyState
-        actionLabel="Atualizar avisos"
-        title="Nenhuma notificação"
-        message="As novidades dos seus workshops aparecerão aqui."
-        onAction={onRetry}
-      />
+      <StatePage
+        fallback="/(authenticated)/(tabs)/feed"
+        kind="back"
+        title="Notificações"
+      >
+        {status === 'loading' ? (
+          <LoadingState message="Carregando notificações" />
+        ) : status === 'error' ? (
+          <ErrorState
+            message="Não foi possível carregar as notificações."
+            error={error}
+            onRetry={onRetry}
+          />
+        ) : (
+          <EmptyState
+            actionLabel="Atualizar avisos"
+            title="Nenhuma notificação"
+            message="As novidades dos seus workshops aparecerão aqui."
+            onAction={onRetry}
+          />
+        )}
+      </StatePage>
     );
+
+  const footer = loadingMore ? (
+    <ActivityIndicator
+      accessibilityLabel="Carregando mais notificações"
+      accessibilityRole="progressbar"
+      color={colors.brand}
+    />
+  ) : loadMoreError && onLoadMore ? (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onLoadMore}
+      style={({ pressed }) => [
+        styles.paginationRetry,
+        pressed && styles.pressed,
+      ]}
+    >
+      <Text style={styles.paginationRetryText}>
+        Não foi possível carregar mais. Tentar novamente
+      </Text>
+    </Pressable>
+  ) : null;
 
   return (
     <FlatList
@@ -126,55 +196,85 @@ export function NotificationCentreScreen({
       data={items}
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.content}
-      ListHeaderComponent={
-        <AppHeader eyebrow="Central de avisos" title="Notificações" />
-      }
+      ListHeaderComponent={header}
       ListFooterComponent={
-        loadingMore ? (
-          <ActivityIndicator
-            accessibilityLabel="Carregando mais notificações"
-            accessibilityRole="progressbar"
-            color={colors.brand}
-          />
-        ) : loadMoreError && onLoadMore ? (
+        <View>
+          {footer}
           <Pressable
-            accessibilityRole="button"
-            onPress={onLoadMore}
-            style={({ pressed }) => [
-              styles.paginationRetry,
-              pressed && styles.pressed,
-            ]}
+            accessibilityRole="link"
+            onPress={() => router.push('/(authenticated)/settings')}
+            style={({ pressed }) => [styles.manage, pressed && styles.pressed]}
           >
-            <Text style={styles.paginationRetryText}>
-              Não foi possível carregar mais. Tentar novamente
-            </Text>
+            <Text style={styles.manageText}>Gerenciar notificações</Text>
           </Pressable>
-        ) : null
+        </View>
       }
       onEndReached={loadingMore ? undefined : onLoadMore}
       onEndReachedThreshold={0.4}
-      renderItem={({ item }) => (
-        <NotificationCard
-          item={item}
-          onPress={onPress ? () => onPress(item) : undefined}
-        />
+      renderItem={({ item, index }) => (
+        <View>
+          {showsDayHeading(items, index) ? (
+            <Text accessibilityRole="header" style={styles.dayHeading}>
+              {notificationDayLabel(item.createdAt)}
+            </Text>
+          ) : null}
+          <NotificationCard
+            item={item}
+            onPress={onPress ? () => onPress(item) : undefined}
+          />
+        </View>
       )}
     />
   );
 }
 
-function formatDate(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date);
-}
-
 const styles = StyleSheet.create({
+  summary: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: spacing.sm,
+  },
+  unreadChip: {
+    backgroundColor: colors.brandSubtle,
+    borderRadius: radii.full,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xxs,
+  },
+  unreadChipText: {
+    color: colors.accent,
+    fontFamily: typography.familyMedium,
+    fontSize: typography.caption,
+    fontWeight: typography.medium,
+  },
+  markAll: { minHeight: sizes.touchTarget, justifyContent: 'center' },
+  markAllText: {
+    color: colors.accent,
+    fontFamily: typography.familyMedium,
+    fontSize: typography.bodySmall,
+    fontWeight: typography.medium,
+  },
+  dayHeading: {
+    color: colors.textMuted,
+    fontFamily: typography.familyMedium,
+    fontSize: typography.caption,
+    fontWeight: typography.medium,
+    letterSpacing: 0.6,
+    marginBottom: spacing.xs,
+    marginTop: spacing.sm,
+    textTransform: 'uppercase',
+  },
+  manage: {
+    alignItems: 'center',
+    marginTop: spacing.lg,
+    minHeight: sizes.touchTarget,
+    justifyContent: 'center',
+  },
+  manageText: {
+    color: colors.accent,
+    fontFamily: typography.familyMedium,
+    fontWeight: typography.medium,
+  },
   content: {
     alignSelf: 'center',
     maxWidth: sizes.contentMaxWidth,

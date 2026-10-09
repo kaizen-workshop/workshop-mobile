@@ -6,6 +6,7 @@ import type { NotificationItem, NotificationPage } from '@/notification/domain';
 export type NotificationGateway = Readonly<{
   loadPage(page: number, size?: number): Promise<NotificationPage>;
   markRead(id: string): Promise<NotificationItem>;
+  markAllRead(): Promise<void>;
   registerDevice(token: string, platform: 'ANDROID' | 'IOS'): Promise<string>;
   unregisterDevice(id: string): Promise<void>;
 }>;
@@ -46,6 +47,9 @@ export function createApiNotificationGateway(
       if (!isNotification(response)) throw invalidResponse();
       return response;
     },
+    async markAllRead() {
+      await request<void>('/notifications/read-all', 'PATCH');
+    },
     async registerDevice(token, platform) {
       if (!token.trim()) throw new AppError({ category: 'bad_request' });
       const response = await request<unknown>('/notification-devices', 'POST', {
@@ -71,6 +75,10 @@ export function mergeNotifications(
 ) {
   const known = new Set(current.map((item) => item.id));
   return [...current, ...incoming.filter((item) => !known.has(item.id))];
+}
+
+export function markAllNotificationsRead(items: readonly NotificationItem[]) {
+  return items.map((item) => (item.read ? item : { ...item, read: true }));
 }
 
 export function updateNotificationRead(

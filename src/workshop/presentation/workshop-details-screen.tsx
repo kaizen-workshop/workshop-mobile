@@ -13,7 +13,6 @@ import {
 import type { ComponentType } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -23,7 +22,7 @@ import {
 } from 'react-native';
 
 import type { PostComment } from '@/feed/domain';
-import { BackHeader } from '@/navigation';
+import { BackHeader, StatePage } from '@/navigation';
 import { ErrorState, LoadingState } from '@/shared/presentation';
 import type { RegistrationResult } from '@/registration/domain';
 import type { PaymentResult } from '@/payment/domain';
@@ -40,29 +39,32 @@ import { useWorkshopImageSource } from './use-workshop-image-source';
 
 type Props = Readonly<{
   status: 'loading' | 'error' | 'success';
+  error?: unknown;
   workshop?: WorkshopDetails;
   source?: 'network' | 'cache';
   onRetry?: () => void;
   onOpenAttachment?: (attachment: WorkshopAttachment) => void;
   openingAttachmentId?: string;
-  attachmentError?: boolean;
+  attachmentError?: boolean | string;
   registration?: RegistrationResult;
-  registrationError?: 'conflict' | 'error';
+  registrationError?: string;
   registering?: boolean;
   onRegister?: () => void;
   onCancelRegistration?: () => void;
   cancellingRegistration?: boolean;
-  cancellationError?: 'conflict' | 'error';
+  cancellationError?: string;
   payment?: PaymentResult;
-  paymentError?: boolean;
+  paymentError?: boolean | string;
   paying?: boolean;
   onCreatePayment?: () => void;
+  onRefreshRegistration?: () => void;
+  refreshingRegistration?: boolean;
   onEvaluate?: () => void;
   discussionStatus?: 'loading' | 'error' | 'success' | 'unavailable';
   comments?: readonly PostComment[];
   currentUserId?: string;
   commentSending?: boolean;
-  commentError?: boolean;
+  commentError?: boolean | string;
   onRetryComments?: () => void;
   onSendComment?: (content: string) => Promise<boolean> | boolean;
 }>;
@@ -99,6 +101,8 @@ export function WorkshopDetailsScreen({
   cancellingRegistration = false,
   onCancelRegistration,
   onCreatePayment,
+  onRefreshRegistration,
+  refreshingRegistration = false,
   onEvaluate,
   onOpenAttachment,
   onRetry,
@@ -114,24 +118,33 @@ export function WorkshopDetailsScreen({
   paying = false,
   source = 'network',
   status,
+  error,
   workshop,
 }: Props) {
   const [imageStatus, setImageStatus] = useState<
     'loading' | 'loaded' | 'error'
   >('loading');
   const [commentText, setCommentText] = useState('');
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
   const { refreshImage, source: imageSource } = useWorkshopImageSource(
     workshop?.imageUrl,
   );
 
+  const frame = (node: React.ReactNode) => (
+    <StatePage kind="back" eyebrow={'Workshop'} title={'Detalhes'}>
+      {node}
+    </StatePage>
+  );
   if (status === 'loading')
-    return <LoadingState message="Carregando workshop" />;
+    return frame(<LoadingState message="Carregando workshop" />);
   if (!workshop)
-    return (
+    return frame(
       <ErrorState
         message="Não foi possível carregar o workshop."
+        error={error}
+        overrides={{ not_found: 'Este workshop não está mais disponível.' }}
         onRetry={onRetry}
-      />
+      />,
     );
 
   return (
@@ -208,49 +221,71 @@ export function WorkshopDetailsScreen({
           </Text>
           {cancellationError ? (
             <Text accessibilityRole="alert" style={styles.registrationError}>
-              {cancellationError === 'conflict'
-                ? 'O cancelamento não é permitido no estado atual da inscrição.'
-                : 'Não foi possível cancelar a inscrição. Tente novamente.'}
+              {cancellationError}
             </Text>
           ) : null}
           {onCancelRegistration &&
           ['PENDING', 'CONFIRMED', 'WAITING_LIST'].includes(
             registration.status,
           ) ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{
-                busy: cancellingRegistration,
-                disabled: cancellingRegistration,
-              }}
-              disabled={cancellingRegistration}
-              onPress={() =>
-                Alert.alert(
-                  'Cancelar inscrição',
-                  'Tem certeza de que deseja cancelar esta inscrição?',
-                  [
-                    { text: 'Manter inscrição', style: 'cancel' },
-                    {
-                      text: 'Cancelar inscrição',
-                      style: 'destructive',
-                      onPress: onCancelRegistration,
-                    },
-                  ],
-                )
-              }
-              style={styles.cancellationButton}
-            >
-              {cancellingRegistration ? (
-                <ActivityIndicator
-                  accessibilityLabel="Cancelando inscrição"
-                  color={colors.danger}
-                />
-              ) : (
+            confirmingCancel ? (
+              <View style={styles.cancelConfirm}>
+                <Text
+                  accessibilityRole="header"
+                  style={styles.registrationTitle}
+                >
+                  Deseja cancelar sua inscrição?
+                </Text>
+                <Text style={styles.registrationMessage}>
+                  {registration.paymentStatus === 'PAID'
+                    ? 'Sua participação será cancelada. O reembolso só acontece se o cancelamento for feito com mais de 48 horas de antecedência.'
+                    : 'Ao confirmar, sua participação neste workshop será cancelada.'}
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => setConfirmingCancel(false)}
+                  style={styles.registrationButton}
+                >
+                  <Text style={styles.registrationButtonText}>
+                    Manter minha inscrição
+                  </Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{
+                    busy: cancellingRegistration,
+                    disabled: cancellingRegistration,
+                  }}
+                  disabled={cancellingRegistration}
+                  onPress={() => {
+                    setConfirmingCancel(false);
+                    onCancelRegistration();
+                  }}
+                  style={styles.cancellationButton}
+                >
+                  {cancellingRegistration ? (
+                    <ActivityIndicator
+                      accessibilityLabel="Cancelando inscrição"
+                      color={colors.danger}
+                    />
+                  ) : (
+                    <Text style={styles.cancellationButtonText}>
+                      Confirmar cancelamento
+                    </Text>
+                  )}
+                </Pressable>
+              </View>
+            ) : (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setConfirmingCancel(true)}
+                style={styles.cancellationButton}
+              >
                 <Text style={styles.cancellationButtonText}>
                   Cancelar inscrição
                 </Text>
-              )}
-            </Pressable>
+              </Pressable>
+            )
           ) : null}
         </View>
       ) : null}
@@ -261,9 +296,7 @@ export function WorkshopDetailsScreen({
         <View style={styles.registrationAction}>
           {registrationError ? (
             <Text accessibilityRole="alert" style={styles.registrationError}>
-              {registrationError === 'conflict'
-                ? 'Você já possui uma inscrição válida ou este workshop não aceita novas inscrições.'
-                : 'Não foi possível realizar a inscrição. Tente novamente.'}
+              {registrationError}
             </Text>
           ) : null}
           <Pressable
@@ -290,19 +323,46 @@ export function WorkshopDetailsScreen({
       {payment ? (
         <View accessibilityLiveRegion="polite" style={styles.paymentResult}>
           <Text accessibilityRole="header" style={styles.registrationTitle}>
-            Pagamento {paymentStatusLabel(payment.status)}
+            Pagamento{' '}
+            {paymentStatusLabel(shownPaymentStatus(payment, registration))}
           </Text>
           <Text style={styles.registrationMessage}>
-            {payment.status === 'PENDING'
-              ? 'A solicitação foi criada e aguarda confirmação.'
-              : 'O estado do pagamento foi atualizado.'}
+            {paymentMessage(
+              shownPaymentStatus(payment, registration),
+              workshop.priceLabel,
+            )}
           </Text>
+          {shownPaymentStatus(payment, registration) === 'PENDING' &&
+          onRefreshRegistration ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{
+                busy: refreshingRegistration,
+                disabled: refreshingRegistration,
+              }}
+              disabled={refreshingRegistration}
+              onPress={onRefreshRegistration}
+              style={styles.refreshButton}
+            >
+              {refreshingRegistration ? (
+                <ActivityIndicator
+                  accessibilityLabel="Atualizando situação"
+                  color={colors.brand}
+                />
+              ) : (
+                <Text style={styles.refreshButtonText}>Atualizar situação</Text>
+              )}
+            </Pressable>
+          ) : null}
         </View>
       ) : onCreatePayment && registration?.paymentStatus === 'PENDING' ? (
         <View style={styles.registrationAction}>
           {paymentError ? (
             <Text accessibilityRole="alert" style={styles.registrationError}>
-              Não foi possível iniciar o pagamento. Tente novamente.
+              {errorText(
+                paymentError,
+                'Não foi possível iniciar o pagamento. Tente novamente.',
+              )}
             </Text>
           ) : null}
           <Pressable
@@ -346,7 +406,10 @@ export function WorkshopDetailsScreen({
           </Text>
           {attachmentError ? (
             <Text accessibilityRole="alert" style={styles.attachmentError}>
-              Não foi possível abrir o anexo. Tente novamente.
+              {errorText(
+                attachmentError,
+                'Não foi possível abrir o anexo. Tente novamente.',
+              )}
             </Text>
           ) : null}
           {workshop.attachments.map((attachment) => {
@@ -476,7 +539,10 @@ export function WorkshopDetailsScreen({
                       accessibilityRole="alert"
                       style={styles.registrationError}
                     >
-                      Não foi possível publicar o comentário.
+                      {errorText(
+                        commentError,
+                        'Não foi possível publicar o comentário.',
+                      )}
                     </Text>
                   ) : null}
                   <Pressable
@@ -532,11 +598,35 @@ function registrationMessage(registration: RegistrationResult) {
     registration.paymentStatus === 'PAID'
   )
     return 'A inscrição foi cancelada, mas o pagamento não foi reembolsado conforme a regra de prazo.';
+  if (
+    registration.status === 'CANCELLED' &&
+    registration.paymentStatus === 'REFUNDED'
+  )
+    return 'A inscrição foi cancelada e o reembolso foi processado.';
   if (registration.status === 'CANCELLED')
     return 'A inscrição foi cancelada com sucesso.';
   if (registration.status === 'REFUNDED')
     return 'A inscrição foi cancelada e o reembolso foi processado.';
   return 'Sua inscrição está pendente de confirmação.';
+}
+
+/** The registration is the source of truth once it moves past the first answer. */
+function shownPaymentStatus(
+  payment: PaymentResult,
+  registration?: RegistrationResult,
+): PaymentResult['status'] {
+  const latest = registration?.paymentStatus;
+  return latest && latest !== 'EXEMPT' ? latest : payment.status;
+}
+
+function paymentMessage(status: PaymentResult['status'], priceLabel?: string) {
+  if (status === 'PENDING')
+    return `${priceLabel ? `Pagamento de ${priceLabel} registrado. ` : 'Pagamento registrado. '}Sua vaga está reservada enquanto aguardamos a confirmação. Você receberá um aviso quando for confirmado; toque em "Atualizar situação" para conferir agora.`;
+  if (status === 'PAID')
+    return 'Pagamento confirmado. Sua inscrição está garantida.';
+  if (status === 'DECLINED')
+    return 'O pagamento foi recusado e a vaga foi liberada. Você pode se inscrever novamente.';
+  return 'O estado do pagamento foi atualizado.';
 }
 
 function paymentStatusLabel(status: PaymentResult['status']) {
@@ -550,7 +640,26 @@ function paymentStatusLabel(status: PaymentResult['status']) {
   }[status];
 }
 
+function errorText(error: boolean | string, fallback: string) {
+  return typeof error === 'string' ? error : fallback;
+}
+
 const styles = StyleSheet.create({
+  cancelConfirm: { gap: spacing.sm },
+  refreshButton: {
+    alignItems: 'center',
+    borderColor: colors.brand,
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    justifyContent: 'center',
+    marginTop: spacing.sm,
+    minHeight: sizes.touchTarget,
+  },
+  refreshButtonText: {
+    color: colors.brand,
+    fontFamily: typography.familyBold,
+    fontWeight: typography.bold,
+  },
   page: {
     backgroundColor: colors.background,
   },

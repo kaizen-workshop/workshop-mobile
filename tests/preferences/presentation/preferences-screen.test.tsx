@@ -1,3 +1,4 @@
+import { AppError } from '@/core/errors';
 import { useState } from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 
@@ -105,4 +106,21 @@ it('shows a safe save error and leaves retry available', async () => {
     await screen.findByText('Não foi possível salvar suas preferências.'),
   ).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Continuar' })).toBeEnabled();
+});
+
+it('explains a connection failure while saving', async () => {
+  render(
+    <SelectionHarness
+      onSubmit={jest
+        .fn()
+        .mockRejectedValue(new AppError({ category: 'network' }))}
+    />,
+  );
+
+  fireEvent.press(screen.getByRole('checkbox', { name: 'Lean' }));
+  await act(async () => {
+    fireEvent.press(screen.getByRole('button', { name: 'Continuar' }));
+  });
+
+  expect(await screen.findByText(/Verifique sua internet/)).toBeTruthy();
 });

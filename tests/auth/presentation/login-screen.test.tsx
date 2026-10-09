@@ -85,7 +85,29 @@ it('logs safe technical details for a failed development login', async () => {
     technicalMessage: 'Secure storage unavailable.',
   });
   expect(screen.getByRole('alert')).toHaveTextContent(
-    'Não foi possível entrar. Tente novamente.',
+    'Não conseguimos falar com o servidor. Verifique sua internet e tente novamente.',
+  );
+  log.mockRestore();
+});
+
+it('tells invalid credentials apart from connection problems', async () => {
+  const log = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+  render(
+    <LoginScreen
+      onSubmit={() =>
+        Promise.reject(new AppError({ category: 'unauthorized', status: 401 }))
+      }
+    />,
+  );
+
+  fireEvent.changeText(screen.getByLabelText('Usuário ou e-mail'), 'admin');
+  fireEvent.changeText(screen.getByLabelText('Senha'), 'senha-incorreta');
+  await act(async () => {
+    fireEvent.press(screen.getByRole('button', { name: 'Entrar' }));
+  });
+
+  expect(screen.getByRole('alert')).toHaveTextContent(
+    /Usuário\/e-mail ou senha inválidos\./,
   );
   log.mockRestore();
 });
