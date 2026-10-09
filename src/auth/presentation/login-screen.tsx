@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 
 import { AppError, describeError } from '@/core/errors';
+import { useKeyboardVisible } from '@/shared/hooks';
 import {
   colors,
   radii,
@@ -35,6 +36,7 @@ export function LoginScreen({
   onSubmit,
 }: Props) {
   const { height: viewportHeight } = useWindowDimensions();
+  const keyboardVisible = useKeyboardVisible();
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
   const [visible, setVisible] = useState(false);
@@ -77,24 +79,30 @@ export function LoginScreen({
       <View style={styles.overlay} />
       <ScrollView
         contentContainerStyle={styles.page}
+        automaticallyAdjustKeyboardInsets
+        keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
-          <Image
-            accessibilityLabel="WEG"
-            contentFit="contain"
-            source={require('../../../assets/images/logo-weg.png')}
-            style={styles.logo}
-          />
+          {keyboardVisible ? null : (
+            <Image
+              accessibilityLabel="WEG"
+              contentFit="contain"
+              source={require('../../../assets/images/logo-weg.png')}
+              style={styles.logo}
+            />
+          )}
 
           <View style={styles.card}>
             <View style={styles.heading}>
               <Text accessibilityRole="header" style={styles.title}>
                 Entrar
               </Text>
-              <Text style={styles.subtitle}>
-                Acesse workshops, conteúdos e atividades da sua jornada.
-              </Text>
+              {keyboardVisible ? null : (
+                <Text style={styles.subtitle}>
+                  Acesse workshops, conteúdos e atividades da sua jornada.
+                </Text>
+              )}
             </View>
 
             <Text style={styles.label}>Usuário ou e-mail</Text>
@@ -216,9 +224,11 @@ export function LoginScreen({
             </Pressable>
           </View>
 
-          <Text style={styles.footer}>
-            © 2026 WEG S.A. Todos os direitos reservados.
-          </Text>
+          {keyboardVisible ? null : (
+            <Text style={styles.footer}>
+              © 2026 WEG S.A. Todos os direitos reservados.
+            </Text>
+          )}
         </View>
       </ScrollView>
     </ImageBackground>

@@ -1,9 +1,15 @@
 import { router, Stack } from 'expo-router';
 import * as Notifications from 'expo-notifications';
 import { useEffect } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import { resolveNotificationData } from '@/notification/presentation';
-import { selectGroup, selectPost, selectWorkshop } from '@/navigation';
+import {
+  FloatingMenu,
+  selectGroup,
+  selectPost,
+  selectWorkshop,
+} from '@/navigation';
 
 export default function AuthenticatedLayout() {
   useEffect(() => {
@@ -32,5 +38,12 @@ export default function AuthenticatedLayout() {
     );
     return () => subscription.remove();
   }, []);
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <View style={styles.root}>
+      <Stack screenOptions={{ headerShown: false }} />
+      <FloatingMenu />
+    </View>
+  );
 }
+
+const styles = StyleSheet.create({ root: { flex: 1 } });

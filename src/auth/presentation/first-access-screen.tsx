@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { KeyRound, LockKeyhole, Mail } from 'lucide-react-native';
 import { useState } from 'react';
 import { describeError } from '@/core/errors';
+import { useKeyboardVisible } from '@/shared/hooks';
 import {
   ActivityIndicator,
   ImageBackground,
@@ -31,6 +32,7 @@ type Props = Readonly<{
 
 export function FirstAccessScreen({ onBack, onRequestCode, onSubmit }: Props) {
   const { height: viewportHeight } = useWindowDimensions();
+  const keyboardVisible = useKeyboardVisible();
   const [login, setLogin] = useState('');
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
@@ -98,21 +100,27 @@ export function FirstAccessScreen({ onBack, onRequestCode, onSubmit }: Props) {
       <View style={styles.overlay} />
       <ScrollView
         contentContainerStyle={styles.page}
+        automaticallyAdjustKeyboardInsets
+        keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
       >
-        <Image
-          accessibilityLabel="WEG"
-          contentFit="contain"
-          source={require('../../../assets/images/logo-weg.png')}
-          style={styles.logo}
-        />
+        {keyboardVisible ? null : (
+          <Image
+            accessibilityLabel="WEG"
+            contentFit="contain"
+            source={require('../../../assets/images/logo-weg.png')}
+            style={styles.logo}
+          />
+        )}
         <View style={styles.card}>
           <Text accessibilityRole="header" style={styles.title}>
             Primeiro acesso
           </Text>
-          <Text style={styles.description}>
-            Solicite o código enviado por e-mail e defina sua senha de acesso.
-          </Text>
+          {keyboardVisible ? null : (
+            <Text style={styles.description}>
+              Solicite o código enviado por e-mail e defina sua senha de acesso.
+            </Text>
+          )}
 
           <Text style={styles.label}>E-mail</Text>
           <View style={styles.field}>

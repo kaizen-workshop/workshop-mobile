@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 
 import { describeError } from '@/core/errors';
+import { useKeyboardVisible } from '@/shared/hooks';
 import { colors, radii, sizes, spacing, typography } from '@/shared/theme';
 
 type Props = Readonly<{
@@ -21,6 +22,7 @@ type Props = Readonly<{
 }>;
 
 export function ChangePasswordScreen({ onCancel, onSubmit }: Props) {
+  const keyboardVisible = useKeyboardVisible();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
@@ -60,17 +62,21 @@ export function ChangePasswordScreen({ onCancel, onSubmit }: Props) {
   return (
     <ScrollView
       contentContainerStyle={styles.page}
+      automaticallyAdjustKeyboardInsets
+      keyboardDismissMode="on-drag"
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.card}>
         <Text accessibilityRole="header" style={styles.title}>
           Crie uma nova senha
         </Text>
-        <Text style={styles.description}>
-          {onCancel
-            ? 'Depois de alterar, você será desconectado e entrará novamente com a nova senha.'
-            : 'Para continuar, substitua a senha temporária da sua conta.'}
-        </Text>
+        {keyboardVisible ? null : (
+          <Text style={styles.description}>
+            {onCancel
+              ? 'Depois de alterar, você será desconectado e entrará novamente com a nova senha.'
+              : 'Para continuar, substitua a senha temporária da sua conta.'}
+          </Text>
+        )}
 
         <Text style={styles.label}>Senha atual</Text>
         <TextInput

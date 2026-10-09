@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import {
   FlatList,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -9,6 +11,7 @@ import {
 } from 'react-native';
 import type { ChatMessage } from './message';
 import { BackHeader, StatePage } from '@/navigation';
+import { useKeyboardVisible } from '@/shared/hooks';
 import {
   AppSymbol,
   EmptyState,
@@ -64,6 +67,7 @@ export function ChatScreen({
   onSend(content: string): Promise<boolean> | boolean;
   onDelete(message: ChatMessage): void;
 }) {
+  const keyboardVisible = useKeyboardVisible();
   const [content, setContent] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
   const [confirmingId, setConfirmingId] = useState<string>();
@@ -91,13 +95,18 @@ export function ChatScreen({
       />,
     );
   return (
-    <View style={styles.page}>
-      <View style={styles.header}>
-        <BackHeader
-          eyebrow={active ? 'Grupo ativo' : 'Histórico do grupo'}
-          title={title}
-        />
-      </View>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={styles.page}
+    >
+      {keyboardVisible ? null : (
+        <View style={styles.header}>
+          <BackHeader
+            eyebrow={active ? 'Grupo ativo' : 'Histórico do grupo'}
+            title={title}
+          />
+        </View>
+      )}
       {!active ? (
         <View style={styles.notice}>
           <InlineNotice message="Este grupo foi encerrado. O histórico permanece disponível." />
@@ -219,7 +228,7 @@ export function ChatScreen({
           <Text style={styles.sendText}>{sending ? '...' : 'Enviar'}</Text>
         </Pressable>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

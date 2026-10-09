@@ -49,9 +49,8 @@ it('renders every available workshop detail', () => {
   expect(
     screen.getByLabelText('Imagem do workshop Lean Manufacturing'),
   ).toBeTruthy();
-  // Only the always-visible menu: no action buttons without registration callbacks.
-  expect(screen.getAllByRole('button')).toHaveLength(1);
-  expect(screen.getByRole('button', { name: 'Abrir menu' })).toBeTruthy();
+  // No action buttons without registration callbacks (the menu is fixed by the layout).
+  expect(screen.queryByRole('button')).toBeNull();
 });
 
 it('omits unavailable optional sections', () => {
@@ -152,10 +151,8 @@ it('submits a registration once and exposes loading feedback', () => {
       workshop={workshop}
     />,
   );
-  // While registering the label is replaced by a spinner, so find the button by exclusion.
-  const button = screen
-    .getAllByRole('button')
-    .find((node) => node.props.accessibilityLabel !== 'Abrir menu')!;
+  // While registering the label is replaced by a spinner, so take the only button.
+  const button = screen.getByRole('button');
   fireEvent.press(button);
   expect(button.props.accessibilityState).toMatchObject({
     busy: true,

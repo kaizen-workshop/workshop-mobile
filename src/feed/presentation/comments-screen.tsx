@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import {
   FlatList,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -9,6 +11,7 @@ import {
 } from 'react-native';
 import type { PostComment } from '@/feed/domain/post-comment';
 import { BackHeader, StatePage } from '@/navigation';
+import { useKeyboardVisible } from '@/shared/hooks';
 import {
   AppSymbol,
   EmptyState,
@@ -56,6 +59,7 @@ export function CommentsScreen({
   onEdit(comment: PostComment, content: string): Promise<boolean> | boolean;
   onDelete(comment: PostComment): Promise<void> | void;
 }) {
+  const keyboardVisible = useKeyboardVisible();
   const [content, setContent] = useState('');
   const [editingId, setEditingId] = useState<string>();
   const [editContent, setEditContent] = useState('');
@@ -70,18 +74,23 @@ export function CommentsScreen({
   if (status === 'error')
     return frame(<ErrorState error={error} onRetry={onRetry} />);
   return (
-    <View style={styles.page}>
-      <View style={styles.header}>
-        <BackHeader eyebrow="Conversa" title="Comentários" />
-        {postTitle ? (
-          <View style={styles.postContext}>
-            <Text style={styles.postContextLabel}>Sobre o post</Text>
-            <Text numberOfLines={2} style={styles.postContextTitle}>
-              {postTitle}
-            </Text>
-          </View>
-        ) : null}
-      </View>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={styles.page}
+    >
+      {keyboardVisible ? null : (
+        <View style={styles.header}>
+          <BackHeader eyebrow="Conversa" title="Comentários" />
+          {postTitle ? (
+            <View style={styles.postContext}>
+              <Text style={styles.postContextLabel}>Sobre o post</Text>
+              <Text numberOfLines={2} style={styles.postContextTitle}>
+                {postTitle}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      )}
       <FlatList
         data={items}
         keyExtractor={(item) => item.id}
@@ -254,7 +263,7 @@ export function CommentsScreen({
           </Text>
         </Pressable>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 const styles = StyleSheet.create({

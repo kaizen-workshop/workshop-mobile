@@ -13,6 +13,7 @@ import {
   ArrowLeft,
 } from 'lucide-react-native';
 import { useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Modal,
   Pressable,
@@ -23,6 +24,7 @@ import {
 } from 'react-native';
 
 import { canManage, useRole } from '@/auth/session';
+import { useKeyboardVisible } from '@/shared/hooks';
 import {
   colors,
   radii,
@@ -66,34 +68,11 @@ export function AppHeader({
   /** Adds a back arrow, shown only when there is a real previous screen. */
   showBack?: boolean;
 }>) {
-  const [open, setOpen] = useState(false);
-  const pathname = usePathname();
-  const role = useRole();
-  const items = canManage(role)
-    ? [
-        ...destinations,
-        {
-          label: 'Gestão',
-          href: '/admin',
-          Icon: LayoutDashboard,
-        } as const,
-      ]
-    : destinations;
-
   return (
     <>
       <View style={styles.header}>
-        <Pressable
-          accessibilityLabel="Abrir menu"
-          accessibilityRole="button"
-          onPress={() => setOpen(true)}
-          style={({ pressed }) => [
-            styles.menuButton,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Menu color={colors.onBrand} size={25} strokeWidth={2.2} />
-        </Pressable>
+        {/* The real, fixed button is FloatingMenu; this keeps the title aligned with it. */}
+        <View style={styles.menuSlot} />
         {showBack && router.canGoBack() ? (
           <Pressable
             accessibilityLabel="Voltar"
@@ -115,6 +94,50 @@ export function AppHeader({
         </View>
         {action ?? <View style={styles.actionPlaceholder} />}
       </View>
+    </>
+  );
+}
+
+/**
+ * The one menu button of the app. It is fixed on the screen (it does not scroll away with the
+ * content) and opens the drawer. It steps aside while the keyboard is open so it never covers
+ * the field being typed in.
+ */
+export function FloatingMenu() {
+  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const role = useRole();
+  const items = canManage(role)
+    ? [
+        ...destinations,
+        {
+          label: 'Gestão',
+          href: '/admin',
+          Icon: LayoutDashboard,
+        } as const,
+      ]
+    : destinations;
+
+  const insets = useSafeAreaInsets();
+  const keyboardVisible = useKeyboardVisible();
+
+  return (
+    <>
+      {keyboardVisible ? null : (
+        <Pressable
+          accessibilityLabel="Abrir menu"
+          accessibilityRole="button"
+          onPress={() => setOpen(true)}
+          style={({ pressed }) => [
+            styles.menuButton,
+            styles.floatingMenu,
+            { top: insets.top + spacing.md },
+            pressed && styles.pressed,
+          ]}
+        >
+          <Menu color={colors.onBrand} size={25} strokeWidth={2.2} />
+        </Pressable>
+      )}
 
       <Modal
         animationType="fade"
@@ -253,6 +276,13 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginBottom: spacing.lg,
     minHeight: 56,
+  },
+  menuSlot: { height: 48, width: 48 },
+  floatingMenu: {
+    left: spacing.md,
+    position: 'absolute',
+    zIndex: 1000,
+    ...shadows.floating,
   },
   menuButton: {
     alignItems: 'center',

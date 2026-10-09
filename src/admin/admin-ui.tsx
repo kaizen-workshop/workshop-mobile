@@ -30,7 +30,9 @@ export function AdminPage({
 }: Readonly<{ children: ReactNode; fallback?: string; title: string }>) {
   return (
     <ScrollView
+      automaticallyAdjustKeyboardInsets
       contentContainerStyle={styles.page}
+      keyboardDismissMode="on-drag"
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.content}>

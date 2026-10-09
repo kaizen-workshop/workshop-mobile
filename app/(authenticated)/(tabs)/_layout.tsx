@@ -1,63 +1,25 @@
 import { Tabs } from 'expo-router';
-import { Bell, CalendarDays, Home, UserRound } from 'lucide-react-native';
 
-import { colors, spacing, typography } from '@/shared/theme';
+import { colors } from '@/shared/theme';
 
-/** Bottom navigation between the main areas, so no section needs the menu first. */
+/**
+ * Navigation is the fixed hamburger menu (FloatingMenu, mounted by the authenticated layout),
+ * so the tab bar itself stays hidden; Tabs only keeps these screens as siblings.
+ */
 export default function MainTabsLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         sceneStyle: { backgroundColor: colors.background },
-        tabBarActiveTintColor: colors.brand,
         tabBarHideOnKeyboard: true,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarLabelStyle: {
-          fontFamily: typography.familyMedium,
-          fontSize: typography.caption,
-        },
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.surface3,
-          minHeight: 60,
-          paddingBottom: spacing.xxs,
-          paddingTop: spacing.xxs,
-        },
+        tabBarStyle: { display: 'none' },
       }}
     >
-      <Tabs.Screen
-        name="feed"
-        options={{
-          title: 'Feed',
-          tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="agenda"
-        options={{
-          title: 'Workshops',
-          tabBarIcon: ({ color, size }) => (
-            <CalendarDays color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="notifications"
-        options={{
-          title: 'Avisos',
-          tabBarIcon: ({ color, size }) => <Bell color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Perfil',
-          tabBarIcon: ({ color, size }) => (
-            <UserRound color={color} size={size} />
-          ),
-        }}
-      />
+      <Tabs.Screen name="feed" options={{ title: 'Início' }} />
+      <Tabs.Screen name="agenda" options={{ title: 'Workshops' }} />
+      <Tabs.Screen name="notifications" options={{ title: 'Avisos' }} />
+      <Tabs.Screen name="profile" options={{ title: 'Perfil' }} />
     </Tabs>
   );
 }

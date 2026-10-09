@@ -19,6 +19,7 @@ import {
 } from 'react-native';
 
 import { describeError } from '@/core/errors';
+import { useKeyboardVisible } from '@/shared/hooks';
 import { colors, radii, sizes, spacing, typography } from '@/shared/theme';
 
 export function ResetPasswordScreen({
@@ -31,6 +32,7 @@ export function ResetPasswordScreen({
   onSubmit(input: { code: string; password: string }): Promise<void> | void;
 }) {
   const { height: viewportHeight } = useWindowDimensions();
+  const keyboardVisible = useKeyboardVisible();
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
   const [visible, setVisible] = useState(false);
@@ -65,6 +67,8 @@ export function ResetPasswordScreen({
       <View style={styles.overlay} />
       <ScrollView
         contentContainerStyle={styles.page}
+        automaticallyAdjustKeyboardInsets
+        keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
       >
         {onBack ? (
@@ -81,9 +85,11 @@ export function ResetPasswordScreen({
           <Text accessibilityRole="header" style={styles.title}>
             Confirme o código
           </Text>
-          <Text style={styles.description}>
-            Cole o código enviado ao seu e-mail e escolha sua nova senha.
-          </Text>
+          {keyboardVisible ? null : (
+            <Text style={styles.description}>
+              Cole o código enviado ao seu e-mail e escolha sua nova senha.
+            </Text>
+          )}
           <Text style={styles.label}>Código de recuperação</Text>
           <View style={styles.field}>
             <KeyRound color={colors.textMuted} size={20} />
@@ -149,9 +155,11 @@ export function ResetPasswordScreen({
             </View>
           ) : null}
         </View>
-        <Text style={styles.footer}>
-          © 2026 WEG S.A. Todos os direitos reservados.
-        </Text>
+        {keyboardVisible ? null : (
+          <Text style={styles.footer}>
+            © 2026 WEG S.A. Todos os direitos reservados.
+          </Text>
+        )}
       </ScrollView>
     </ImageBackground>
   );
