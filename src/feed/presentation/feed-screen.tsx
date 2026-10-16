@@ -178,7 +178,7 @@ function FeedItem({
               <MessageCircle color={colors.brandText} size={18} />
               <Text style={styles.commentText}>Comentários</Text>
             </Pressable>
-          ) : null}
+          ) : undefined}
         </View>
       ) : item.kind === 'workshop' && onPress ? (
         <View style={styles.cardFooter}>
@@ -346,7 +346,7 @@ export function FeedScreen({
               Não foi possível carregar mais. Tentar novamente
             </Text>
           </Pressable>
-        ) : null
+        ) : undefined
       }
       onEndReached={loadingMore ? undefined : onLoadMore}
       onEndReachedThreshold={0.4}

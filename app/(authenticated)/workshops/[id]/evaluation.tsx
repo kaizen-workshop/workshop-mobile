@@ -7,6 +7,7 @@ import { createAuthenticatedHttpClient } from '@/core/http';
 import { createTokenStorage } from '@/core/secure-storage';
 import { createApiEvaluationGateway, EvaluationScreen } from '@/evaluation';
 import { getSelectedWorkshop } from '@/navigation';
+import * as DocumentPicker from 'expo-document-picker';
 export default function EvaluationRoute() {
   const params = useLocalSearchParams<{ id?: string; title?: string }>();
   const selected = getSelectedWorkshop();

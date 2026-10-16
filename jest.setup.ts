@@ -28,10 +28,7 @@ jest.mock('lucide-react-native', () => {
   );
 });
 
-jest.mock('react-native-reanimated', () => ({
-  ...require('react-native-reanimated/mock'),
-  useReducedMotion: () => false,
-}));
+require('react-native-reanimated').setUpTests();
 
 jest.mock('expo-haptics', () => ({
   impactAsync: jest.fn(() => Promise.resolve()),

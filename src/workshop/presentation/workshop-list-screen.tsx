@@ -120,7 +120,7 @@ export function WorkshopListScreen({
               onChange={onFiltersChange}
               options={filterOptions}
             />
-          ) : null}
+          ) : undefined}
           {filtering ? (
             <ActivityIndicator
               accessibilityLabel="Aplicando filtros"
@@ -160,7 +160,7 @@ export function WorkshopListScreen({
               Tentar carregar mais workshops
             </Text>
           </Pressable>
-        ) : null
+        ) : undefined
       }
       onEndReached={hasMore && !loadingMore ? onLoadMore : undefined}
       onEndReachedThreshold={0.4}

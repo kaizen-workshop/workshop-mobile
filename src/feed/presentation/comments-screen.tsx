@@ -105,7 +105,7 @@ export function CommentsScreen({
         ListFooterComponent={
           loadingMore ? (
             <Text style={styles.loadingMore}>Carregando mais...</Text>
-          ) : null
+          ) : undefined
         }
         onEndReached={onLoadMore}
         renderItem={({ item }) => (

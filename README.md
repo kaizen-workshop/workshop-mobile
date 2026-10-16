@@ -27,7 +27,7 @@ encerra essa sessão; Android e iOS continuam usando o armazenamento seguro nati
 
 ## Stack oficial
 
-Expo SDK 57, React Native 0.86, React 19 e TypeScript estrito. A navegação
+Expo SDK 58, React Native 0.88, React 19 e TypeScript estrito. A navegação
 usa Expo Router; `fetch` encapsulado fornece HTTP; AsyncStorage é reservado
 para cache não sensível e Expo SecureStore é exclusivo para access/refresh
 token. Chat usa WebSocket/STOMP e o push usa Expo Notifications. Testes usam
@@ -109,7 +109,7 @@ O contrato OpenAPI da API deve ser tratado como fonte de verdade para endpoints,
 
 # Stack
 
-Expo SDK 57, React Native 0.86, React 19 e TypeScript estrito, conforme a seção
+Expo SDK 58, React Native 0.88, React 19 e TypeScript estrito, conforme a seção
 “Stack oficial”. A aplicação usa Expo Router, `fetch`, AsyncStorage para cache,
 SecureStore para tokens, WebSocket/STOMP nativo e Expo Notifications.
 
