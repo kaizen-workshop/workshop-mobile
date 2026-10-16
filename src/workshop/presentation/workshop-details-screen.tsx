@@ -703,7 +703,7 @@ function shownPaymentStatus(
 
 function paymentMessage(status: PaymentResult['status'], priceLabel?: string) {
   if (status === 'PENDING')
-    return `${priceLabel ? `Pagamento de ${priceLabel} registrado. ` : 'Pagamento registrado. '}Sua vaga está reservada, aguardando a confirmação do administrador (o pagamento é simulado). Você receberá um aviso quando for confirmado; toque em "Atualizar situação" para conferir agora.`;
+    return `${priceLabel ? `Pagamento de ${priceLabel} registrado. ` : 'Pagamento registrado. '}Sua vaga está reservada. O pagamento é simulado: conclua-o em "Pagar com PIX (simulado)" ou aguarde a confirmação do administrador. Você receberá um aviso quando for confirmado; toque em "Atualizar situação" para conferir agora.`;
   if (status === 'PAID')
     return 'Pagamento confirmado. Sua inscrição está garantida.';
   if (status === 'DECLINED')
