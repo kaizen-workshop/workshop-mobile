@@ -56,15 +56,21 @@ async function downloadOnDevice({
       technicalMessage: 'File sharing is unavailable on this device.',
     });
   const target = `${FileSystem.cacheDirectory}${filename}`;
-  const result = await FileSystem.downloadAsync(url, target, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  if (result.status < 200 || result.status >= 300)
-    throw toAppError(
-      new AppError({ category: 'unknown', status: result.status }),
+  try {
+    const result = await FileSystem.downloadAsync(url, target, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (result.status < 200 || result.status >= 300)
+      throw toAppError(
+        new AppError({ category: 'unknown', status: result.status }),
+      );
+    await Sharing.shareAsync(result.uri, {
+      ...(mimeType ? { mimeType } : {}),
+      dialogTitle: `Salvar ${filename}`,
+    });
+  } finally {
+    await FileSystem.deleteAsync(target, { idempotent: true }).catch(
+      () => undefined,
     );
-  await Sharing.shareAsync(result.uri, {
-    ...(mimeType ? { mimeType } : {}),
-    dialogTitle: `Salvar ${filename}`,
-  });
+  }
 }
