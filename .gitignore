@@ -39,6 +39,7 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+jest-baseline.json
 
 example
 

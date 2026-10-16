@@ -85,4 +85,3 @@
 - [ ] Add PR/manual workflow using Node 24, npm ci, format check, lint, typecheck, unit tests, and integration tests.
 - [ ] Run equivalent local commands: `npm run format:check`, `npm run lint`, `npm run typecheck`, `npm test -- --runInBand`, and `npm run test:integration`.
 - [ ] Commit: `ci: validate mobile pull requests`.
-
