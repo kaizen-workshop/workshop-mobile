@@ -1,6 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { act, render, screen } from '@testing-library/react-native';
-import { Text } from 'react-native';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react-native';
+import { Pressable, Text } from 'react-native';
 
 import {
   resolveScheme,
@@ -22,12 +27,19 @@ jest.mock('@react-native-async-storage/async-storage', () => {
   };
 });
 
-let setPreferenceRef: (value: 'system' | 'light' | 'dark') => void;
-
 function Probe() {
   const { colors, scheme, setPreference } = useTheme();
-  setPreferenceRef = setPreference;
-  return <Text>{`${scheme}:${colors.background}`}</Text>;
+  return (
+    <>
+      <Text>{`${scheme}:${colors.background}`}</Text>
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => setPreference('dark')}
+      >
+        <Text>Escuro</Text>
+      </Pressable>
+    </>
+  );
 }
 
 it('resolves the scheme from the preference and the system', () => {
@@ -45,11 +57,9 @@ it('switches palette and persists the chosen preference', async () => {
   );
   expect(screen.getByText('light:#F5F6FA')).toBeTruthy();
 
-  await act(async () => {
-    setPreferenceRef('dark');
-  });
+  fireEvent.press(screen.getByText('Escuro'));
 
-  expect(screen.getByText('dark:#0B0F1A')).toBeTruthy();
+  await waitFor(() => expect(screen.getByText('dark:#0B0F1A')).toBeTruthy());
   expect(AsyncStorage.setItem).toHaveBeenCalledWith(
     themePreferenceStorageKey,
     'dark',

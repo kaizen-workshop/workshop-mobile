@@ -56,3 +56,26 @@ it('rejects malformed payment responses', async () => {
     gateway.create('registration-1', 'payment-operation'),
   ).rejects.toMatchObject({ category: 'unknown' });
 });
+
+it('completes a simulated PIX payment as its owner', async () => {
+  const request = jest.fn().mockResolvedValue({ ...response, status: 'PAID' });
+  const gateway = createApiPaymentGateway({ request } as HttpClient, tokens);
+
+  await expect(gateway.payWithPix('payment/1')).resolves.toMatchObject({
+    id: 'payment-1',
+    status: 'PAID',
+  });
+  expect(request).toHaveBeenCalledWith({
+    path: '/payments/payment%2F1/pay',
+    method: 'PATCH',
+    headers: { Authorization: 'Bearer access' },
+  });
+});
+
+it('rejects a blank payment id before calling the API', async () => {
+  const request = jest.fn();
+  const gateway = createApiPaymentGateway({ request } as HttpClient, tokens);
+
+  await expect(gateway.payWithPix('  ')).rejects.toBeDefined();
+  expect(request).not.toHaveBeenCalled();
+});

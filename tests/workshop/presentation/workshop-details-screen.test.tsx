@@ -4,7 +4,6 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react-native';
-import { Alert } from 'react-native';
 
 import { WorkshopDetailsScreen } from '@/workshop/presentation';
 
@@ -337,6 +336,91 @@ it('starts payment only for a pending paid registration and shows its state', ()
   expect(screen.getByText('Pagamento pendente')).toBeTruthy();
   expect(screen.getByText(/vaga está reservada/)).toBeTruthy();
   expect(screen.queryByText('simulated-reference')).toBeNull();
+});
+
+it('offers the simulated PIX payment while it is pending and reports a failure', () => {
+  const onPayWithPix = jest.fn();
+  const registration = {
+    id: 'registration-1',
+    workshopId: workshop.id,
+    status: 'PENDING' as const,
+    paymentStatus: 'PENDING' as const,
+  };
+  const payment = {
+    id: 'payment-1',
+    registrationId: 'registration-1',
+    amount: 30,
+    status: 'PENDING' as const,
+    method: 'PIX',
+    reference: 'simulated-reference',
+  };
+  const { rerender } = render(
+    <WorkshopDetailsScreen
+      onPayWithPix={onPayWithPix}
+      payment={payment}
+      registration={registration}
+      status="success"
+      workshop={workshop}
+    />,
+  );
+
+  fireEvent.press(
+    screen.getByRole('button', { name: 'Pagar com PIX (simulado)' }),
+  );
+  expect(onPayWithPix).toHaveBeenCalledTimes(1);
+
+  rerender(
+    <WorkshopDetailsScreen
+      onPayWithPix={onPayWithPix}
+      payment={payment}
+      pixPaymentError="Não foi possível concluir o pagamento."
+      registration={registration}
+      status="success"
+      workshop={workshop}
+    />,
+  );
+  expect(
+    screen.getByText('Não foi possível concluir o pagamento.'),
+  ).toBeTruthy();
+
+  rerender(
+    <WorkshopDetailsScreen
+      onPayWithPix={onPayWithPix}
+      payment={{ ...payment, status: 'PAID' }}
+      registration={{
+        ...registration,
+        status: 'CONFIRMED',
+        paymentStatus: 'PAID',
+      }}
+      status="success"
+      workshop={workshop}
+    />,
+  );
+  expect(screen.queryByText('Pagar com PIX (simulado)')).toBeNull();
+});
+
+it('does not offer the PIX button for card payments', () => {
+  render(
+    <WorkshopDetailsScreen
+      onPayWithPix={jest.fn()}
+      payment={{
+        id: 'payment-2',
+        registrationId: 'registration-1',
+        amount: 30,
+        status: 'PENDING',
+        method: 'CREDIT_CARD',
+      }}
+      registration={{
+        id: 'registration-1',
+        workshopId: workshop.id,
+        status: 'PENDING',
+        paymentStatus: 'PENDING',
+      }}
+      status="success"
+      workshop={workshop}
+    />,
+  );
+  expect(screen.queryByText('Pagar com PIX (simulado)')).toBeNull();
 });
 
 it('shows workshop comments in the detail scroll and publishes a new comment', async () => {

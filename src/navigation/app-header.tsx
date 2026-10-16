@@ -13,7 +13,6 @@ import {
   ArrowLeft,
 } from 'lucide-react-native';
 import { useState } from 'react';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { canManage, useRole } from '@/auth/session';
@@ -125,7 +124,6 @@ export function FloatingMenu() {
       ]
     : destinations;
 
-  const insets = useSafeAreaInsets();
   const keyboardVisible = useKeyboardVisible();
 
   return (
@@ -138,7 +136,8 @@ export function FloatingMenu() {
           style={({ pressed }) => [
             styles.menuButton,
             styles.floatingMenu,
-            { top: insets.top + spacing.md },
+            // The app root already sits inside the safe area, so no inset is added here.
+            { top: spacing.md },
             pressed && styles.pressed,
           ]}
         >

@@ -50,6 +50,13 @@ type Props = Readonly<{
 
 type KindFilter = 'all' | 'workshop' | 'post';
 
+/** Feed items are posts, so "Workshops" also covers the posts that promote a workshop. */
+function matchesKind(item: FeedCard, kind: Exclude<KindFilter, 'all'>) {
+  return kind === 'workshop'
+    ? item.kind === 'workshop' || Boolean(item.relatedWorkshopId)
+    : item.kind === kind;
+}
+
 const kindFilters: readonly { value: KindFilter; label: string }[] = [
   { value: 'all', label: 'Para você' },
   { value: 'workshop', label: 'Workshops' },
@@ -213,7 +220,7 @@ export function FeedScreen({
     if (!needle && kindFilter === 'all') return items;
     return items.filter(
       (item) =>
-        (kindFilter === 'all' || item.kind === kindFilter) &&
+        (kindFilter === 'all' || matchesKind(item, kindFilter)) &&
         (!needle ||
           `${item.title} ${item.summary ?? ''}`
             .toLocaleLowerCase('pt-BR')

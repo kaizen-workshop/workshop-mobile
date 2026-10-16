@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { FlatList } from 'react-native';
 
 import { ChatScreen } from '@/chat/chat-screen';
 
@@ -64,4 +65,27 @@ it('does not offer deletion of other people messages to regular members', () => 
   expect(
     screen.getAllByRole('button', { name: 'Excluir mensagem' }),
   ).toHaveLength(1);
+});
+
+it('inverts the list only when there are messages, so the empty state is upright', () => {
+  const props = {
+    active: true,
+    canModerate: false,
+    canSendMessages: true,
+    currentUserId: 'me',
+    hasMore: false,
+    onDelete: jest.fn(),
+    onLoadMore: jest.fn(),
+    onRetry: jest.fn(),
+    onSend: jest.fn(),
+    sending: false,
+    status: 'success' as const,
+    title: 'Grupo',
+  };
+  const { rerender } = render(<ChatScreen {...props} messages={[]} />);
+  expect(screen.getByText('Ainda não há mensagens.')).toBeTruthy();
+  expect(screen.UNSAFE_getByType(FlatList).props.inverted).toBe(false);
+
+  rerender(<ChatScreen {...props} messages={[message('m1', 'me', 'Eu')]} />);
+  expect(screen.UNSAFE_getByType(FlatList).props.inverted).toBe(true);
 });
