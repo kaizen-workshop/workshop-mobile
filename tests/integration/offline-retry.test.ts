@@ -4,6 +4,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 }));
 
 import type { CacheEntry, CacheStorage } from '@/core/cache';
+import { AppError } from '@/core/errors';
 import { createFeedCache, loadFeed } from '@/feed/data';
 
 function createMemoryCacheStorage(): CacheStorage {
@@ -43,7 +44,7 @@ it('keeps the last successful feed available after connectivity is lost', async 
   });
   let online = true;
   const loadRemote = jest.fn(async () => {
-    if (!online) throw new Error('offline');
+    if (!online) throw new AppError({ category: 'network' });
     return items;
   });
 

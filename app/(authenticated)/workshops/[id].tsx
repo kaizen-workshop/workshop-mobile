@@ -3,6 +3,7 @@ import * as Crypto from 'expo-crypto';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { getEnvironment } from '@/core/config';
+import { createPendingOperationStore } from '@/core/operations';
 import { describeError } from '@/core/errors';
 import { createAuthenticatedHttpClient } from '@/core/http';
 import { createTokenStorage } from '@/core/secure-storage';
@@ -86,21 +87,15 @@ export default function WorkshopDetailsRoute() {
   const [registration, setRegistration] = useState<RegistrationResult>();
   const [registrationError, setRegistrationError] = useState<string>();
   const [registering, setRegistering] = useState(false);
-  const [registrationKey, setRegistrationKey] = useState(() =>
-    Crypto.randomUUID(),
-  );
   const [cancellingRegistration, setCancellingRegistration] = useState(false);
-  const [cancellationKey, setCancellationKey] = useState(() =>
-    Crypto.randomUUID(),
-  );
   const [cancellationError, setCancellationError] = useState<string>();
   const registeringRef = useRef(false);
   const cancellingRef = useRef(false);
   const [payment, setPayment] = useState<PaymentResult>();
-  const [paymentKey, setPaymentKey] = useState(() => Crypto.randomUUID());
   const [paying, setPaying] = useState(false);
   const [paymentError, setPaymentError] = useState<boolean | string>(false);
   const payingRef = useRef(false);
+  const pendingOperations = useMemo(() => createPendingOperationStore(), []);
   const [discussionStatus, setDiscussionStatus] = useState<
     'loading' | 'error' | 'success' | 'unavailable'
   >('loading');
@@ -161,10 +156,16 @@ export default function WorkshopDetailsRoute() {
     setRegistering(true);
     setRegistrationError(undefined);
     try {
-      const created = await registrationGateway.register(id, registrationKey);
+      const userId = await gateway.getCurrentUserId();
+      const key = await pendingOperations.getOrCreate(
+        userId,
+        'registration',
+        id,
+      );
+      const created = await registrationGateway.register(id, key);
+      await pendingOperations.complete(userId, 'registration', id);
       setRegistration(created);
       setPayment(undefined);
-      setPaymentKey(Crypto.randomUUID());
     } catch (error) {
       setRegistrationError(
         describeError(error, {
@@ -177,7 +178,7 @@ export default function WorkshopDetailsRoute() {
       registeringRef.current = false;
       setRegistering(false);
     }
-  }, [id, registration, registrationGateway, registrationKey]);
+  }, [gateway, id, pendingOperations, registration, registrationGateway]);
 
   const cancelRegistration = useCallback(async () => {
     if (!registration || cancellingRef.current) return;
@@ -185,13 +186,15 @@ export default function WorkshopDetailsRoute() {
     setCancellingRegistration(true);
     setCancellationError(undefined);
     try {
-      setRegistration(
-        await registrationGateway.cancel(registration.id, cancellationKey),
+      const userId = await gateway.getCurrentUserId();
+      const key = await pendingOperations.getOrCreate(
+        userId,
+        'cancellation',
+        registration.id,
       );
-      setRegistrationKey(Crypto.randomUUID());
-      setCancellationKey(Crypto.randomUUID());
+      setRegistration(await registrationGateway.cancel(registration.id, key));
+      await pendingOperations.complete(userId, 'cancellation', registration.id);
       setPayment(undefined);
-      setPaymentKey(Crypto.randomUUID());
     } catch (error) {
       setCancellationError(
         describeError(error, {
@@ -204,7 +207,7 @@ export default function WorkshopDetailsRoute() {
       cancellingRef.current = false;
       setCancellingRegistration(false);
     }
-  }, [cancellationKey, registration, registrationGateway]);
+  }, [gateway, pendingOperations, registration, registrationGateway]);
 
   const createPayment = useCallback(async () => {
     if (!registration || payingRef.current || payment) return;
@@ -212,7 +215,14 @@ export default function WorkshopDetailsRoute() {
     setPaying(true);
     setPaymentError(false);
     try {
-      setPayment(await paymentGateway.create(registration.id, paymentKey));
+      const userId = await gateway.getCurrentUserId();
+      const key = await pendingOperations.getOrCreate(
+        userId,
+        'payment',
+        registration.id,
+      );
+      setPayment(await paymentGateway.create(registration.id, key));
+      await pendingOperations.complete(userId, 'payment', registration.id);
     } catch (cause) {
       setPaymentError(
         describeError(cause, {
@@ -223,7 +233,7 @@ export default function WorkshopDetailsRoute() {
       payingRef.current = false;
       setPaying(false);
     }
-  }, [payment, paymentGateway, paymentKey, registration]);
+  }, [gateway, payment, paymentGateway, pendingOperations, registration]);
 
   const [payingWithPix, setPayingWithPix] = useState(false);
   const [pixPaymentError, setPixPaymentError] = useState<string>();

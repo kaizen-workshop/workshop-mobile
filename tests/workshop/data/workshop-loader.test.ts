@@ -5,6 +5,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 
 import type { WorkshopCache } from '@/workshop/data';
 import { loadWorkshopDetails, loadWorkshopList } from '@/workshop/data';
+import { AppError } from '@/core/errors';
 
 function createCacheDouble(
   overrides: Partial<WorkshopCache> = {},
@@ -15,6 +16,8 @@ function createCacheDouble(
     readDetails: jest.fn(async () => null),
     saveDetails: jest.fn(async () => undefined),
     clear: jest.fn(async () => undefined),
+    removeList: jest.fn(async () => undefined),
+    removeDetails: jest.fn(async () => undefined),
     ...overrides,
   };
 }
@@ -38,7 +41,7 @@ it('returns fresh workshops and updates the cache', async () => {
 });
 
 it('returns the saved list when the remote read fails', async () => {
-  const networkError = new Error('offline');
+  const networkError = new AppError({ category: 'network' });
   const cached = [{ id: 'cached', title: 'Workshop salvo' }];
   const cache = createCacheDouble({
     readList: jest.fn(async () => ({ data: cached, updatedAt: 4_000 })),
@@ -56,6 +59,27 @@ it('returns the saved list when the remote read fails', async () => {
   });
 });
 
+it.each(['unauthorized', 'forbidden', 'not_found'] as const)(
+  'does not return cached workshops after a %s response',
+  async (category) => {
+    const remoteError = new AppError({ category });
+    const cache = createCacheDouble({
+      readList: jest.fn(async () => ({
+        data: [{ id: 'cached', title: 'Cached' }],
+        updatedAt: 1,
+      })),
+    });
+
+    await expect(
+      loadWorkshopList({
+        cache,
+        loadRemote: async () => Promise.reject(remoteError),
+      }),
+    ).rejects.toBe(remoteError);
+    expect(cache.readList).not.toHaveBeenCalled();
+  },
+);
+
 it('returns saved details when the remote read fails', async () => {
   const cached = { id: 'one', title: 'Workshop salvo' };
   const cache = createCacheDouble({
@@ -66,7 +90,8 @@ it('returns saved details when the remote read fails', async () => {
     loadWorkshopDetails({
       id: 'one',
       cache,
-      loadRemote: async () => Promise.reject(new Error('offline')),
+      loadRemote: async () =>
+        Promise.reject(new AppError({ category: 'network' })),
     }),
   ).resolves.toEqual({
     data: cached,

@@ -1,4 +1,5 @@
 import type { CacheEntry } from '@/core/cache';
+import { AppError } from '@/core/errors';
 import type { WorkshopDetails, WorkshopSummary } from '@/workshop/domain';
 import type { WorkshopCache } from './workshop-cache';
 
@@ -12,11 +13,13 @@ async function loadWithCache<T>({
   loadRemote,
   readCache,
   saveCache,
+  invalidateCache,
   now,
 }: Readonly<{
   loadRemote(): Promise<T>;
   readCache(): Promise<CacheEntry<T> | null>;
   saveCache(data: T, updatedAt: number): Promise<void>;
+  invalidateCache(): Promise<void>;
   now(): number;
 }>): Promise<WorkshopLoadResult<T>> {
   try {
@@ -31,6 +34,11 @@ async function loadWithCache<T>({
 
     return { data, source: 'network', updatedAt };
   } catch (remoteError) {
+    if (!isOfflineFallbackError(remoteError)) {
+      if (shouldInvalidateCache(remoteError))
+        await invalidateCache().catch(() => undefined);
+      throw remoteError;
+    }
     try {
       const cached = await readCache();
       if (cached)
@@ -47,6 +55,13 @@ async function loadWithCache<T>({
   }
 }
 
+function isOfflineFallbackError(error: unknown) {
+  return (
+    error instanceof AppError &&
+    (error.category === 'network' || error.category === 'timeout')
+  );
+}
+
 export function loadWorkshopList({
   cache,
   loadRemote,
@@ -60,6 +75,7 @@ export function loadWorkshopList({
     loadRemote,
     readCache: () => cache.readList(),
     saveCache: (workshops, updatedAt) => cache.saveList(workshops, updatedAt),
+    invalidateCache: () => cache.removeList(),
     now,
   });
 }
@@ -79,6 +95,14 @@ export function loadWorkshopDetails({
     loadRemote,
     readCache: () => cache.readDetails(id),
     saveCache: (workshop, updatedAt) => cache.saveDetails(workshop, updatedAt),
+    invalidateCache: () => cache.removeDetails(id),
     now,
   });
+}
+
+function shouldInvalidateCache(error: unknown) {
+  return (
+    error instanceof AppError &&
+    ['unauthorized', 'forbidden', 'not_found'].includes(error.category)
+  );
 }

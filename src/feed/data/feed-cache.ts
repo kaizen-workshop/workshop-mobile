@@ -11,6 +11,7 @@ export type FeedCache = Readonly<{
   read(): Promise<CacheEntry<readonly FeedCard[]> | null>;
   save(items: readonly FeedCard[], updatedAt?: number): Promise<void>;
   clear(): Promise<void>;
+  remove(): Promise<void>;
 }>;
 
 export function createFeedCache({
@@ -42,6 +43,9 @@ export function createFeedCache({
 
     clear() {
       return cache.clearNamespace();
+    },
+    remove() {
+      return cache.remove('items');
     },
   };
 }
