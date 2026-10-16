@@ -15,7 +15,10 @@ type FileSystemAdapter = Readonly<{
     fileUri: string,
     options: { headers: Record<string, string> },
   ): Promise<{ uri: string; status: number; mimeType: string | null }>;
-  deleteAsync?(fileUri: string, options?: { idempotent?: boolean }): Promise<void>;
+  deleteAsync?(
+    fileUri: string,
+    options?: { idempotent?: boolean },
+  ): Promise<void>;
 }>;
 
 type SharingAdapter = Readonly<{

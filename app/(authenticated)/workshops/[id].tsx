@@ -87,18 +87,11 @@ export default function WorkshopDetailsRoute() {
   const [registration, setRegistration] = useState<RegistrationResult>();
   const [registrationError, setRegistrationError] = useState<string>();
   const [registering, setRegistering] = useState(false);
-  const [registrationKey, setRegistrationKey] = useState(() =>
-    Crypto.randomUUID(),
-  );
   const [cancellingRegistration, setCancellingRegistration] = useState(false);
-  const [cancellationKey, setCancellationKey] = useState(() =>
-    Crypto.randomUUID(),
-  );
   const [cancellationError, setCancellationError] = useState<string>();
   const registeringRef = useRef(false);
   const cancellingRef = useRef(false);
   const [payment, setPayment] = useState<PaymentResult>();
-  const [paymentKey, setPaymentKey] = useState(() => Crypto.randomUUID());
   const [paying, setPaying] = useState(false);
   const [paymentError, setPaymentError] = useState<boolean | string>(false);
   const payingRef = useRef(false);
@@ -169,12 +162,10 @@ export default function WorkshopDetailsRoute() {
         'registration',
         id,
       );
-      setRegistrationKey(key);
       const created = await registrationGateway.register(id, key);
       await pendingOperations.complete(userId, 'registration', id);
       setRegistration(created);
       setPayment(undefined);
-      setPaymentKey(Crypto.randomUUID());
     } catch (error) {
       setRegistrationError(
         describeError(error, {
@@ -201,13 +192,9 @@ export default function WorkshopDetailsRoute() {
         'cancellation',
         registration.id,
       );
-      setCancellationKey(key);
       setRegistration(await registrationGateway.cancel(registration.id, key));
       await pendingOperations.complete(userId, 'cancellation', registration.id);
-      setRegistrationKey(Crypto.randomUUID());
-      setCancellationKey(Crypto.randomUUID());
       setPayment(undefined);
-      setPaymentKey(Crypto.randomUUID());
     } catch (error) {
       setCancellationError(
         describeError(error, {
@@ -234,7 +221,6 @@ export default function WorkshopDetailsRoute() {
         'payment',
         registration.id,
       );
-      setPaymentKey(key);
       setPayment(await paymentGateway.create(registration.id, key));
       await pendingOperations.complete(userId, 'payment', registration.id);
     } catch (cause) {
