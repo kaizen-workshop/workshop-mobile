@@ -47,6 +47,7 @@ export default function ChatRoute() {
   const pendingSend = useRef<{ content: string; key: string } | undefined>(
     undefined,
   );
+  const loadingMoreRef = useRef(false);
 
   const applyInitial = useCallback(
     async (active: () => boolean) => {
@@ -136,16 +137,21 @@ export default function ChatRoute() {
       hasMore={hasMore}
       onRetry={load}
       onLoadMore={async () => {
-        if (!cursor) return;
-        const page = await chat.load(id, cursor);
-        setMessages((current) => [
-          ...current,
-          ...page.items.filter(
-            (item) => !current.some((old) => old.id === item.id),
-          ),
-        ]);
-        setCursor(page.nextCursor);
-        setHasMore(page.hasMore);
+        if (!cursor || loadingMoreRef.current) return;
+        loadingMoreRef.current = true;
+        try {
+          const page = await chat.load(id, cursor);
+          setMessages((current) => [
+            ...current,
+            ...page.items.filter(
+              (item) => !current.some((old) => old.id === item.id),
+            ),
+          ]);
+          setCursor(page.nextCursor);
+          setHasMore(page.hasMore);
+        } finally {
+          loadingMoreRef.current = false;
+        }
       }}
       onSend={async (content) => {
         setSending(true);
