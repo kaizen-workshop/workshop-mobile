@@ -5,6 +5,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 
 import type { FeedCache } from '@/feed/data';
 import { loadFeed } from '@/feed/data';
+import { AppError } from '@/core/errors';
 
 function createCacheDouble(overrides: Partial<FeedCache> = {}): FeedCache {
   return {
@@ -34,9 +35,18 @@ it('returns the saved feed when the remote read fails', async () => {
   await expect(
     loadFeed({
       cache,
-      loadRemote: async () => Promise.reject(new Error('offline')),
+      loadRemote: async () => Promise.reject(new AppError({ category: 'timeout' })),
     }),
   ).resolves.toEqual({ items, source: 'cache', updatedAt: 4_000 });
+});
+
+it('does not return saved feed after authorization fails', async () => {
+  const remoteError = new AppError({ category: 'unauthorized' });
+  const cache = createCacheDouble({
+    read: jest.fn(async () => ({ data: [{ id: 'saved', kind: 'post' as const, title: 'Post' }], updatedAt: 1 })),
+  });
+  await expect(loadFeed({ cache, loadRemote: async () => Promise.reject(remoteError) })).rejects.toBe(remoteError);
+  expect(cache.read).not.toHaveBeenCalled();
 });
 
 it('preserves the remote error when no readable feed is cached', async () => {

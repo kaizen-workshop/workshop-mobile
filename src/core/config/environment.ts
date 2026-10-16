@@ -23,11 +23,14 @@ export function getEnvironment(
   try {
     const url = new URL(input.EXPO_PUBLIC_API_URL ?? '');
     if (!['http:', 'https:'].includes(url.protocol)) throw new Error();
+    if (variant !== 'development' && url.protocol !== 'https:')
+      throw new Error('HTTPS obrigatÃ³rio neste ambiente.');
     return {
       variant,
       apiUrl: url.toString().replace(/\/$/, ''),
     };
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('HTTPS')) throw error;
     throw new Error(
       'EXPO_PUBLIC_API_URL inválida. Informe uma URL HTTP(S) absoluta.',
     );

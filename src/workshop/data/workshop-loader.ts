@@ -1,4 +1,5 @@
 import type { CacheEntry } from '@/core/cache';
+import { AppError } from '@/core/errors';
 import type { WorkshopDetails, WorkshopSummary } from '@/workshop/domain';
 import type { WorkshopCache } from './workshop-cache';
 
@@ -31,6 +32,7 @@ async function loadWithCache<T>({
 
     return { data, source: 'network', updatedAt };
   } catch (remoteError) {
+    if (!isOfflineFallbackError(remoteError)) throw remoteError;
     try {
       const cached = await readCache();
       if (cached)
@@ -45,6 +47,13 @@ async function loadWithCache<T>({
 
     throw remoteError;
   }
+}
+
+function isOfflineFallbackError(error: unknown) {
+  return (
+    error instanceof AppError &&
+    (error.category === 'network' || error.category === 'timeout')
+  );
 }
 
 export function loadWorkshopList({

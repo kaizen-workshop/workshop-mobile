@@ -1,4 +1,5 @@
 import type { FeedCard } from '@/feed/domain';
+import { AppError } from '@/core/errors';
 import type { FeedCache } from './feed-cache';
 
 export type FeedLoadResult = Readonly<{
@@ -28,6 +29,7 @@ export async function loadFeed({
 
     return { items, source: 'network', updatedAt };
   } catch (remoteError) {
+    if (!isOfflineFallbackError(remoteError)) throw remoteError;
     try {
       const cached = await cache.read();
       if (cached)
@@ -42,4 +44,11 @@ export async function loadFeed({
 
     throw remoteError;
   }
+}
+
+function isOfflineFallbackError(error: unknown) {
+  return (
+    error instanceof AppError &&
+    (error.category === 'network' || error.category === 'timeout')
+  );
 }
