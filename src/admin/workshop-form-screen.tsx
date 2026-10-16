@@ -15,6 +15,7 @@ import {
   emptyWorkshopForm,
   maskDate,
   maskTime,
+  parsePrice,
   validateWorkshopForm,
   type WorkshopFormErrors,
   type WorkshopFormValues,
@@ -68,6 +69,28 @@ export function WorkshopFormScreen({
   ) => {
     setValues((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, [key]: undefined }));
+  };
+
+  const hasPrice = (parsePrice(values.price) ?? 0) > 0;
+
+  // A priced workshop cannot be free: switch to PIX, and back to free when the price is cleared.
+  const setPrice = (price: string) => {
+    const amount = parsePrice(price) ?? 0;
+    setValues((current) => ({
+      ...current,
+      price,
+      paymentMethod:
+        amount > 0 && current.paymentMethod === 'FREE'
+          ? 'PIX'
+          : amount === 0 && price.trim() === ''
+            ? 'FREE'
+            : current.paymentMethod,
+    }));
+    setErrors((current) => ({
+      ...current,
+      price: undefined,
+      paymentMethod: undefined,
+    }));
   };
 
   const submit = () => {
@@ -183,14 +206,17 @@ export function WorkshopFormScreen({
           hint="Deixe em branco para workshop gratuito."
           keyboardType="decimal-pad"
           label="Valor (R$)"
-          onChangeText={(value) => set('price', value)}
+          onChangeText={setPrice}
           placeholder="0,00"
           value={values.price}
         />
         <ChoiceChips
           label="Forma de pagamento"
           onChange={(value) => set('paymentMethod', value)}
-          options={payments}
+          options={payments.map((option) => ({
+            ...option,
+            disabled: option.value === 'FREE' && hasPrice,
+          }))}
           value={values.paymentMethod}
         />
         {shown.paymentMethod ? (

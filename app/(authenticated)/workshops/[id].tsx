@@ -225,6 +225,27 @@ export default function WorkshopDetailsRoute() {
     }
   }, [payment, paymentGateway, paymentKey, registration]);
 
+  const [payingWithPix, setPayingWithPix] = useState(false);
+  const [pixPaymentError, setPixPaymentError] = useState<string>();
+  const payWithPix = useCallback(async () => {
+    if (!payment || payingWithPix) return;
+    setPayingWithPix(true);
+    setPixPaymentError(undefined);
+    try {
+      setPayment(await paymentGateway.payWithPix(payment.id));
+      const current = await registrationGateway.loadCurrent(id ?? '');
+      if (current) setRegistration(current);
+    } catch (cause) {
+      setPixPaymentError(
+        describeError(cause, {
+          conflict: 'Este pagamento não pode mais ser concluído.',
+        }).message,
+      );
+    } finally {
+      setPayingWithPix(false);
+    }
+  }, [id, payment, payingWithPix, paymentGateway, registrationGateway]);
+
   const [refreshingRegistration, setRefreshingRegistration] = useState(false);
   const refreshRegistration = useCallback(async () => {
     if (!id || refreshingRegistration) return;
@@ -345,6 +366,9 @@ export default function WorkshopDetailsRoute() {
       onOpenAttachment={openAttachment}
       onCancelRegistration={cancelRegistration}
       onCreatePayment={createPayment}
+      onPayWithPix={() => void payWithPix()}
+      payingWithPix={payingWithPix}
+      pixPaymentError={pixPaymentError}
       onRefreshRegistration={() => void refreshRegistration()}
       refreshingRegistration={refreshingRegistration}
       onEvaluate={

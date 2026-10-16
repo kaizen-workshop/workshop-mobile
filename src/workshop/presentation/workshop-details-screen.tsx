@@ -58,6 +58,9 @@ type Props = Readonly<{
   paymentError?: boolean | string;
   paying?: boolean;
   onCreatePayment?: () => void;
+  onPayWithPix?: () => void;
+  payingWithPix?: boolean;
+  pixPaymentError?: string;
   onRefreshRegistration?: () => void;
   refreshingRegistration?: boolean;
   onEvaluate?: () => void;
@@ -104,6 +107,9 @@ export function WorkshopDetailsScreen({
   cancellingRegistration = false,
   onCancelRegistration,
   onCreatePayment,
+  onPayWithPix,
+  payingWithPix = false,
+  pixPaymentError,
   onRefreshRegistration,
   refreshingRegistration = false,
   onEvaluate,
@@ -371,6 +377,41 @@ export function WorkshopDetailsScreen({
               <Text selectable style={styles.pixValue}>
                 {payment.reference}
               </Text>
+            </View>
+          ) : null}
+          {payment.method === 'PIX' &&
+          shownPaymentStatus(payment, registration) === 'PENDING' &&
+          onPayWithPix ? (
+            <View style={styles.registrationAction}>
+              {pixPaymentError ? (
+                <Text
+                  accessibilityRole="alert"
+                  style={styles.registrationError}
+                >
+                  {pixPaymentError}
+                </Text>
+              ) : null}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{
+                  busy: payingWithPix,
+                  disabled: payingWithPix,
+                }}
+                disabled={payingWithPix}
+                onPress={onPayWithPix}
+                style={styles.registrationButton}
+              >
+                {payingWithPix ? (
+                  <ActivityIndicator
+                    accessibilityLabel="Processando pagamento"
+                    color={colors.onBrand}
+                  />
+                ) : (
+                  <Text style={styles.registrationButtonText}>
+                    Pagar com PIX (simulado)
+                  </Text>
+                )}
+              </Pressable>
             </View>
           ) : null}
           {shownPaymentStatus(payment, registration) === 'PENDING' &&

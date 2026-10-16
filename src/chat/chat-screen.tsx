@@ -114,7 +114,7 @@ export function ChatScreen({
         </View>
       ) : null}
       <FlatList
-        inverted
+        inverted={messages.length > 0}
         data={messages}
         keyExtractor={(item) => item.id}
         contentContainerStyle={messages.length ? styles.list : styles.empty}

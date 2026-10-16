@@ -8,6 +8,8 @@ export type PaymentGateway = Readonly<{
     registrationId: string,
     idempotencyKey: string,
   ): Promise<PaymentResult>;
+  /** Completes a simulated PIX payment, standing in for the bank callback. */
+  payWithPix(paymentId: string): Promise<PaymentResult>;
 }>;
 
 export function createApiPaymentGateway(
@@ -29,17 +31,35 @@ export function createApiPaymentGateway(
         },
       });
       if (!isPaymentResponse(response)) throw invalidResponse();
-      return {
-        id: response.id,
-        registrationId: response.registrationId,
-        amount: response.amount,
-        status: response.status,
-        method: response.method,
-        ...(typeof response.externalReference === 'string'
-          ? { reference: response.externalReference }
-          : {}),
-      };
+      return toPaymentResult(response);
     },
+    async payWithPix(paymentId) {
+      if (!paymentId.trim()) throw new AppError({ category: 'bad_request' });
+      const tokens = await tokenStorage.read();
+      if (!tokens) throw new AppError({ category: 'unauthorized' });
+      const response = await http.request<unknown>({
+        path: `/payments/${encodeURIComponent(paymentId)}/pay`,
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${tokens.accessToken}` },
+      });
+      if (!isPaymentResponse(response)) throw invalidResponse();
+      return toPaymentResult(response);
+    },
+  };
+}
+
+function toPaymentResult(
+  response: PaymentResult & { externalReference?: unknown },
+): PaymentResult {
+  return {
+    id: response.id,
+    registrationId: response.registrationId,
+    amount: response.amount,
+    status: response.status,
+    method: response.method,
+    ...(typeof response.externalReference === 'string'
+      ? { reference: response.externalReference }
+      : {}),
   };
 }
 
