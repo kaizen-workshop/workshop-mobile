@@ -59,3 +59,42 @@ it('offers CSV and XLSX exports', () => {
   expect(onExport).toHaveBeenNthCalledWith(1, 'CSV');
   expect(onExport).toHaveBeenNthCalledWith(2, 'XLSX');
 });
+
+it('asks for confirmation before declining a payment', () => {
+  const onSimulate = jest.fn();
+  render(
+    <ParticipantsScreen
+      canSimulatePayments
+      onExport={jest.fn()}
+      onMarkAttendance={jest.fn()}
+      onRetry={jest.fn()}
+      onSimulate={onSimulate}
+      participants={participants}
+      payments={[
+        {
+          paymentId: 'p1',
+          registrationId: 'r2',
+          participantName: 'Bruno Lima',
+          participantEmail: 'bruno@x.com',
+          amount: 149.9,
+          status: 'PENDING',
+          method: 'PIX',
+        },
+      ]}
+      status="success"
+    />,
+  );
+
+  expect(screen.getByText('Pendente')).toBeTruthy();
+  expect(screen.getAllByText('R$ 149,90').length).toBeGreaterThanOrEqual(2);
+  fireEvent.press(screen.getByRole('button', { name: 'Recusar' }));
+  expect(onSimulate).not.toHaveBeenCalled();
+  expect(screen.getByText(/libera a vaga/)).toBeTruthy();
+
+  fireEvent.press(screen.getByRole('button', { name: 'Voltar' }));
+  expect(screen.queryByText(/libera a vaga/)).toBeNull();
+
+  fireEvent.press(screen.getByRole('button', { name: 'Recusar' }));
+  fireEvent.press(screen.getByRole('button', { name: 'Confirmar recusa' }));
+  expect(onSimulate).toHaveBeenCalledWith('p1', 'declined');
+});

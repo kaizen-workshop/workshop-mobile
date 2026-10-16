@@ -35,12 +35,17 @@ export function createApiPaymentGateway(
         amount: response.amount,
         status: response.status,
         method: response.method,
+        ...(typeof response.externalReference === 'string'
+          ? { reference: response.externalReference }
+          : {}),
       };
     },
   };
 }
 
-function isPaymentResponse(value: unknown): value is PaymentResult {
+function isPaymentResponse(
+  value: unknown,
+): value is PaymentResult & { externalReference?: unknown } {
   if (!value || typeof value !== 'object') return false;
   const payment = value as Partial<PaymentResult>;
   return (

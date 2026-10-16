@@ -233,7 +233,27 @@ function toSummary(
             style: 'currency',
             currency: 'BRL',
           }).format(workshop.price),
+    ...registrationState(workshop),
+  };
+}
+
+function registrationState(
+  workshop: Pick<WorkshopResponse, 'registrationStart' | 'registrationEnd'>,
+): Pick<WorkshopSummary, 'registrationLabel' | 'registrationOpen'> {
+  const now = Date.now();
+  if (now < Date.parse(workshop.registrationStart))
+    return {
+      registrationLabel: `Inscrições a partir de ${formatDate(workshop.registrationStart.slice(0, 10))}`,
+      registrationOpen: false,
+    };
+  if (now > Date.parse(workshop.registrationEnd))
+    return {
+      registrationLabel: 'Inscrições encerradas',
+      registrationOpen: false,
+    };
+  return {
     registrationLabel: `Inscrições até ${formatDate(workshop.registrationEnd.slice(0, 10))}`,
+    registrationOpen: true,
   };
 }
 

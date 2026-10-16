@@ -37,15 +37,20 @@ export default function HistoryRoute() {
       which: HistoryFilter,
       page: number,
     ): Promise<ParticipantWorkshopPage> => {
-      if (which !== 'ALL') return gateway.loadHistory(which, page);
+      if (which !== 'ALL') {
+        const result = await gateway.loadHistory(which, page);
+        return { ...result, items: uniqueWorkshops(result.items) };
+      }
       // "Todos" = concluídos + cancelados, newest first.
       const [completed, cancelled] = await Promise.all([
         gateway.loadHistory('COMPLETED', 0, 50),
         gateway.loadHistory('CANCELLED', 0, 50),
       ]);
       return {
-        items: [...completed.items, ...cancelled.items].sort((a, b) =>
-          b.startDate.localeCompare(a.startDate),
+        items: uniqueWorkshops(
+          [...completed.items, ...cancelled.items].sort((a, b) =>
+            b.startDate.localeCompare(a.startDate),
+          ),
         ),
         page: 0,
         hasMore: false,
@@ -129,6 +134,16 @@ export default function HistoryRoute() {
       }}
     />
   );
+}
+
+/**
+ * The API lists one row per registration, so cancelling and registering again
+ * (or a completed workshop with an earlier cancellation) repeats the workshop.
+ * Keep the first occurrence: the list is a list of workshops.
+ */
+function uniqueWorkshops(items: readonly ParticipantWorkshop[]) {
+  const seen = new Set<string>();
+  return items.filter((item) => !seen.has(item.id) && !!seen.add(item.id));
 }
 
 const emptyMessages: Readonly<Record<HistoryFilter, string>> = {

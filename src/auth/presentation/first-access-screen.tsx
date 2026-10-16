@@ -1,6 +1,10 @@
 import { Image } from 'expo-image';
 import { KeyRound, LockKeyhole, Mail } from 'lucide-react-native';
 import { useState } from 'react';
+import {
+  passwordPolicyError,
+  passwordPolicyHint,
+} from '@/auth/domain/password-policy';
 import { describeError } from '@/core/errors';
 import { useKeyboardVisible } from '@/shared/hooks';
 import {
@@ -8,7 +12,6 @@ import {
   ImageBackground,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   useWindowDimensions,
@@ -16,12 +19,13 @@ import {
 } from 'react-native';
 
 import {
-  colors,
+  makeStyles,
   radii,
   shadows,
   sizes,
   spacing,
   typography,
+  useTheme,
 } from '@/shared/theme';
 
 type Props = Readonly<{
@@ -31,6 +35,8 @@ type Props = Readonly<{
 }>;
 
 export function FirstAccessScreen({ onBack, onRequestCode, onSubmit }: Props) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const { height: viewportHeight } = useWindowDimensions();
   const keyboardVisible = useKeyboardVisible();
   const [login, setLogin] = useState('');
@@ -68,6 +74,11 @@ export function FirstAccessScreen({ onBack, onRequestCode, onSubmit }: Props) {
     if (submitting) return;
     if (!code.trim() || !password) {
       setError('Informe o código recebido e a nova senha.');
+      return;
+    }
+    const policyError = passwordPolicyError(password);
+    if (policyError) {
+      setError(policyError);
       return;
     }
     if (password !== confirmPassword) {
@@ -189,6 +200,7 @@ export function FirstAccessScreen({ onBack, onRequestCode, onSubmit }: Props) {
               value={password}
             />
           </View>
+          <Text style={styles.hint}>{passwordPolicyHint}</Text>
 
           <Text style={styles.label}>Confirme a senha</Text>
           <View style={styles.field}>
@@ -256,7 +268,7 @@ export function FirstAccessScreen({ onBack, onRequestCode, onSubmit }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   background: { flex: 1, width: '100%' },
   overlay: {
     backgroundColor: 'rgba(0, 4, 35, 0.28)',
@@ -330,10 +342,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   sendButtonText: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyBold,
     fontSize: typography.bodySmall,
     fontWeight: typography.bold,
+  },
+  hint: {
+    color: colors.textMuted,
+    fontFamily: typography.familyRegular,
+    fontSize: typography.caption,
+    marginTop: spacing.xxs,
   },
   success: {
     color: colors.positive,
@@ -372,9 +390,9 @@ const styles = StyleSheet.create({
     minHeight: sizes.touchTarget,
   },
   backText: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyMedium,
     fontSize: typography.bodySmall,
   },
   pressed: { opacity: 0.7 },
-});
+}));

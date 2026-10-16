@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import type {
   AttendanceStatus,
@@ -18,7 +18,13 @@ import {
 } from './admin-ui';
 import { ErrorState, LoadingState } from '@/shared/presentation';
 import { StatePage } from '@/navigation';
-import { colors, radii, spacing, typography } from '@/shared/theme';
+import {
+  makeStyles,
+  radii,
+  spacing,
+  typography,
+  useTheme,
+} from '@/shared/theme';
 
 const attendanceOptions: readonly { value: AttendanceStatus; label: string }[] =
   [
@@ -73,7 +79,12 @@ export function ParticipantsScreen({
   payments: readonly WorkshopPayment[];
   status: 'loading' | 'error' | 'success';
 }>) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const [query, setQuery] = useState('');
+  const [confirmingDecline, setConfirmingDecline] = useState<string | null>(
+    null,
+  );
   const visible = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase('pt-BR');
     return needle
@@ -100,6 +111,12 @@ export function ParticipantsScreen({
     return frame(<ErrorState error={error} onRetry={onRetry} />);
 
   const pending = payments.filter((p) => p.status === 'PENDING');
+  const totals = (['PAID', 'PENDING', 'REFUNDED'] as const).map((status) => ({
+    status,
+    amount: payments
+      .filter((p) => p.status === status)
+      .reduce((sum, p) => sum + Number(p.amount), 0),
+  }));
 
   return (
     <AdminPage fallback="/admin/workshops" title="Participantes">
@@ -114,6 +131,14 @@ export function ParticipantsScreen({
       {payments.length > 0 ? (
         <Card>
           <SectionTitle>Pagamentos</SectionTitle>
+          <View style={styles.totals}>
+            {totals.map(({ status, amount }) => (
+              <View key={status} style={styles.total}>
+                <Text style={styles.totalValue}>{money(amount)}</Text>
+                <Text style={styles.totalLabel}>{totalLabels[status]}</Text>
+              </View>
+            ))}
+          </View>
           {!canSimulatePayments && pending.length > 0 ? (
             <Notice tone="info">
               O gateway é simulado: somente administradores podem confirmar ou
@@ -125,13 +150,39 @@ export function ParticipantsScreen({
               <View style={styles.itemHead}>
                 <Text style={styles.name}>{payment.participantName}</Text>
                 <Text style={styles.amount}>
-                  R$ {Number(payment.amount).toFixed(2).replace('.', ',')}
+                  {money(Number(payment.amount))}
                 </Text>
               </View>
               <StatusChip
                 label={paymentLabels[payment.status] ?? payment.status}
               />
-              {payment.status === 'PENDING' && canSimulatePayments ? (
+              {payment.status === 'PENDING' &&
+              canSimulatePayments &&
+              confirmingDecline === payment.paymentId ? (
+                <>
+                  <Notice tone="danger">
+                    Recusar o pagamento cancela a inscrição de{' '}
+                    {payment.participantName} e libera a vaga. Esta ação não
+                    pode ser desfeita.
+                  </Notice>
+                  <View style={styles.actions}>
+                    <Action
+                      busy={busyId === payment.paymentId}
+                      label="Confirmar recusa"
+                      onPress={() => {
+                        setConfirmingDecline(null);
+                        onSimulate(payment.paymentId, 'declined');
+                      }}
+                      tone="danger"
+                    />
+                    <Action
+                      label="Voltar"
+                      onPress={() => setConfirmingDecline(null)}
+                      tone="secondary"
+                    />
+                  </View>
+                </>
+              ) : payment.status === 'PENDING' && canSimulatePayments ? (
                 <View style={styles.actions}>
                   <Action
                     busy={busyId === payment.paymentId}
@@ -142,7 +193,7 @@ export function ParticipantsScreen({
                   <Action
                     busy={busyId === payment.paymentId}
                     label="Recusar"
-                    onPress={() => onSimulate(payment.paymentId, 'declined')}
+                    onPress={() => setConfirmingDecline(payment.paymentId)}
                     tone="danger"
                   />
                 </View>
@@ -259,17 +310,28 @@ export function ParticipantsScreen({
   );
 }
 
+const totalLabels = {
+  PAID: 'Recebido',
+  PENDING: 'Pendente',
+  REFUNDED: 'Reembolsado',
+} as const;
+
+function money(value: number) {
+  return `R$ ${value.toFixed(2).replace('.', ',')}`;
+}
+
 function Action({
-  busy,
+  busy = false,
   label,
   onPress,
   tone,
 }: Readonly<{
-  busy: boolean;
+  busy?: boolean;
   label: string;
   onPress(): void;
-  tone: 'primary' | 'danger';
+  tone: 'primary' | 'danger' | 'secondary';
 }>) {
+  const styles = useStyles();
   return (
     <Pressable
       accessibilityRole="button"
@@ -278,16 +340,27 @@ function Action({
       onPress={onPress}
       style={({ pressed }) => [
         styles.action,
-        tone === 'danger' ? styles.actionDanger : styles.actionPrimary,
+        tone === 'danger'
+          ? styles.actionDanger
+          : tone === 'secondary'
+            ? styles.actionSecondary
+            : styles.actionPrimary,
         (pressed || busy) && styles.pressed,
       ]}
     >
-      <Text style={styles.actionText}>{label}</Text>
+      <Text
+        style={[
+          styles.actionText,
+          tone === 'secondary' && styles.actionSecondaryText,
+        ]}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   item: {
     borderTopColor: colors.surface3,
     borderTopWidth: 1,
@@ -343,6 +416,24 @@ const styles = StyleSheet.create({
     fontSize: typography.bodySmall,
   },
   attendanceTextSelected: { color: colors.onBrand },
+  totals: { flexDirection: 'row', gap: spacing.xs },
+  total: {
+    backgroundColor: colors.brandSubtle,
+    borderRadius: radii.md,
+    flex: 1,
+    padding: spacing.sm,
+  },
+  totalValue: {
+    color: colors.brandText,
+    fontFamily: typography.familyBold,
+    fontSize: typography.bodySmall,
+    fontWeight: typography.bold,
+  },
+  totalLabel: {
+    color: colors.textMuted,
+    fontFamily: typography.familyRegular,
+    fontSize: typography.caption,
+  },
   action: {
     borderRadius: radii.xl,
     justifyContent: 'center',
@@ -351,10 +442,15 @@ const styles = StyleSheet.create({
   },
   actionPrimary: { backgroundColor: colors.brand },
   actionDanger: { backgroundColor: colors.dangerStrong },
+  actionSecondary: {
+    borderColor: colors.brand,
+    borderWidth: 1,
+  },
+  actionSecondaryText: { color: colors.brandText },
   actionText: {
     color: colors.onBrand,
     fontFamily: typography.familyBold,
     fontSize: typography.bodySmall,
     fontWeight: typography.bold,
   },
-});
+}));

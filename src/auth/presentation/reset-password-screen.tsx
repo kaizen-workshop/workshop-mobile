@@ -11,16 +11,26 @@ import {
   ImageBackground,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   useWindowDimensions,
   View,
 } from 'react-native';
 
+import {
+  passwordPolicyError,
+  passwordPolicyHint,
+} from '@/auth/domain/password-policy';
 import { describeError } from '@/core/errors';
 import { useKeyboardVisible } from '@/shared/hooks';
-import { colors, radii, sizes, spacing, typography } from '@/shared/theme';
+import {
+  makeStyles,
+  radii,
+  sizes,
+  spacing,
+  typography,
+  useTheme,
+} from '@/shared/theme';
 
 export function ResetPasswordScreen({
   onBack,
@@ -31,6 +41,8 @@ export function ResetPasswordScreen({
   onResend?: () => void;
   onSubmit(input: { code: string; password: string }): Promise<void> | void;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const { height: viewportHeight } = useWindowDimensions();
   const keyboardVisible = useKeyboardVisible();
   const [code, setCode] = useState('');
@@ -40,6 +52,11 @@ export function ResetPasswordScreen({
   const [error, setError] = useState<string | null>(null);
   const submit = async () => {
     if (loading) return;
+    const policyError = passwordPolicyError(password);
+    if (policyError) {
+      setError(policyError);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -128,6 +145,7 @@ export function ResetPasswordScreen({
               )}
             </Pressable>
           </View>
+          <Text style={styles.hint}>{passwordPolicyHint}</Text>
           {error ? (
             <Text accessibilityRole="alert" style={styles.error}>
               {error}
@@ -165,7 +183,7 @@ export function ResetPasswordScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   resend: { alignItems: 'center', gap: spacing.xxs, marginTop: spacing.md },
   resendLabel: {
     color: colors.text,
@@ -173,7 +191,7 @@ const styles = StyleSheet.create({
     fontSize: typography.bodySmall,
   },
   resendLink: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyBold,
     fontSize: typography.bodySmall,
     textDecorationLine: 'underline',
@@ -251,8 +269,14 @@ const styles = StyleSheet.create({
     minHeight: sizes.touchTarget,
     minWidth: sizes.touchTarget,
   },
+  hint: {
+    color: colors.textMuted,
+    fontFamily: typography.familyRegular,
+    fontSize: typography.caption,
+    marginTop: spacing.xxs,
+  },
   error: {
-    color: colors.text,
+    color: colors.danger,
     fontFamily: typography.familyRegular,
     marginTop: spacing.sm,
   },
@@ -276,4 +300,4 @@ const styles = StyleSheet.create({
     fontSize: typography.caption,
     marginTop: spacing.xxl,
   },
-});
+}));

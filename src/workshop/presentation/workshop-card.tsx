@@ -6,15 +6,16 @@ import {
   MapPin,
 } from 'lucide-react-native';
 import type { ComponentType } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import {
-  colors,
+  makeStyles,
   radii,
   shadows,
   sizes,
   spacing,
   typography,
+  useTheme,
 } from '@/shared/theme';
 import type { WorkshopSummary } from '@/workshop/domain';
 import { useWorkshopImageSource } from './use-workshop-image-source';
@@ -24,6 +25,8 @@ export function WorkshopCard({
   onPress,
   workshop,
 }: Readonly<{ onPress?: () => void; workshop: WorkshopSummary }>) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const { refreshImage, source: imageSource } = useWorkshopImageSource(
     workshop.imageUrl,
   );
@@ -79,7 +82,14 @@ export function WorkshopCard({
           ) : null}
         </View>
         {workshop.registrationLabel ? (
-          <Text style={styles.registration}>{workshop.registrationLabel}</Text>
+          <Text
+            style={[
+              styles.registration,
+              workshop.registrationOpen === false && styles.registrationClosed,
+            ]}
+          >
+            {workshop.registrationLabel}
+          </Text>
         ) : null}
         {onPress ? (
           <View style={styles.detailsButton}>
@@ -112,15 +122,17 @@ function MetadataLine({
   Icon: ComponentType<{ color: string; size: number }>;
   value: string;
 }>) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <View style={styles.metadataLine}>
-      <Icon color={colors.brand} size={18} />
+      <Icon color={colors.brandText} size={18} />
       <Text style={styles.metadataText}>{value}</Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   card: {
     ...shadows.card,
     backgroundColor: colors.surface,
@@ -157,7 +169,7 @@ const styles = StyleSheet.create({
     width: 6,
   },
   theme: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyBold,
     fontSize: typography.caption,
     fontWeight: typography.bold,
@@ -204,6 +216,7 @@ const styles = StyleSheet.create({
     fontSize: typography.caption,
     marginTop: spacing.sm,
   },
+  registrationClosed: { color: colors.textMuted },
   detailsButton: {
     alignItems: 'center',
     backgroundColor: colors.brand,
@@ -220,4 +233,4 @@ const styles = StyleSheet.create({
     fontSize: typography.body,
     fontWeight: typography.bold,
   },
-});
+}));

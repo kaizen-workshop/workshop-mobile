@@ -452,3 +452,18 @@ Nome recomendado:
 ```text
 workshop_mobile
 ```
+
+---
+
+# Demonstração local
+
+1. Suba a infraestrutura da API (`docker compose up -d`) e a API (`mvnw spring-boot:run`, porta `8082`).
+2. Em `.env`, aponte `EXPO_PUBLIC_API_URL` para o IP da máquina na rede atual, por exemplo
+   `http://192.168.0.10:8082/api/v1` (descubra com `ipconfig`). O IP muda quando a rede muda;
+   depois de alterar, reinicie o Expo com `npx expo start -c`.
+3. Contas de demonstração (senha `Workshop@2026!`): `demo.ana` e `demo.bruno` (participantes),
+   `demo.carla` (ARWEG) e `demo.admin` (ADMIN).
+
+O pagamento é simulado: depois que o participante inicia o pagamento, somente o ADMIN o confirma ou
+recusa em Participantes do workshop. Mantenha dois navegadores abertos (participante e ADMIN) e o
+Mailpit em `http://localhost:8025` para mostrar os e-mails de primeiro acesso.

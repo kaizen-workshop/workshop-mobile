@@ -14,6 +14,21 @@ export default function AdminDashboardRoute() {
   const gateway = useAdminGateway();
   const load = useCallback(() => gateway.dashboard(), [gateway]);
   const dashboard = useAsyncData(load);
+  // Scheduled posts are a nice-to-have: a failure here must not hide the dashboard.
+  const loadUpcoming = useCallback(
+    () =>
+      gateway
+        .listPosts(0, 50)
+        .then((result) =>
+          result.items
+            .filter((post) => post.status === 'SCHEDULED' && post.scheduledAt)
+            .sort((a, b) => a.scheduledAt!.localeCompare(b.scheduledAt!))
+            .slice(0, 3),
+        )
+        .catch(() => []),
+    [gateway],
+  );
+  const upcoming = useAsyncData(loadUpcoming);
 
   return (
     <DashboardScreen
@@ -29,6 +44,7 @@ export default function AdminDashboardRoute() {
       onOpenWorkshops={() => router.push(adminHref.workshops)}
       onRetry={dashboard.reload}
       status={dashboard.status}
+      upcomingPosts={upcoming.data}
     />
   );
 }

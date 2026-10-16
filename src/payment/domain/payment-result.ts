@@ -6,4 +6,6 @@ export type PaymentResult = Readonly<{
   amount: number;
   status: PaymentStatus;
   method: string;
+  /** Opaque reference from the simulated gateway, shown as the simulated PIX code. */
+  reference?: string;
 }>;
