@@ -4,7 +4,7 @@ import { ChangePasswordScreen } from '@/auth/presentation/change-password-screen
 
 function fillPasswords({
   current = 'temporaria',
-  next = 'nova-senha',
+  next = 'nova-senha1',
   confirmation = next,
 }: {
   current?: string;
@@ -31,7 +31,7 @@ it('renders accessible mandatory password-change controls', () => {
 it('does not submit when confirmation differs', async () => {
   const onSubmit = jest.fn();
   render(<ChangePasswordScreen onSubmit={onSubmit} />);
-  fillPasswords({ confirmation: 'outra-senha' });
+  fillPasswords({ confirmation: 'outra-senha1' });
 
   await act(async () => {
     fireEvent.press(screen.getByRole('button', { name: 'Alterar senha' }));
@@ -41,6 +41,19 @@ it('does not submit when confirmation differs', async () => {
   expect(
     screen.getByText('A confirmação deve ser igual à nova senha.'),
   ).toBeTruthy();
+});
+
+it('does not submit a password outside the policy', async () => {
+  const onSubmit = jest.fn();
+  render(<ChangePasswordScreen onSubmit={onSubmit} />);
+  fillPasswords({ next: 'fraca' });
+
+  await act(async () => {
+    fireEvent.press(screen.getByRole('button', { name: 'Alterar senha' }));
+  });
+
+  expect(onSubmit).not.toHaveBeenCalled();
+  expect(screen.getByText(/não atende aos requisitos/)).toBeTruthy();
 });
 
 it('blocks duplicate submissions while changing the password', async () => {

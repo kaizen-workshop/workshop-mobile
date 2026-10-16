@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import {
   FlatList,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
-  StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
 import type { PostComment } from '@/feed/domain/post-comment';
 import { BackHeader, StatePage } from '@/navigation';
+import { useKeyboardVisible } from '@/shared/hooks';
 import {
   AppSymbol,
   EmptyState,
@@ -17,18 +19,20 @@ import {
   LoadingState,
 } from '@/shared/presentation';
 import {
-  colors,
+  makeStyles,
   radii,
   shadows,
   sizes,
   spacing,
   typography,
+  useTheme,
 } from '@/shared/theme';
 export function CommentsScreen({
   items,
   currentUserId,
   status,
   error,
+  postTitle,
   sending,
   sendError,
   actionError,
@@ -42,6 +46,8 @@ export function CommentsScreen({
   items: readonly PostComment[];
   currentUserId: string;
   status: 'loading' | 'error' | 'success';
+  /** Title of the post being discussed, shown for context. */
+  postTitle?: string;
   error?: unknown;
   sending: boolean;
   sendError: boolean | string;
@@ -53,6 +59,9 @@ export function CommentsScreen({
   onEdit(comment: PostComment, content: string): Promise<boolean> | boolean;
   onDelete(comment: PostComment): Promise<void> | void;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
+  const keyboardVisible = useKeyboardVisible();
   const [content, setContent] = useState('');
   const [editingId, setEditingId] = useState<string>();
   const [editContent, setEditContent] = useState('');
@@ -67,9 +76,24 @@ export function CommentsScreen({
   if (status === 'error')
     return frame(<ErrorState error={error} onRetry={onRetry} />);
   return (
-    <View style={styles.page}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={styles.page}
+    >
       <View style={styles.header}>
-        <BackHeader eyebrow="Conversa" title="Comentários" />
+        <BackHeader
+          compact={keyboardVisible}
+          eyebrow="Conversa"
+          title="Comentários"
+        />
+        {postTitle && !keyboardVisible ? (
+          <View style={styles.postContext}>
+            <Text style={styles.postContextLabel}>Sobre o post</Text>
+            <Text numberOfLines={2} style={styles.postContextTitle}>
+              {postTitle}
+            </Text>
+          </View>
+        ) : null}
       </View>
       <FlatList
         data={items}
@@ -89,7 +113,7 @@ export function CommentsScreen({
             <View style={styles.commentHeader}>
               <View style={styles.avatar}>
                 <AppSymbol
-                  color={colors.brand}
+                  color={colors.brandText}
                   fallback="•"
                   name={{
                     ios: 'person.fill',
@@ -243,10 +267,29 @@ export function CommentsScreen({
           </Text>
         </Pressable>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
+  postContext: {
+    backgroundColor: colors.brandSubtle,
+    borderRadius: radii.xl,
+    marginBottom: spacing.sm,
+    padding: spacing.sm,
+  },
+  postContextLabel: {
+    color: colors.accent,
+    fontFamily: typography.familyMedium,
+    fontSize: typography.caption,
+    fontWeight: typography.medium,
+    textTransform: 'uppercase',
+  },
+  postContextTitle: {
+    color: colors.text,
+    fontFamily: typography.familyBold,
+    fontSize: typography.body,
+    fontWeight: typography.bold,
+  },
   page: { backgroundColor: colors.background, flex: 1 },
   header: {
     alignSelf: 'center',
@@ -307,7 +350,7 @@ const styles = StyleSheet.create({
     minHeight: sizes.touchTarget,
     paddingHorizontal: spacing.xs,
   },
-  action: { color: colors.brand, fontFamily: typography.familyMedium },
+  action: { color: colors.brandText, fontFamily: typography.familyMedium },
   delete: { color: colors.danger, fontFamily: typography.familyMedium },
   loadingMore: { color: colors.textMuted, padding: spacing.md },
   feedback: {
@@ -358,4 +401,4 @@ const styles = StyleSheet.create({
     fontFamily: typography.familyBold,
     fontWeight: typography.bold,
   },
-});
+}));

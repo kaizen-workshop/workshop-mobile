@@ -23,6 +23,7 @@ export default function ParticipantsRoute() {
   }, [gateway, id]);
   const loaded = useAsyncData(fetchAll);
   const [busyId, setBusyId] = useState<string>();
+  const [exporting, setExporting] = useState(false);
   const [feedback, setFeedback] = useState<{
     tone: 'danger' | 'success';
     message: string;
@@ -59,6 +60,26 @@ export default function ParticipantsRoute() {
       busyId={busyId}
       canSimulatePayments={role === 'ADMIN'}
       error={loaded.error}
+      exporting={exporting}
+      onExport={(format) => {
+        if (exporting) return;
+        setExporting(true);
+        setFeedback(undefined);
+        gateway
+          .exportParticipants(id, format)
+          .then(() =>
+            setFeedback({ tone: 'success', message: 'Lista exportada.' }),
+          )
+          .catch((cause: unknown) =>
+            setFeedback({
+              tone: 'danger',
+              message: describeError(cause, {
+                forbidden: 'Você não tem permissão para exportar esta lista.',
+              }).message,
+            }),
+          )
+          .finally(() => setExporting(false));
+      }}
       feedback={feedback}
       onMarkAttendance={(registrationId, attendance: AttendanceStatus) =>
         void run(

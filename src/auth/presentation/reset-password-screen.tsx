@@ -11,15 +11,26 @@ import {
   ImageBackground,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   useWindowDimensions,
   View,
 } from 'react-native';
 
+import {
+  passwordPolicyError,
+  passwordPolicyHint,
+} from '@/auth/domain/password-policy';
 import { describeError } from '@/core/errors';
-import { colors, radii, sizes, spacing, typography } from '@/shared/theme';
+import { useKeyboardVisible } from '@/shared/hooks';
+import {
+  makeStyles,
+  radii,
+  sizes,
+  spacing,
+  typography,
+  useTheme,
+} from '@/shared/theme';
 
 export function ResetPasswordScreen({
   onBack,
@@ -30,7 +41,10 @@ export function ResetPasswordScreen({
   onResend?: () => void;
   onSubmit(input: { code: string; password: string }): Promise<void> | void;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const { height: viewportHeight } = useWindowDimensions();
+  const keyboardVisible = useKeyboardVisible();
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
   const [visible, setVisible] = useState(false);
@@ -38,6 +52,11 @@ export function ResetPasswordScreen({
   const [error, setError] = useState<string | null>(null);
   const submit = async () => {
     if (loading) return;
+    const policyError = passwordPolicyError(password);
+    if (policyError) {
+      setError(policyError);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -65,6 +84,8 @@ export function ResetPasswordScreen({
       <View style={styles.overlay} />
       <ScrollView
         contentContainerStyle={styles.page}
+        automaticallyAdjustKeyboardInsets
+        keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
       >
         {onBack ? (
@@ -81,9 +102,11 @@ export function ResetPasswordScreen({
           <Text accessibilityRole="header" style={styles.title}>
             Confirme o código
           </Text>
-          <Text style={styles.description}>
-            Cole o código enviado ao seu e-mail e escolha sua nova senha.
-          </Text>
+          {keyboardVisible ? null : (
+            <Text style={styles.description}>
+              Cole o código enviado ao seu e-mail e escolha sua nova senha.
+            </Text>
+          )}
           <Text style={styles.label}>Código de recuperação</Text>
           <View style={styles.field}>
             <KeyRound color={colors.textMuted} size={20} />
@@ -122,6 +145,7 @@ export function ResetPasswordScreen({
               )}
             </Pressable>
           </View>
+          <Text style={styles.hint}>{passwordPolicyHint}</Text>
           {error ? (
             <Text accessibilityRole="alert" style={styles.error}>
               {error}
@@ -149,15 +173,17 @@ export function ResetPasswordScreen({
             </View>
           ) : null}
         </View>
-        <Text style={styles.footer}>
-          © 2026 WEG S.A. Todos os direitos reservados.
-        </Text>
+        {keyboardVisible ? null : (
+          <Text style={styles.footer}>
+            © 2026 WEG S.A. Todos os direitos reservados.
+          </Text>
+        )}
       </ScrollView>
     </ImageBackground>
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   resend: { alignItems: 'center', gap: spacing.xxs, marginTop: spacing.md },
   resendLabel: {
     color: colors.text,
@@ -165,7 +191,7 @@ const styles = StyleSheet.create({
     fontSize: typography.bodySmall,
   },
   resendLink: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyBold,
     fontSize: typography.bodySmall,
     textDecorationLine: 'underline',
@@ -243,8 +269,14 @@ const styles = StyleSheet.create({
     minHeight: sizes.touchTarget,
     minWidth: sizes.touchTarget,
   },
+  hint: {
+    color: colors.textMuted,
+    fontFamily: typography.familyRegular,
+    fontSize: typography.caption,
+    marginTop: spacing.xxs,
+  },
   error: {
-    color: colors.text,
+    color: colors.danger,
     fontFamily: typography.familyRegular,
     marginTop: spacing.sm,
   },
@@ -268,4 +300,4 @@ const styles = StyleSheet.create({
     fontSize: typography.caption,
     marginTop: spacing.xxl,
   },
-});
+}));

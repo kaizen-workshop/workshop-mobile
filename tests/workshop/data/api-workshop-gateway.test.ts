@@ -41,7 +41,39 @@ const workshop = {
   createdBy: 'user-1',
 };
 
+afterEach(() => jest.restoreAllMocks());
+
+function listGateway(overrides: Partial<typeof workshop> = {}) {
+  const request = jest.fn(async ({ path }: { path: string }) => {
+    if (path === '/themes' || path === '/categories') return [];
+    return { content: [{ ...workshop, ...overrides }], number: 0, last: true };
+  });
+  return createApiWorkshopGateway(
+    { request } as HttpClient,
+    tokens,
+    'https://api.example.test/api/v1',
+  );
+}
+
+it('labels the registration period as closed or not yet open', async () => {
+  jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-16T12:00:00Z'));
+  await expect(listGateway().loadList()).resolves.toEqual([
+    expect.objectContaining({
+      registrationLabel: 'Inscrições encerradas',
+      registrationOpen: false,
+    }),
+  ]);
+  jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-08-01T12:00:00Z'));
+  await expect(listGateway().loadList()).resolves.toEqual([
+    expect.objectContaining({
+      registrationLabel: 'Inscrições a partir de 01/09/2026',
+      registrationOpen: false,
+    }),
+  ]);
+});
+
 it('loads published workshops and maps API metadata for the list', async () => {
+  jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-09-15T12:00:00Z'));
   const request = jest.fn(async ({ path }: { path: string }) => {
     if (path === '/themes')
       return [
@@ -84,6 +116,7 @@ it('loads published workshops and maps API metadata for the list', async () => {
       modality: 'Presencial',
       priceLabel: 'Gratuito',
       registrationLabel: 'Inscrições até 08/10/2026',
+      registrationOpen: true,
     }),
   ]);
   expect(request).toHaveBeenCalledWith({

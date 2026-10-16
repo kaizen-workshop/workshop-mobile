@@ -49,6 +49,7 @@ it('renders every available workshop detail', () => {
   expect(
     screen.getByLabelText('Imagem do workshop Lean Manufacturing'),
   ).toBeTruthy();
+  // No action buttons without registration callbacks (the menu is fixed by the layout).
   expect(screen.queryByRole('button')).toBeNull();
 });
 
@@ -150,6 +151,7 @@ it('submits a registration once and exposes loading feedback', () => {
       workshop={workshop}
     />,
   );
+  // While registering the label is replaced by a spinner, so take the only button.
   const button = screen.getByRole('button');
   fireEvent.press(button);
   expect(button.props.accessibilityState).toMatchObject({
@@ -455,4 +457,23 @@ it('shows the evaluation shortcut only when the caller passes it', () => {
     />,
   );
   expect(screen.getByRole('button', { name: 'Avaliar workshop' })).toBeTruthy();
+});
+
+it('highlights the waiting-list position', () => {
+  render(
+    <WorkshopDetailsScreen
+      registration={{
+        id: 'registration-1',
+        workshopId: workshop.id,
+        status: 'WAITING_LIST',
+        paymentStatus: 'PENDING',
+        waitingListPosition: 3,
+      }}
+      status="success"
+      workshop={workshop}
+    />,
+  );
+  expect(screen.getByLabelText('Posição 3 na lista de espera')).toBeTruthy();
+  expect(screen.getByText('03')).toBeTruthy();
+  expect(screen.getByText('2 pessoas à sua frente.')).toBeTruthy();
 });

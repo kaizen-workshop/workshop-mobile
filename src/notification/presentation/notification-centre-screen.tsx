@@ -2,6 +2,7 @@ import {
   AlertCircle,
   Bell,
   CalendarDays,
+  CalendarX,
   Check,
   Clock,
   CreditCard,
@@ -11,7 +12,6 @@ import {
   ActivityIndicator,
   FlatList,
   Pressable,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -27,12 +27,13 @@ import {
 import { BackHeader, StatePage } from '@/navigation';
 import { EmptyState, ErrorState, LoadingState } from '@/shared/presentation';
 import {
-  colors,
+  makeStyles,
   radii,
   shadows,
   sizes,
   spacing,
   typography,
+  useTheme,
 } from '@/shared/theme';
 
 const typeIcons: Record<string, LucideIcon> = {
@@ -41,6 +42,7 @@ const typeIcons: Record<string, LucideIcon> = {
   WAITING_LIST_PROMOTED: Check,
   PAYMENT_CONFIRMED: CreditCard,
   PAYMENT_DECLINED: AlertCircle,
+  WORKSHOP_CANCELLED: CalendarX,
   MANUAL: CalendarDays,
 };
 
@@ -63,6 +65,8 @@ function NotificationCard({
   item: NotificationItem;
   onPress?: () => void;
 }>) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const Icon = typeIcons[item.type] ?? Bell;
   const content = (
     <View style={styles.cardContent}>
@@ -115,6 +119,8 @@ export function NotificationCentreScreen({
   onMarkAllRead,
   onPress,
 }: Props) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const unread = items.filter((item) => !item.read).length;
   const header = (
     <View>
@@ -173,7 +179,7 @@ export function NotificationCentreScreen({
     <ActivityIndicator
       accessibilityLabel="Carregando mais notificações"
       accessibilityRole="progressbar"
-      color={colors.brand}
+      color={colors.brandText}
     />
   ) : loadMoreError && onLoadMore ? (
     <Pressable
@@ -228,7 +234,7 @@ export function NotificationCentreScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   summary: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -318,7 +324,7 @@ const styles = StyleSheet.create({
     fontSize: typography.body,
     fontWeight: typography.medium,
   },
-  dot: { color: colors.brand, marginLeft: spacing.sm },
+  dot: { color: colors.brandText, marginLeft: spacing.sm },
   message: {
     color: colors.textMuted,
     fontFamily: typography.familyRegular,
@@ -337,8 +343,8 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
   },
   paginationRetryText: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyMedium,
     fontWeight: typography.medium,
   },
-});
+}));

@@ -1,25 +1,31 @@
 import { Image } from 'expo-image';
 import { KeyRound, LockKeyhole, Mail } from 'lucide-react-native';
 import { useState } from 'react';
+import {
+  passwordPolicyError,
+  passwordPolicyHint,
+} from '@/auth/domain/password-policy';
 import { describeError } from '@/core/errors';
+import { useKeyboardVisible } from '@/shared/hooks';
 import {
   ActivityIndicator,
   ImageBackground,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
 
 import {
-  colors,
+  makeStyles,
   radii,
   shadows,
   sizes,
   spacing,
   typography,
+  useTheme,
 } from '@/shared/theme';
 
 type Props = Readonly<{
@@ -29,6 +35,10 @@ type Props = Readonly<{
 }>;
 
 export function FirstAccessScreen({ onBack, onRequestCode, onSubmit }: Props) {
+  const styles = useStyles();
+  const { colors } = useTheme();
+  const { height: viewportHeight } = useWindowDimensions();
+  const keyboardVisible = useKeyboardVisible();
   const [login, setLogin] = useState('');
   const [code, setCode] = useState('');
   const [password, setPassword] = useState('');
@@ -66,6 +76,11 @@ export function FirstAccessScreen({ onBack, onRequestCode, onSubmit }: Props) {
       setError('Informe o código recebido e a nova senha.');
       return;
     }
+    const policyError = passwordPolicyError(password);
+    if (policyError) {
+      setError(policyError);
+      return;
+    }
     if (password !== confirmPassword) {
       setError('As senhas não coincidem.');
       return;
@@ -91,26 +106,32 @@ export function FirstAccessScreen({ onBack, onRequestCode, onSubmit }: Props) {
     <ImageBackground
       resizeMode="cover"
       source={require('../../../assets/images/background-login.webp')}
-      style={styles.background}
+      style={[styles.background, { height: viewportHeight }]}
     >
       <View style={styles.overlay} />
       <ScrollView
         contentContainerStyle={styles.page}
+        automaticallyAdjustKeyboardInsets
+        keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
       >
-        <Image
-          accessibilityLabel="WEG"
-          contentFit="contain"
-          source={require('../../../assets/images/logo-weg.png')}
-          style={styles.logo}
-        />
+        {keyboardVisible ? null : (
+          <Image
+            accessibilityLabel="WEG"
+            contentFit="contain"
+            source={require('../../../assets/images/logo-weg.png')}
+            style={styles.logo}
+          />
+        )}
         <View style={styles.card}>
           <Text accessibilityRole="header" style={styles.title}>
             Primeiro acesso
           </Text>
-          <Text style={styles.description}>
-            Solicite o código enviado por e-mail e defina sua senha de acesso.
-          </Text>
+          {keyboardVisible ? null : (
+            <Text style={styles.description}>
+              Solicite o código enviado por e-mail e defina sua senha de acesso.
+            </Text>
+          )}
 
           <Text style={styles.label}>E-mail</Text>
           <View style={styles.field}>
@@ -126,25 +147,30 @@ export function FirstAccessScreen({ onBack, onRequestCode, onSubmit }: Props) {
               style={styles.input}
               value={login}
             />
-            <Pressable
-              accessibilityLabel="Enviar código"
-              accessibilityRole="button"
-              accessibilityState={{
-                busy: sendingCode,
-                disabled: sendingCode,
-              }}
-              disabled={sendingCode}
-              onPress={() => void requestCode()}
-              style={({ pressed }) => [
-                styles.sendButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={styles.sendButtonText}>
-                {sendingCode ? 'Enviando...' : 'Enviar'}
-              </Text>
-            </Pressable>
           </View>
+
+          <Pressable
+            accessibilityLabel="Enviar código"
+            accessibilityRole="button"
+            accessibilityState={{
+              busy: sendingCode,
+              disabled: sendingCode,
+            }}
+            disabled={sendingCode}
+            onPress={() => void requestCode()}
+            style={({ pressed }) => [
+              styles.sendButton,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={styles.sendButtonText}>
+              {sendingCode
+                ? 'Enviando código...'
+                : codeSent
+                  ? 'Reenviar código'
+                  : 'Enviar código'}
+            </Text>
+          </Pressable>
 
           <Text style={styles.label}>Código</Text>
           <View style={styles.field}>
@@ -174,6 +200,7 @@ export function FirstAccessScreen({ onBack, onRequestCode, onSubmit }: Props) {
               value={password}
             />
           </View>
+          <Text style={styles.hint}>{passwordPolicyHint}</Text>
 
           <Text style={styles.label}>Confirme a senha</Text>
           <View style={styles.field}>
@@ -193,7 +220,8 @@ export function FirstAccessScreen({ onBack, onRequestCode, onSubmit }: Props) {
 
           {codeSent ? (
             <Text accessibilityLiveRegion="polite" style={styles.success}>
-              Se a conta existir, o código será enviado para o e-mail informado.
+              Se existir uma conta para este e-mail, enviamos um código. Confira
+              a caixa de entrada e o spam. Ele vale por 1 hora.
             </Text>
           ) : null}
           {error ? (
@@ -218,7 +246,7 @@ export function FirstAccessScreen({ onBack, onRequestCode, onSubmit }: Props) {
               <ActivityIndicator color={colors.onBrand} size="small" />
             ) : null}
             <Text style={styles.buttonText}>
-              {submitting ? 'Concluindo...' : 'Entrar'}
+              {submitting ? 'Concluindo...' : 'Concluir primeiro acesso'}
             </Text>
           </Pressable>
 
@@ -240,7 +268,7 @@ export function FirstAccessScreen({ onBack, onRequestCode, onSubmit }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   background: { flex: 1, width: '100%' },
   overlay: {
     backgroundColor: 'rgba(0, 4, 35, 0.28)',
@@ -306,18 +334,24 @@ const styles = StyleSheet.create({
   },
   sendButton: {
     alignItems: 'center',
-    alignSelf: 'stretch',
-    backgroundColor: colors.brand,
-    borderBottomRightRadius: radii.xl,
-    borderTopRightRadius: radii.xl,
+    backgroundColor: colors.brandSubtle,
+    borderRadius: radii.xl,
     justifyContent: 'center',
-    minWidth: 86,
-    paddingHorizontal: spacing.sm,
+    marginTop: spacing.xs,
+    minHeight: sizes.touchTarget,
+    paddingHorizontal: spacing.md,
   },
   sendButtonText: {
-    color: colors.onBrand,
-    fontFamily: typography.familyMedium,
+    color: colors.brandText,
+    fontFamily: typography.familyBold,
     fontSize: typography.bodySmall,
+    fontWeight: typography.bold,
+  },
+  hint: {
+    color: colors.textMuted,
+    fontFamily: typography.familyRegular,
+    fontSize: typography.caption,
+    marginTop: spacing.xxs,
   },
   success: {
     color: colors.positive,
@@ -356,9 +390,9 @@ const styles = StyleSheet.create({
     minHeight: sizes.touchTarget,
   },
   backText: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyMedium,
     fontSize: typography.bodySmall,
   },
   pressed: { opacity: 0.7 },
-});
+}));

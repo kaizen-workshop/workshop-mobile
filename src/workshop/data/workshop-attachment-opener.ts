@@ -1,5 +1,6 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
+import { Platform } from 'react-native';
 
 import type { EnvironmentConfig } from '@/core/config';
 import { AppError } from '@/core/errors';
@@ -42,6 +43,16 @@ export function createWorkshopAttachmentOpener(
         throw new AppError({ category: 'bad_request' });
       let tokens = await tokenStorage.read();
       if (!tokens) throw new AppError({ category: 'unauthorized' });
+      if (Platform.OS === 'web') {
+        await downloadOnWeb(
+          config,
+          tokens,
+          workshopId,
+          attachment,
+          refreshSession,
+        );
+        return;
+      }
       if (!fileSystem.cacheDirectory || !(await sharing.isAvailableAsync()))
         throw unavailableError();
 
@@ -70,6 +81,41 @@ export function createWorkshopAttachmentOpener(
       });
     },
   };
+}
+
+/**
+ * The browser has no cache directory or share sheet, so fetch the file with the session
+ * token and hand it to the browser as a download.
+ */
+async function downloadOnWeb(
+  config: EnvironmentConfig,
+  initial: SessionTokens,
+  workshopId: string,
+  attachment: WorkshopAttachment,
+  refreshSession: () => Promise<SessionTokens>,
+) {
+  const url = `${config.apiUrl}/workshops/${encodeURIComponent(workshopId)}/attachments/${encodeURIComponent(attachment.id)}/content`;
+  const get = (tokens: SessionTokens) =>
+    fetch(url, { headers: { Authorization: `Bearer ${tokens.accessToken}` } });
+  let response: Response;
+  try {
+    response = await get(initial);
+    if (response.status === 401) response = await get(await refreshSession());
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw new AppError({ category: 'network' });
+  }
+  if (!response.ok)
+    throw new AppError({ category: 'unknown', status: response.status });
+
+  const objectUrl = URL.createObjectURL(await response.blob());
+  const link = document.createElement('a');
+  link.href = objectUrl;
+  link.download = attachment.name;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(objectUrl), 10_000);
 }
 
 function safeExtension(filename: string) {

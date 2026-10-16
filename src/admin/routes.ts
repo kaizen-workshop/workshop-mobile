@@ -8,12 +8,30 @@ export const adminHref = {
   home: '/admin' as Href,
   workshops: '/admin/workshops' as Href,
   newWorkshop: '/admin/workshops/new' as Href,
+  posts: '/admin/posts' as Href,
   newPost: '/admin/posts/new' as Href,
+  editPost: (id: string) =>
+    ({
+      pathname: '/admin/posts/[id]/edit',
+      params: { id },
+    }) as unknown as Href,
+  taxonomies: '/admin/taxonomies' as Href,
+  newAnnouncement: '/admin/announcements/new' as Href,
   manage: (id: string) =>
     ({ pathname: '/admin/workshops/[id]', params: { id } }) as unknown as Href,
   edit: (id: string) =>
     ({
       pathname: '/admin/workshops/[id]/edit',
+      params: { id },
+    }) as unknown as Href,
+  evaluations: (id: string) =>
+    ({
+      pathname: '/admin/workshops/[id]/evaluations',
+      params: { id },
+    }) as unknown as Href,
+  media: (id: string) =>
+    ({
+      pathname: '/admin/workshops/[id]/media',
       params: { id },
     }) as unknown as Href,
   participants: (id: string) =>

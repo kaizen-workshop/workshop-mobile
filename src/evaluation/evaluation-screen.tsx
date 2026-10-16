@@ -1,23 +1,17 @@
 import { useState } from 'react';
 import { CheckCircle2, Send, Star } from 'lucide-react-native';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import type { EvaluationInput } from './api-evaluation-gateway';
 import { BackHeader } from '@/navigation';
 import { InlineNotice } from '@/shared/presentation';
 import {
-  colors,
+  makeStyles,
   radii,
   shadows,
   sizes,
   spacing,
   typography,
+  useTheme,
 } from '@/shared/theme';
 
 export function EvaluationScreen({
@@ -33,6 +27,8 @@ export function EvaluationScreen({
   error?: 'ineligible' | 'error';
   onSubmit(input: EvaluationInput): Promise<void> | void;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const [rating, setRating] = useState(5);
   const [contentRating, setContentRating] = useState(5);
   const [instructorRating, setInstructorRating] = useState(5);
@@ -137,6 +133,8 @@ function Rating({
   value: number;
   onChange(value: number): void;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <View style={styles.ratingGroup}>
       <Text style={styles.label}>{label}</Text>
@@ -165,7 +163,7 @@ function Rating({
     </View>
   );
 }
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   page: {
     backgroundColor: colors.background,
     flexGrow: 1,
@@ -268,4 +266,4 @@ const styles = StyleSheet.create({
     fontFamily: typography.familyBold,
     fontWeight: typography.bold,
   },
-});
+}));

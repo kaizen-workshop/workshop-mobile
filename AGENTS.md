@@ -577,7 +577,8 @@ https://design-system.weg.net/?path=/docs/about-introduction--documentation
 Regras obrigatórias:
 
 - usar os tokens semânticos do WEG Design System como fonte para cores;
-- usar Roboto como tipografia principal;
+- tipografia principal: Inter (divergência intencional do Roboto do WEG Design System, já adotada no app; registrada em 2026-10-09);
+- tema claro/escuro via `ThemeProvider`/`useTheme`/`makeStyles` em `src/shared/theme` (preferência Sistema/Claro/Escuro em Configurações); animações usam os tokens de `motion.ts` e respeitam `useReducedMotion`;
 - respeitar a escala oficial de espaçamento, radius, tipografia e estados;
 - adaptar os padrões visuais para componentes nativos do React Native;
 - não instalar ou reutilizar diretamente componentes React destinados à web;

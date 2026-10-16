@@ -1,4 +1,12 @@
-import { colors, radii, sizes, spacing, typography } from '@/shared/theme';
+import {
+  colors,
+  darkColors,
+  lightColors,
+  radii,
+  sizes,
+  spacing,
+  typography,
+} from '@/shared/theme';
 
 function relativeLuminance(hex: string) {
   const channels = hex
@@ -43,3 +51,27 @@ it.each([
     expect(contrastRatio(foreground, background)).toBeGreaterThanOrEqual(4.5);
   },
 );
+
+describe('dark palette', () => {
+  it('has the same keys as the light palette', () => {
+    expect(Object.keys(darkColors).sort()).toEqual(
+      Object.keys(lightColors).sort(),
+    );
+  });
+
+  it.each([
+    ['body text', darkColors.text, darkColors.background],
+    ['body text on surface', darkColors.text, darkColors.surface],
+    ['muted text', darkColors.textMuted, darkColors.surface],
+    ['brand text', darkColors.brandText, darkColors.surface],
+    ['button text', darkColors.onBrand, darkColors.brand],
+    ['placeholder text', darkColors.placeholder, darkColors.surface],
+    ['danger text', darkColors.danger, darkColors.dangerSoft],
+    ['positive text', darkColors.positive, darkColors.positiveSoft],
+    ['warning text', darkColors.warning, darkColors.warningSoft],
+    ['info text', darkColors.info, darkColors.infoSoft],
+    ['like heart', darkColors.likeActive, darkColors.surface],
+  ])('%s meets WCAG AA contrast', (_name, foreground, background) => {
+    expect(contrastRatio(foreground, background)).toBeGreaterThanOrEqual(4.5);
+  });
+});

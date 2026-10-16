@@ -1,5 +1,5 @@
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react-native';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import {
   buildMonthGrid,
@@ -13,12 +13,13 @@ import type { ParticipantWorkshop } from './participant-workshop';
 import { BackHeader, StatePage } from '@/navigation';
 import { ErrorState, LoadingState } from '@/shared/presentation';
 import {
-  colors,
+  makeStyles,
   radii,
   shadows,
   sizes,
   spacing,
   typography,
+  useTheme,
 } from '@/shared/theme';
 
 const fallback = '/(authenticated)/(tabs)/profile';
@@ -48,6 +49,8 @@ export function CalendarScreen({
   status: 'loading' | 'error' | 'success';
   today: string;
 }>) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const grid = buildMonthGrid(month.year, month.month);
   const dayItems = items.filter((item) => occursOn(item, selectedDate));
   const selectedLabel = selectedDayTitle(selectedDate);
@@ -184,7 +187,7 @@ function formatTime(item: ParticipantWorkshop) {
   return `${hours}h${minutes}`;
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   page: {
     alignSelf: 'center',
     gap: spacing.md,
@@ -320,4 +323,4 @@ const styles = StyleSheet.create({
     fontSize: typography.body,
     fontWeight: typography.bold,
   },
-});
+}));

@@ -33,6 +33,7 @@ it('creates an idempotent payment without sending sensitive data', async () => {
     amount: 150,
     status: 'PENDING',
     method: 'PIX',
+    reference: 'simulated-reference',
   });
   expect(request).toHaveBeenCalledWith({
     path: '/registrations/registration%2F1/payments',

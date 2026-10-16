@@ -39,7 +39,7 @@ it('shows identity, stats and interests like the design', () => {
   expect(screen.getByLabelText('Concluídos: 2')).toBeTruthy();
   expect(screen.getByLabelText('Em espera: 1')).toBeTruthy();
   expect(screen.getByText('Esportes')).toBeTruthy();
-  expect(screen.getByRole('link', { name: 'Voltar' })).toBeTruthy();
+  expect(screen.getByText('Meu perfil')).toBeTruthy();
 });
 
 it('keeps the edit form hidden until Editar perfil is pressed', () => {
@@ -74,4 +74,16 @@ it('guides people without interests and opens the shortcuts', () => {
   );
   expect(onOpenPreferences).toHaveBeenCalled();
   expect(onOpenHistory).toHaveBeenCalled();
+});
+
+it('shows the management shortcut only for managers', () => {
+  const onOpenAdmin = jest.fn();
+  setup({ onOpenAdmin });
+  fireEvent.press(screen.getByRole('button', { name: 'Painel de gestão' }));
+  expect(onOpenAdmin).toHaveBeenCalledTimes(1);
+});
+
+it('hides the management shortcut for participants', () => {
+  setup();
+  expect(screen.queryByRole('button', { name: 'Painel de gestão' })).toBeNull();
 });

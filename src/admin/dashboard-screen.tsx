@@ -1,6 +1,7 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
-import type { Dashboard } from './admin';
+import type { Dashboard, ManagedPost } from './admin';
+import { formatScheduled } from './schedule';
 import {
   AdminPage,
   Card,
@@ -9,27 +10,44 @@ import {
   SecondaryButton,
   SectionTitle,
 } from './admin-ui';
-import { colors, radii, shadows, spacing, typography } from '@/shared/theme';
+import {
+  makeStyles,
+  radii,
+  shadows,
+  spacing,
+  typography,
+} from '@/shared/theme';
 import { ErrorState, LoadingState } from '@/shared/presentation';
 import { StatePage } from '@/navigation';
 
 export function DashboardScreen({
   dashboard,
   error,
+  onCreateAnnouncement,
   onCreatePost,
   onCreateWorkshop,
+  onManageTaxonomies,
+  onOpenPosts,
   onOpenWorkshops,
   onRetry,
   status,
+  upcomingPosts = [],
 }: Readonly<{
   dashboard?: Dashboard;
   error?: unknown;
+  onCreateAnnouncement(): void;
   onCreatePost(): void;
   onCreateWorkshop(): void;
+  /** Only for ADMIN accounts. */
+  onManageTaxonomies?: () => void;
+  onOpenPosts(): void;
   onOpenWorkshops(): void;
   onRetry(): void;
   status: 'loading' | 'error' | 'success';
+  /** Scheduled posts, soonest first. Optional: the dashboard works without them. */
+  upcomingPosts?: readonly ManagedPost[];
 }>) {
+  const styles = useStyles();
   const frame = (node: React.ReactNode) => (
     <StatePage
       eyebrow="ARWEG · Administrativo"
@@ -69,10 +87,40 @@ export function DashboardScreen({
           value={dashboard.waitingListRegistrations}
         />
       </View>
+      {upcomingPosts.length > 0 ? (
+        <Card>
+          <SectionTitle>Próximas publicações</SectionTitle>
+          {upcomingPosts.map((post) => (
+            <View key={post.id} style={styles.upcoming}>
+              <Text style={styles.upcomingTitle}>{post.title}</Text>
+              {post.scheduledAt ? (
+                <Text style={styles.upcomingMeta}>
+                  Sai no feed em {formatScheduled(post.scheduledAt)}
+                </Text>
+              ) : null}
+            </View>
+          ))}
+          <SecondaryButton
+            label="Ver todas as publicações"
+            onPress={onOpenPosts}
+          />
+        </Card>
+      ) : null}
       <Card>
         <SectionTitle>Ações rápidas</SectionTitle>
         <PrimaryButton label="+ Criar workshop" onPress={onCreateWorkshop} />
         <SecondaryButton label="+ Criar post" onPress={onCreatePost} />
+        <SecondaryButton label="Meus posts" onPress={onOpenPosts} />
+        <SecondaryButton
+          label="Enviar comunicado"
+          onPress={onCreateAnnouncement}
+        />
+        {onManageTaxonomies ? (
+          <SecondaryButton
+            label="Categorias e temas"
+            onPress={onManageTaxonomies}
+          />
+        ) : null}
         <SecondaryButton
           label={`Meus workshops (${dashboard.workshops})`}
           onPress={onOpenWorkshops}
@@ -83,6 +131,7 @@ export function DashboardScreen({
 }
 
 function Tile({ label, value }: Readonly<{ label: string; value: number }>) {
+  const styles = useStyles();
   return (
     <View
       accessible
@@ -95,8 +144,19 @@ function Tile({ label, value }: Readonly<{ label: string; value: number }>) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  upcoming: { gap: spacing.xxs, paddingVertical: spacing.xs },
+  upcomingTitle: {
+    color: colors.text,
+    fontFamily: typography.familyBold,
+    fontWeight: typography.bold,
+  },
+  upcomingMeta: {
+    color: colors.textMuted,
+    fontFamily: typography.familyRegular,
+    fontSize: typography.bodySmall,
+  },
   tile: {
     ...shadows.card,
     backgroundColor: colors.surface,
@@ -106,7 +166,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   tileValue: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyBold,
     fontSize: typography.title,
     fontWeight: typography.bold,
@@ -117,4 +177,4 @@ const styles = StyleSheet.create({
     fontSize: typography.caption,
     marginTop: spacing.xxs,
   },
-});
+}));

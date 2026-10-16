@@ -4,7 +4,6 @@ import {
   Pressable,
   RefreshControl,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -19,12 +18,13 @@ import {
   LoadingState,
 } from '@/shared/presentation';
 import {
-  colors,
+  makeStyles,
   radii,
   shadows,
   sizes,
   spacing,
   typography,
+  useTheme,
 } from '@/shared/theme';
 import type {
   WorkshopFilterOption,
@@ -72,6 +72,8 @@ export function WorkshopListScreen({
   loadingMore = false,
   loadMoreError = false,
 }: Props) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const [filtersVisible, setFiltersVisible] = useState(false);
   const frame = (node: React.ReactNode) => (
     <StatePage kind="menu" eyebrow={'Descubra e aprenda'} title={'Workshops'}>
@@ -123,7 +125,7 @@ export function WorkshopListScreen({
             <ActivityIndicator
               accessibilityLabel="Aplicando filtros"
               accessibilityRole="progressbar"
-              color={colors.brand}
+              color={colors.brandText}
               style={styles.filtering}
             />
           ) : null}
@@ -145,7 +147,7 @@ export function WorkshopListScreen({
         loadingMore ? (
           <ActivityIndicator
             accessibilityLabel="Carregando mais workshops"
-            color={colors.brand}
+            color={colors.brandText}
             style={styles.pagination}
           />
         ) : loadMoreError ? (
@@ -201,6 +203,7 @@ function WorkshopFilterBar({
   onChange(filters: WorkshopFilters): void;
   options: WorkshopFilterOptions;
 }>) {
+  const styles = useStyles();
   return (
     <View accessibilityLabel="Filtros de workshops" style={styles.filters}>
       <FilterGroup
@@ -241,6 +244,7 @@ function FilterGroup({
   options: readonly WorkshopFilterOption[];
   selectedId?: string;
 }>) {
+  const styles = useStyles();
   return (
     <View style={styles.filterGroup}>
       <Text style={styles.filterLabel}>{label}</Text>
@@ -272,6 +276,7 @@ function FilterChip({
   onPress,
   selected,
 }: Readonly<{ label: string; onPress(): void; selected: boolean }>) {
+  const styles = useStyles();
   return (
     <Pressable
       accessibilityLabel={`Filtrar por ${label}`}
@@ -292,7 +297,7 @@ function FilterChip({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   page: {
     backgroundColor: colors.background,
   },
@@ -368,8 +373,8 @@ const styles = StyleSheet.create({
     marginVertical: spacing.md,
   },
   paginationRetryText: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyMedium,
     fontWeight: typography.medium,
   },
-});
+}));

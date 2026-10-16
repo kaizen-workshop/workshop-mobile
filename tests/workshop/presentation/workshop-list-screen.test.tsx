@@ -61,7 +61,7 @@ it('preserves workshop order and tolerates optional fields', () => {
     'Qualidade na prática',
   ]);
   expect(screen.queryByText('undefined')).toBeNull();
-  expect(screen.getByRole('button', { name: 'Abrir menu' })).toBeTruthy();
+  expect(screen.queryByRole('button', { name: 'Abrir menu' })).toBeNull();
 });
 
 it('opens workshops and connects pull-to-refresh', () => {

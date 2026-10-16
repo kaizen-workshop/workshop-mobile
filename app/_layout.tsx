@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import {
   Inter_400Regular,
@@ -5,7 +6,8 @@ import {
   Inter_700Bold,
   useFonts,
 } from '@expo-google-fonts/inter';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 
@@ -19,7 +21,13 @@ import {
   createPushDeviceStorage,
   unregisterPushDevice,
 } from '@/notification/data';
-import { colors } from '@/shared/theme';
+import {
+  installWebFocusStyle,
+  installWebViewportFit,
+  makeStyles,
+  useTheme,
+  ThemeProvider,
+} from '@/shared/theme';
 
 const variant = getAppVariant();
 const authMode =
@@ -45,6 +53,8 @@ const cleanupPushDevice = () =>
   unregisterPushDevice(notificationGateway, pushDeviceStorage);
 
 function SessionRoutes() {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const { isRestoring, state } = useAuth();
 
   if (isRestoring) {
@@ -54,7 +64,7 @@ function SessionRoutes() {
         accessibilityRole="progressbar"
         style={styles.loading}
       >
-        <ActivityIndicator color={colors.brand} size="large" />
+        <ActivityIndicator color={colors.brandText} size="large" />
       </View>
     );
   }
@@ -78,7 +88,13 @@ function SessionRoutes() {
   );
 }
 
-export default function RootLayout() {
+function RootContent() {
+  const styles = useStyles();
+  const { colors } = useTheme();
+  useEffect(() => {
+    installWebFocusStyle();
+    installWebViewportFit();
+  }, []);
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -92,31 +108,44 @@ export default function RootLayout() {
         accessibilityRole="progressbar"
         style={styles.loading}
       >
-        <ActivityIndicator color={colors.brand} size="large" />
+        <ActivityIndicator color={colors.brandText} size="large" />
       </View>
     );
   }
 
   return (
-    <SafeAreaProvider>
-      <StatusBar style="light" />
-      <SafeAreaView
-        edges={['top', 'right', 'bottom', 'left']}
-        style={styles.safe}
-      >
-        <AuthProvider
-          beforeLogout={cleanupPushDevice}
-          gateway={gateway}
-          tokenStorage={tokenStorage}
+    <GestureHandlerRootView style={styles.root}>
+      <SafeAreaProvider>
+        <StatusBar style="light" />
+        <SafeAreaView
+          edges={['top', 'right', 'bottom', 'left']}
+          style={styles.safe}
         >
-          <SessionRoutes />
-        </AuthProvider>
-      </SafeAreaView>
-    </SafeAreaProvider>
+          <AuthProvider
+            beforeLogout={cleanupPushDevice}
+            gateway={gateway}
+            tokenStorage={tokenStorage}
+          >
+            <SessionRoutes />
+          </AuthProvider>
+        </SafeAreaView>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 
-const styles = StyleSheet.create({
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <RootContent />
+    </ThemeProvider>
+  );
+}
+
+const useStyles = makeStyles((colors) => ({
+  root: {
+    flex: 1,
+  },
   safe: {
     backgroundColor: colors.brand,
     flex: 1,
@@ -127,4 +156,4 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
-});
+}));

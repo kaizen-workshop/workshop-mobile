@@ -9,4 +9,6 @@ export type WorkshopSummary = Readonly<{
   modality?: string;
   priceLabel?: string;
   registrationLabel?: string;
+  /** False when the registration period has not started or already ended. */
+  registrationOpen?: boolean;
 }>;

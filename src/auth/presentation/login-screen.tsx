@@ -6,7 +6,6 @@ import {
   ImageBackground,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   useWindowDimensions,
@@ -14,13 +13,15 @@ import {
 } from 'react-native';
 
 import { AppError, describeError } from '@/core/errors';
+import { useKeyboardVisible } from '@/shared/hooks';
 import {
-  colors,
+  makeStyles,
   radii,
   shadows,
   sizes,
   spacing,
   typography,
+  useTheme,
 } from '@/shared/theme';
 
 type Props = Readonly<{
@@ -34,7 +35,10 @@ export function LoginScreen({
   onForgotPassword,
   onSubmit,
 }: Props) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const { height: viewportHeight } = useWindowDimensions();
+  const keyboardVisible = useKeyboardVisible();
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
   const [visible, setVisible] = useState(false);
@@ -77,24 +81,30 @@ export function LoginScreen({
       <View style={styles.overlay} />
       <ScrollView
         contentContainerStyle={styles.page}
+        automaticallyAdjustKeyboardInsets
+        keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
-          <Image
-            accessibilityLabel="WEG"
-            contentFit="contain"
-            source={require('../../../assets/images/logo-weg.png')}
-            style={styles.logo}
-          />
+          {keyboardVisible ? null : (
+            <Image
+              accessibilityLabel="WEG"
+              contentFit="contain"
+              source={require('../../../assets/images/logo-weg.png')}
+              style={styles.logo}
+            />
+          )}
 
           <View style={styles.card}>
             <View style={styles.heading}>
               <Text accessibilityRole="header" style={styles.title}>
                 Entrar
               </Text>
-              <Text style={styles.subtitle}>
-                Acesse workshops, conteúdos e atividades da sua jornada.
-              </Text>
+              {keyboardVisible ? null : (
+                <Text style={styles.subtitle}>
+                  Acesse workshops, conteúdos e atividades da sua jornada.
+                </Text>
+              )}
             </View>
 
             <Text style={styles.label}>Usuário ou e-mail</Text>
@@ -216,9 +226,11 @@ export function LoginScreen({
             </Pressable>
           </View>
 
-          <Text style={styles.footer}>
-            © 2026 WEG S.A. Todos os direitos reservados.
-          </Text>
+          {keyboardVisible ? null : (
+            <Text style={styles.footer}>
+              © 2026 WEG S.A. Todos os direitos reservados.
+            </Text>
+          )}
         </View>
       </ScrollView>
     </ImageBackground>
@@ -241,7 +253,7 @@ function logDevelopmentError(error: unknown) {
   });
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   background: { flex: 1, width: '100%' },
   overlay: {
     backgroundColor: 'rgba(0, 4, 35, 0.28)',
@@ -283,7 +295,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   title: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyBold,
     fontSize: typography.title,
     fontWeight: typography.bold,
@@ -298,7 +310,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   label: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyBold,
     fontSize: typography.bodySmall,
     fontWeight: typography.medium,
@@ -363,7 +375,7 @@ const styles = StyleSheet.create({
     opacity: 0.65,
   },
   linkText: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyMedium,
     fontSize: typography.bodySmall,
     fontWeight: typography.medium,
@@ -398,4 +410,4 @@ const styles = StyleSheet.create({
     marginTop: spacing.xl,
     opacity: 0.9,
   },
-});
+}));

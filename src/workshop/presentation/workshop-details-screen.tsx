@@ -15,7 +15,6 @@ import {
   ActivityIndicator,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -27,15 +26,17 @@ import { ErrorState, LoadingState } from '@/shared/presentation';
 import type { RegistrationResult } from '@/registration/domain';
 import type { PaymentResult } from '@/payment/domain';
 import {
-  colors,
+  makeStyles,
   radii,
   shadows,
   sizes,
   spacing,
   typography,
+  useTheme,
 } from '@/shared/theme';
 import type { WorkshopAttachment, WorkshopDetails } from '@/workshop/domain';
 import { useWorkshopImageSource } from './use-workshop-image-source';
+import { WorkshopCover } from './workshop-cover';
 
 type Props = Readonly<{
   status: 'loading' | 'error' | 'success';
@@ -78,10 +79,12 @@ function Detail({
   label: string;
   value?: string;
 }>) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   if (!value) return null;
   return (
     <View style={styles.detail}>
-      <Icon color={colors.brand} size={21} />
+      <Icon color={colors.brandText} size={21} />
       <View style={styles.detailContent}>
         <Text style={styles.detailLabel}>{label}</Text>
         <Text style={styles.detailValue}>{value}</Text>
@@ -121,6 +124,8 @@ export function WorkshopDetailsScreen({
   error,
   workshop,
 }: Props) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const [imageStatus, setImageStatus] = useState<
     'loading' | 'loaded' | 'error'
   >('loading');
@@ -156,18 +161,26 @@ export function WorkshopDetailsScreen({
         </Text>
       ) : null}
       <View style={styles.imageContainer}>
-        <Image
-          accessibilityLabel={`Imagem do workshop ${workshop.title}`}
-          contentFit="cover"
-          onError={() => {
-            setImageStatus('error');
-            refreshImage();
-          }}
-          onLoad={() => setImageStatus('loaded')}
-          source={imageSource}
-          style={styles.image}
-        />
-        {imageStatus !== 'loaded' ? (
+        {workshop.imageUrl ? (
+          <Image
+            accessibilityLabel={`Imagem do workshop ${workshop.title}`}
+            contentFit="cover"
+            onError={() => {
+              setImageStatus('error');
+              refreshImage();
+            }}
+            onLoad={() => setImageStatus('loaded')}
+            source={imageSource}
+            style={styles.image}
+          />
+        ) : (
+          <WorkshopCover
+            style={styles.image}
+            theme={workshop.theme}
+            title={workshop.title}
+          />
+        )}
+        {workshop.imageUrl && imageStatus !== 'loaded' ? (
           <Text accessibilityLiveRegion="polite" style={styles.imageStatus}>
             {imageStatus === 'error'
               ? 'Imagem indisponível'
@@ -219,6 +232,24 @@ export function WorkshopDetailsScreen({
           <Text style={styles.registrationMessage}>
             {registrationMessage(registration)}
           </Text>
+          {registration.status === 'WAITING_LIST' &&
+          registration.waitingListPosition ? (
+            <View
+              accessible
+              accessibilityLabel={`Posição ${registration.waitingListPosition} na lista de espera`}
+              style={styles.positionCard}
+            >
+              <Text style={styles.positionNumber}>
+                {String(registration.waitingListPosition).padStart(2, '0')}
+              </Text>
+              <Text style={styles.positionLabel}>Sua posição na lista</Text>
+              <Text style={styles.positionHint}>
+                {registration.waitingListPosition === 1
+                  ? 'Você é a próxima pessoa da fila.'
+                  : `${registration.waitingListPosition - 1} pessoas à sua frente.`}
+              </Text>
+            </View>
+          ) : null}
           {cancellationError ? (
             <Text accessibilityRole="alert" style={styles.registrationError}>
               {cancellationError}
@@ -332,6 +363,16 @@ export function WorkshopDetailsScreen({
               workshop.priceLabel,
             )}
           </Text>
+          {payment.method === 'PIX' &&
+          payment.reference &&
+          shownPaymentStatus(payment, registration) === 'PENDING' ? (
+            <View style={styles.pixCode}>
+              <Text style={styles.pixLabel}>Código PIX (simulado)</Text>
+              <Text selectable style={styles.pixValue}>
+                {payment.reference}
+              </Text>
+            </View>
+          ) : null}
           {shownPaymentStatus(payment, registration) === 'PENDING' &&
           onRefreshRegistration ? (
             <Pressable
@@ -347,7 +388,7 @@ export function WorkshopDetailsScreen({
               {refreshingRegistration ? (
                 <ActivityIndicator
                   accessibilityLabel="Atualizando situação"
-                  color={colors.brand}
+                  color={colors.brandText}
                 />
               ) : (
                 <Text style={styles.refreshButtonText}>Atualizar situação</Text>
@@ -420,7 +461,7 @@ export function WorkshopDetailsScreen({
                 {opening ? (
                   <ActivityIndicator
                     accessibilityLabel={`Abrindo anexo ${attachment.name}`}
-                    color={colors.brand}
+                    color={colors.brandText}
                   />
                 ) : null}
               </View>
@@ -476,7 +517,7 @@ export function WorkshopDetailsScreen({
           {discussionStatus === 'loading' ? (
             <ActivityIndicator
               accessibilityLabel="Carregando comentários"
-              color={colors.brand}
+              color={colors.brandText}
             />
           ) : null}
           {discussionStatus === 'unavailable' ? (
@@ -621,7 +662,7 @@ function shownPaymentStatus(
 
 function paymentMessage(status: PaymentResult['status'], priceLabel?: string) {
   if (status === 'PENDING')
-    return `${priceLabel ? `Pagamento de ${priceLabel} registrado. ` : 'Pagamento registrado. '}Sua vaga está reservada enquanto aguardamos a confirmação. Você receberá um aviso quando for confirmado; toque em "Atualizar situação" para conferir agora.`;
+    return `${priceLabel ? `Pagamento de ${priceLabel} registrado. ` : 'Pagamento registrado. '}Sua vaga está reservada, aguardando a confirmação do administrador (o pagamento é simulado). Você receberá um aviso quando for confirmado; toque em "Atualizar situação" para conferir agora.`;
   if (status === 'PAID')
     return 'Pagamento confirmado. Sua inscrição está garantida.';
   if (status === 'DECLINED')
@@ -644,8 +685,49 @@ function errorText(error: boolean | string, fallback: string) {
   return typeof error === 'string' ? error : fallback;
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
+  positionCard: {
+    alignItems: 'center',
+    backgroundColor: colors.brandSubtle,
+    borderRadius: radii.xl,
+    marginTop: spacing.sm,
+    padding: spacing.md,
+  },
+  positionNumber: {
+    color: colors.accent,
+    fontFamily: typography.familyBold,
+    fontSize: 44,
+    fontWeight: typography.bold,
+  },
+  positionLabel: {
+    color: colors.text,
+    fontFamily: typography.familyMedium,
+    fontWeight: typography.medium,
+  },
+  positionHint: {
+    color: colors.textMuted,
+    fontFamily: typography.familyRegular,
+    fontSize: typography.bodySmall,
+    marginTop: spacing.xxs,
+  },
   cancelConfirm: { gap: spacing.sm },
+  pixCode: {
+    backgroundColor: colors.brandSubtle,
+    borderRadius: radii.md,
+    marginTop: spacing.sm,
+    padding: spacing.md,
+  },
+  pixLabel: {
+    color: colors.textMuted,
+    fontFamily: typography.familyMedium,
+    fontSize: typography.caption,
+    textTransform: 'uppercase',
+  },
+  pixValue: {
+    color: colors.text,
+    fontFamily: typography.familyMedium,
+    marginTop: spacing.xxs,
+  },
   refreshButton: {
     alignItems: 'center',
     borderColor: colors.brand,
@@ -656,7 +738,7 @@ const styles = StyleSheet.create({
     minHeight: sizes.touchTarget,
   },
   refreshButtonText: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyBold,
     fontWeight: typography.bold,
   },
@@ -761,7 +843,7 @@ const styles = StyleSheet.create({
     width: 6,
   },
   themeText: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyBold,
     fontSize: typography.caption,
     textTransform: 'uppercase',
@@ -793,7 +875,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   attachmentText: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyMedium,
     fontWeight: typography.medium,
   },
@@ -880,7 +962,7 @@ const styles = StyleSheet.create({
     minHeight: sizes.touchTarget,
   },
   evaluationButtonText: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyBold,
   },
   commentsSection: {
@@ -905,7 +987,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: spacing.md,
   },
-  retryText: { color: colors.brand, fontFamily: typography.familyBold },
+  retryText: { color: colors.brandText, fontFamily: typography.familyBold },
   commentCard: {
     backgroundColor: colors.surface,
     borderColor: colors.surface3,
@@ -915,7 +997,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   commentAuthor: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyBold,
     fontSize: typography.bodySmall,
   },
@@ -952,4 +1034,4 @@ const styles = StyleSheet.create({
     minHeight: sizes.touchTarget,
   },
   buttonDisabled: { opacity: 0.55 },
-});
+}));

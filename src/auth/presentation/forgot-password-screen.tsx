@@ -5,7 +5,6 @@ import {
   ImageBackground,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   useWindowDimensions,
@@ -13,8 +12,16 @@ import {
 } from 'react-native';
 
 import { describeError } from '@/core/errors';
+import { useKeyboardVisible } from '@/shared/hooks';
 import { maskEmail } from './mask-email';
-import { colors, radii, sizes, spacing, typography } from '@/shared/theme';
+import {
+  makeStyles,
+  radii,
+  sizes,
+  spacing,
+  typography,
+  useTheme,
+} from '@/shared/theme';
 
 export function ForgotPasswordScreen({
   onBack,
@@ -25,6 +32,9 @@ export function ForgotPasswordScreen({
   onContinue?: () => void;
   onSubmit(login: string): Promise<void> | void;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
+  const keyboardVisible = useKeyboardVisible();
   const [sentTo, setSentTo] = useState<string | null>(null);
   const { height: viewportHeight } = useWindowDimensions();
   const [login, setLogin] = useState('');
@@ -57,6 +67,8 @@ export function ForgotPasswordScreen({
       <View style={styles.overlay} />
       <ScrollView
         contentContainerStyle={styles.page}
+        automaticallyAdjustKeyboardInsets
+        keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
       >
         {onBack ? (
@@ -72,7 +84,7 @@ export function ForgotPasswordScreen({
         {sentTo ? (
           <View style={styles.card}>
             <View style={styles.sentIcon}>
-              <Send color={colors.brand} size={56} strokeWidth={2.2} />
+              <Send color={colors.brandText} size={56} strokeWidth={2.2} />
             </View>
             <Text accessibilityRole="header" style={styles.sentTitle}>
               Enviamos um código para {maskEmail(sentTo)}
@@ -108,10 +120,12 @@ export function ForgotPasswordScreen({
             <Text accessibilityRole="header" style={styles.title}>
               Informe o Email
             </Text>
-            <Text style={styles.description}>
-              Informe o e-mail vinculado à sua conta para receber as instruções
-              de recuperação.
-            </Text>
+            {keyboardVisible ? null : (
+              <Text style={styles.description}>
+                Informe o e-mail vinculado à sua conta para receber as
+                instruções de recuperação.
+              </Text>
+            )}
             <Text style={styles.label}>Usuário / Email</Text>
             <View style={styles.field}>
               <Mail color={colors.textMuted} size={20} />
@@ -151,18 +165,20 @@ export function ForgotPasswordScreen({
             </Pressable>
           </View>
         )}
-        <Text style={styles.footer}>
-          © 2026 WEG S.A. Todos os direitos reservados.
-        </Text>
+        {keyboardVisible ? null : (
+          <Text style={styles.footer}>
+            © 2026 WEG S.A. Todos os direitos reservados.
+          </Text>
+        )}
       </ScrollView>
     </ImageBackground>
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   sentIcon: { alignItems: 'center', marginTop: spacing.md },
   sentTitle: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyBold,
     fontSize: typography.body,
     fontWeight: typography.bold,
@@ -189,7 +205,7 @@ const styles = StyleSheet.create({
     minHeight: sizes.touchTarget,
   },
   linkText: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyMedium,
     fontWeight: typography.medium,
     textDecorationLine: 'underline',
@@ -288,4 +304,4 @@ const styles = StyleSheet.create({
     fontSize: typography.caption,
     marginTop: spacing.xxl,
   },
-});
+}));

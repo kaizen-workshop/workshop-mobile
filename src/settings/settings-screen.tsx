@@ -13,7 +13,6 @@ import {
   ActivityIndicator,
   Pressable,
   ScrollView,
-  StyleSheet,
   Switch,
   Text,
   View,
@@ -21,13 +20,21 @@ import {
 
 import { BackHeader } from '@/navigation';
 import {
-  colors,
+  makeStyles,
   radii,
   shadows,
   sizes,
   spacing,
+  type ThemePreference,
   typography,
+  useTheme,
 } from '@/shared/theme';
+
+const themeOptions: readonly { value: ThemePreference; label: string }[] = [
+  { value: 'system', label: 'Sistema' },
+  { value: 'light', label: 'Claro' },
+  { value: 'dark', label: 'Escuro' },
+];
 
 const fallback = '/(authenticated)/(tabs)/profile';
 
@@ -44,6 +51,8 @@ type Props = Readonly<{
 }>;
 
 export function SettingsScreen(props: Props) {
+  const styles = useStyles();
+  const { colors, preference, setPreference } = useTheme();
   const [showPrivacy, setShowPrivacy] = useState(false);
 
   return (
@@ -74,7 +83,7 @@ export function SettingsScreen(props: Props) {
             {props.pushBusy ? (
               <ActivityIndicator
                 accessibilityLabel="Atualizando notificações push"
-                color={colors.brand}
+                color={colors.brandText}
               />
             ) : (
               <Switch
@@ -97,6 +106,37 @@ export function SettingsScreen(props: Props) {
             last
             onPress={props.onOpenPreferences}
           />
+        </Section>
+
+        <Section title="Aparência">
+          <View accessibilityRole="radiogroup" style={styles.themeOptions}>
+            {themeOptions.map((option) => {
+              const selected = preference === option.value;
+              return (
+                <Pressable
+                  accessibilityLabel={`Tema ${option.label}`}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected }}
+                  key={option.value}
+                  onPress={() => setPreference(option.value)}
+                  style={({ pressed }) => [
+                    styles.themeOption,
+                    selected && styles.themeOptionSelected,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.themeOptionText,
+                      selected && styles.themeOptionTextSelected,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
         </Section>
 
         <Section title="Aplicativo">
@@ -132,6 +172,7 @@ function Section({
   children,
   title,
 }: Readonly<{ children: React.ReactNode; title: string }>) {
+  const styles = useStyles();
   return (
     <View style={styles.section}>
       <Text accessibilityRole="header" style={styles.sectionTitle}>
@@ -155,6 +196,8 @@ function Row({
   last?: boolean;
   onPress(): void;
 }>) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <Pressable
       accessibilityLabel={label}
@@ -174,7 +217,34 @@ function Row({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
+  themeOptions: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    padding: spacing.md,
+  },
+  themeOption: {
+    alignItems: 'center',
+    backgroundColor: colors.surface2,
+    borderColor: colors.border,
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: sizes.touchTarget,
+  },
+  themeOptionSelected: {
+    backgroundColor: colors.brand,
+    borderColor: colors.brand,
+  },
+  themeOptionText: {
+    color: colors.text,
+    fontFamily: typography.familyMedium,
+    fontSize: typography.bodySmall,
+  },
+  themeOptionTextSelected: {
+    color: colors.onBrand,
+  },
   page: {
     backgroundColor: colors.background,
     flexGrow: 1,
@@ -248,4 +318,4 @@ const styles = StyleSheet.create({
     fontSize: typography.body,
     fontWeight: typography.bold,
   },
-});
+}));

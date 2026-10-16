@@ -37,7 +37,7 @@ export default function NewPostRoute() {
           ? 'Post publicado. Ele já aparece no feed.'
           : 'Rascunho salvo.',
       });
-      setTimeout(() => router.replace(adminHref.home), 900);
+      setTimeout(() => router.replace(adminHref.posts), 900);
     } catch (cause) {
       setFeedback({
         tone: 'danger',
@@ -57,7 +57,7 @@ export default function NewPostRoute() {
       feedback={feedback}
       onCancel={() => {
         if (router.canGoBack()) router.back();
-        else router.replace(adminHref.home);
+        else router.replace(adminHref.posts);
       }}
       onSave={(values, publish) => void save(values, publish)}
     />

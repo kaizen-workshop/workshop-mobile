@@ -13,23 +13,19 @@ import {
   ArrowLeft,
 } from 'lucide-react-native';
 import { useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { canManage, useRole } from '@/auth/session';
+import { useKeyboardVisible } from '@/shared/hooks';
 import {
-  colors,
+  makeStyles,
   radii,
   shadows,
   sizes,
   spacing,
   typography,
+  useTheme,
 } from '@/shared/theme';
 
 const destinations = [
@@ -44,7 +40,7 @@ const destinations = [
     href: '/(authenticated)/calendar',
     Icon: CalendarDays,
   },
-  { label: 'Grupos', href: '/(authenticated)/groups', Icon: Users },
+  { label: 'Conversas', href: '/(authenticated)/groups', Icon: Users },
   {
     label: 'Avisos',
     href: '/(authenticated)/(tabs)/notifications',
@@ -58,11 +54,63 @@ export function AppHeader({
   title,
   eyebrow,
   action,
+  compact = false,
+  showBack = false,
 }: Readonly<{
   title: string;
   eyebrow?: string;
   action?: React.ReactNode;
+  /** One-line header for when the keyboard takes most of the screen. */
+  compact?: boolean;
+  /** Adds a back arrow, shown only when there is a real previous screen. */
+  showBack?: boolean;
 }>) {
+  const styles = useStyles();
+  const { colors } = useTheme();
+  return (
+    <>
+      <View style={[styles.header, compact && styles.headerCompact]}>
+        {/* The real, fixed button is FloatingMenu; this keeps the title aligned with it. */}
+        <View style={styles.menuSlot} />
+        {showBack && router.canGoBack() ? (
+          <Pressable
+            accessibilityLabel="Voltar"
+            accessibilityRole="link"
+            onPress={() => router.back()}
+            style={({ pressed }) => [
+              styles.backButton,
+              pressed && styles.pressed,
+            ]}
+          >
+            <ArrowLeft color={colors.text} size={23} />
+          </Pressable>
+        ) : null}
+        <View style={styles.heading}>
+          {eyebrow && !compact ? (
+            <Text style={styles.eyebrow}>{eyebrow}</Text>
+          ) : null}
+          <Text
+            accessibilityRole="header"
+            numberOfLines={compact ? 1 : undefined}
+            style={[styles.title, compact && styles.titleCompact]}
+          >
+            {title}
+          </Text>
+        </View>
+        {action ?? <View style={styles.actionPlaceholder} />}
+      </View>
+    </>
+  );
+}
+
+/**
+ * The one menu button of the app. It is fixed on the screen (it does not scroll away with the
+ * content) and opens the drawer. It steps aside while the keyboard is open so it never covers
+ * the field being typed in.
+ */
+export function FloatingMenu() {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const role = useRole();
@@ -77,28 +125,26 @@ export function AppHeader({
       ]
     : destinations;
 
+  const insets = useSafeAreaInsets();
+  const keyboardVisible = useKeyboardVisible();
+
   return (
     <>
-      <View style={styles.header}>
+      {keyboardVisible ? null : (
         <Pressable
           accessibilityLabel="Abrir menu"
           accessibilityRole="button"
           onPress={() => setOpen(true)}
           style={({ pressed }) => [
             styles.menuButton,
+            styles.floatingMenu,
+            { top: insets.top + spacing.md },
             pressed && styles.pressed,
           ]}
         >
           <Menu color={colors.onBrand} size={25} strokeWidth={2.2} />
         </Pressable>
-        <View style={styles.heading}>
-          {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
-          <Text accessibilityRole="header" style={styles.title}>
-            {title}
-          </Text>
-        </View>
-        {action ?? <View style={styles.actionPlaceholder} />}
-      </View>
+      )}
 
       <Modal
         animationType="fade"
@@ -133,7 +179,7 @@ export function AppHeader({
                     key={href}
                     onPress={() => {
                       setOpen(false);
-                      router.replace(href as Href);
+                      router.navigate(href as Href);
                     }}
                     style={({ pressed }) => [
                       styles.destination,
@@ -170,32 +216,23 @@ export function AppHeader({
   );
 }
 
+/**
+ * Header for secondary screens. The menu button stays visible everywhere; the back arrow
+ * appears next to it only when there is a real previous screen to return to.
+ */
 export function BackHeader({
   title,
   eyebrow,
-  fallback = '/(authenticated)/(tabs)/agenda',
-}: Readonly<{ title: string; eyebrow?: string; fallback?: string }>) {
+  compact,
+}: Readonly<{
+  title: string;
+  eyebrow?: string;
+  compact?: boolean;
+  /** Ignored: with the menu always visible no screen needs a fallback destination. */
+  fallback?: string;
+}>) {
   return (
-    <View style={styles.header}>
-      <Pressable
-        accessibilityLabel="Voltar"
-        accessibilityRole="link"
-        onPress={() => {
-          if (router.canGoBack()) router.back();
-          else router.replace(fallback as never);
-        }}
-        style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
-      >
-        <ArrowLeft color={colors.text} size={23} />
-      </Pressable>
-      <View style={styles.heading}>
-        {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
-        <Text accessibilityRole="header" style={styles.title}>
-          {title}
-        </Text>
-      </View>
-      <View style={styles.actionPlaceholder} />
-    </View>
+    <AppHeader compact={compact} eyebrow={eyebrow} showBack title={title} />
   );
 }
 
@@ -216,6 +253,7 @@ export function StatePage({
   kind: 'menu' | 'back';
   title: string;
 }>) {
+  const styles = useStyles();
   return (
     <View style={styles.statePage}>
       <View style={styles.stateHeader}>
@@ -235,7 +273,7 @@ function routeSegment(href: string) {
   return parts.at(-1) ?? href;
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   statePage: { flex: 1 },
   stateHeader: {
     alignSelf: 'center',
@@ -250,6 +288,15 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginBottom: spacing.lg,
     minHeight: 56,
+  },
+  menuSlot: { height: 48, width: 48 },
+  headerCompact: { marginBottom: spacing.xs, minHeight: 48 },
+  titleCompact: { fontSize: typography.body, lineHeight: 22 },
+  floatingMenu: {
+    left: spacing.md,
+    position: 'absolute',
+    zIndex: 1000,
+    ...shadows.floating,
   },
   menuButton: {
     alignItems: 'center',
@@ -306,7 +353,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.lg,
   },
   drawerEyebrow: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyBold,
     fontSize: typography.caption,
     fontWeight: typography.bold,
@@ -342,5 +389,8 @@ const styles = StyleSheet.create({
     fontFamily: typography.familyMedium,
     fontSize: typography.body,
   },
-  destinationTextActive: { color: colors.brand, fontWeight: typography.bold },
-});
+  destinationTextActive: {
+    color: colors.brandText,
+    fontWeight: typography.bold,
+  },
+}));

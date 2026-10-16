@@ -1,15 +1,13 @@
 import { useState } from 'react';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
+import {
+  passwordPolicyError,
+  passwordPolicyHint,
+} from '@/auth/domain/password-policy';
 import { describeError } from '@/core/errors';
-import { colors, radii, sizes, spacing, typography } from '@/shared/theme';
+import { useKeyboardVisible } from '@/shared/hooks';
+import { makeStyles, radii, sizes, spacing, typography } from '@/shared/theme';
 
 type Props = Readonly<{
   onSubmit(input: {
@@ -21,6 +19,8 @@ type Props = Readonly<{
 }>;
 
 export function ChangePasswordScreen({ onCancel, onSubmit }: Props) {
+  const styles = useStyles();
+  const keyboardVisible = useKeyboardVisible();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
@@ -31,6 +31,11 @@ export function ChangePasswordScreen({ onCancel, onSubmit }: Props) {
     if (loading) return;
     if (!currentPassword || !newPassword) {
       setError('Preencha a senha atual e a nova senha.');
+      return;
+    }
+    const policyError = passwordPolicyError(newPassword);
+    if (policyError) {
+      setError(policyError);
       return;
     }
     if (newPassword !== confirmation) {
@@ -48,8 +53,7 @@ export function ChangePasswordScreen({ onCancel, onSubmit }: Props) {
     } catch (cause) {
       setError(
         describeError(cause, {
-          bad_request:
-            'A senha atual está incorreta ou a nova senha não atende aos requisitos.',
+          bad_request: 'A senha atual está incorreta.',
         }).message,
       );
     } finally {
@@ -60,17 +64,21 @@ export function ChangePasswordScreen({ onCancel, onSubmit }: Props) {
   return (
     <ScrollView
       contentContainerStyle={styles.page}
+      automaticallyAdjustKeyboardInsets
+      keyboardDismissMode="on-drag"
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.card}>
         <Text accessibilityRole="header" style={styles.title}>
           Crie uma nova senha
         </Text>
-        <Text style={styles.description}>
-          {onCancel
-            ? 'Depois de alterar, você será desconectado e entrará novamente com a nova senha.'
-            : 'Para continuar, substitua a senha temporária da sua conta.'}
-        </Text>
+        {keyboardVisible ? null : (
+          <Text style={styles.description}>
+            {onCancel
+              ? 'Depois de alterar, você será desconectado e entrará novamente com a nova senha.'
+              : 'Para continuar, substitua a senha temporária da sua conta.'}
+          </Text>
+        )}
 
         <Text style={styles.label}>Senha atual</Text>
         <TextInput
@@ -91,6 +99,7 @@ export function ChangePasswordScreen({ onCancel, onSubmit }: Props) {
           style={styles.input}
           value={newPassword}
         />
+        <Text style={styles.hint}>{passwordPolicyHint}</Text>
 
         <Text style={styles.label}>Confirmar nova senha</Text>
         <TextInput
@@ -134,7 +143,7 @@ export function ChangePasswordScreen({ onCancel, onSubmit }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   cancel: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -142,7 +151,7 @@ const styles = StyleSheet.create({
     minHeight: sizes.touchTarget,
   },
   cancelText: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyMedium,
     fontWeight: typography.medium,
   },
@@ -189,8 +198,14 @@ const styles = StyleSheet.create({
     minHeight: sizes.touchTarget,
     paddingHorizontal: spacing.md,
   },
+  hint: {
+    color: colors.textMuted,
+    fontFamily: typography.familyRegular,
+    fontSize: typography.caption,
+    marginTop: spacing.xxs,
+  },
   error: {
-    color: colors.text,
+    color: colors.danger,
     fontFamily: typography.familyRegular,
     marginTop: spacing.sm,
   },
@@ -210,4 +225,4 @@ const styles = StyleSheet.create({
     fontFamily: typography.familyBold,
     fontWeight: typography.bold,
   },
-});
+}));

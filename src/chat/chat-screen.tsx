@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import {
   FlatList,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
-  StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
 import type { ChatMessage } from './message';
 import { BackHeader, StatePage } from '@/navigation';
+import { useKeyboardVisible } from '@/shared/hooks';
 import {
   AppSymbol,
   EmptyState,
@@ -17,12 +19,13 @@ import {
   LoadingState,
 } from '@/shared/presentation';
 import {
-  colors,
+  makeStyles,
   radii,
   shadows,
   sizes,
   spacing,
   typography,
+  useTheme,
 } from '@/shared/theme';
 
 const sendSymbol = {
@@ -64,7 +67,12 @@ export function ChatScreen({
   onSend(content: string): Promise<boolean> | boolean;
   onDelete(message: ChatMessage): void;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
+  const keyboardVisible = useKeyboardVisible();
   const [content, setContent] = useState('');
+  const [inputFocused, setInputFocused] = useState(false);
+  const [confirmingId, setConfirmingId] = useState<string>();
   const frame = (node: React.ReactNode) => (
     <StatePage
       kind="back"
@@ -89,9 +97,13 @@ export function ChatScreen({
       />,
     );
   return (
-    <View style={styles.page}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={styles.page}
+    >
       <View style={styles.header}>
         <BackHeader
+          compact={keyboardVisible}
           eyebrow={active ? 'Grupo ativo' : 'Histórico do grupo'}
           title={title}
         />
@@ -126,13 +138,40 @@ export function ChatScreen({
             {(item.authorId === currentUserId || canModerate) &&
             !item.deletedAt &&
             active ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Excluir mensagem"
-                onPress={() => onDelete(item)}
-              >
-                <Text style={styles.delete}>Excluir</Text>
-              </Pressable>
+              confirmingId === item.id ? (
+                <View style={styles.confirmDelete}>
+                  <Text style={styles.confirmText}>
+                    {item.authorId === currentUserId
+                      ? 'Excluir esta mensagem?'
+                      : 'Excluir a mensagem de outra pessoa?'}
+                  </Text>
+                  <View style={styles.confirmActions}>
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => {
+                        setConfirmingId(undefined);
+                        onDelete(item);
+                      }}
+                    >
+                      <Text style={styles.delete}>Sim, excluir</Text>
+                    </Pressable>
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => setConfirmingId(undefined)}
+                    >
+                      <Text style={styles.keep}>Cancelar</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              ) : (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Excluir mensagem"
+                  onPress={() => setConfirmingId(item.id)}
+                >
+                  <Text style={styles.delete}>Excluir</Text>
+                </Pressable>
+              )
             ) : null}
           </View>
         )}
@@ -159,7 +198,9 @@ export function ChatScreen({
           placeholder={
             canSendMessages ? 'Escreva uma mensagem' : 'Envio indisponível'
           }
-          style={styles.input}
+          onBlur={() => setInputFocused(false)}
+          onFocus={() => setInputFocused(true)}
+          style={[styles.input, inputFocused && styles.inputFocused]}
         />
         <Pressable
           accessibilityRole="button"
@@ -188,7 +229,7 @@ export function ChatScreen({
           <Text style={styles.sendText}>{sending ? '...' : 'Enviar'}</Text>
         </Pressable>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -201,7 +242,7 @@ function formatTime(value: string) {
   }).format(date);
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   page: { backgroundColor: colors.background, flex: 1 },
   header: {
     alignSelf: 'center',
@@ -258,6 +299,14 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   delete: { color: colors.danger, marginTop: spacing.xs },
+  keep: { color: colors.brandText, marginTop: spacing.xs },
+  confirmDelete: { marginTop: spacing.xs },
+  confirmText: {
+    color: colors.text,
+    fontFamily: typography.familyMedium,
+    fontSize: typography.bodySmall,
+  },
+  confirmActions: { flexDirection: 'row', gap: spacing.md },
   composer: {
     ...shadows.card,
     alignItems: 'center',
@@ -270,19 +319,23 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radii.lg,
+    borderColor: colors.surface3,
+    borderRadius: radii.xxl,
     borderWidth: 1,
     color: colors.text,
     flex: 1,
+    fontFamily: typography.familyRegular,
+    fontSize: typography.body,
     minHeight: sizes.touchTarget,
     maxHeight: 120,
+    outlineWidth: 0,
     paddingHorizontal: spacing.md,
   },
+  inputFocused: { borderColor: colors.brand },
   send: {
     alignItems: 'center',
     backgroundColor: colors.brand,
-    borderRadius: radii.lg,
+    borderRadius: radii.full,
     flexDirection: 'row',
     gap: spacing.xxs,
     justifyContent: 'center',
@@ -292,4 +345,4 @@ const styles = StyleSheet.create({
   sendPressed: { backgroundColor: colors.brandPressed },
   sendDisabled: { opacity: 0.55 },
   sendText: { color: colors.onBrand, fontFamily: typography.familyBold },
-});
+}));

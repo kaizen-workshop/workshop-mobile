@@ -151,3 +151,19 @@ it('never shows a raw ISO timestamp as post context', () => {
   expect(screen.queryByText(/T10:43/)).toBeNull();
   expect(screen.getByText(/Publicado em/)).toBeTruthy();
 });
+
+it('offers an explicit comments button on posts', () => {
+  const onItemPress = jest.fn();
+  render(
+    <FeedScreen
+      {...baseProps}
+      items={[{ id: 'post-3', kind: 'post' as const, title: 'Dica' }]}
+      onItemPress={onItemPress}
+      onToggleLike={jest.fn()}
+    />,
+  );
+  fireEvent.press(
+    screen.getByRole('button', { name: 'Ver comentários do post' }),
+  );
+  expect(onItemPress).toHaveBeenCalledTimes(1);
+});
