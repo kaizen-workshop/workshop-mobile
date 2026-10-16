@@ -1,12 +1,13 @@
 import { Tabs } from 'expo-router';
 
-import { colors } from '@/shared/theme';
+import { useTheme } from '@/shared/theme';
 
 /**
  * Navigation is the fixed hamburger menu (FloatingMenu, mounted by the authenticated layout),
  * so the tab bar itself stays hidden; Tabs only keeps these screens as siblings.
  */
 export default function MainTabsLayout() {
+  const { colors } = useTheme();
   return (
     <Tabs
       screenOptions={{

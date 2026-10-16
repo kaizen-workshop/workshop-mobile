@@ -14,24 +14,18 @@ import {
 } from 'lucide-react-native';
 import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { canManage, useRole } from '@/auth/session';
 import { useKeyboardVisible } from '@/shared/hooks';
 import {
-  colors,
+  makeStyles,
   radii,
   shadows,
   sizes,
   spacing,
   typography,
+  useTheme,
 } from '@/shared/theme';
 
 const destinations = [
@@ -71,6 +65,8 @@ export function AppHeader({
   /** Adds a back arrow, shown only when there is a real previous screen. */
   showBack?: boolean;
 }>) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <>
       <View style={[styles.header, compact && styles.headerCompact]}>
@@ -113,6 +109,8 @@ export function AppHeader({
  * the field being typed in.
  */
 export function FloatingMenu() {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const role = useRole();
@@ -255,6 +253,7 @@ export function StatePage({
   kind: 'menu' | 'back';
   title: string;
 }>) {
+  const styles = useStyles();
   return (
     <View style={styles.statePage}>
       <View style={styles.stateHeader}>
@@ -274,7 +273,7 @@ function routeSegment(href: string) {
   return parts.at(-1) ?? href;
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   statePage: { flex: 1 },
   stateHeader: {
     alignSelf: 'center',
@@ -354,7 +353,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.lg,
   },
   drawerEyebrow: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyBold,
     fontSize: typography.caption,
     fontWeight: typography.bold,
@@ -390,5 +389,8 @@ const styles = StyleSheet.create({
     fontFamily: typography.familyMedium,
     fontSize: typography.body,
   },
-  destinationTextActive: { color: colors.brand, fontWeight: typography.bold },
-});
+  destinationTextActive: {
+    color: colors.brandText,
+    fontWeight: typography.bold,
+  },
+}));

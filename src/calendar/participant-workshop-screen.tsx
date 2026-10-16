@@ -1,12 +1,5 @@
 import { CalendarDays, X } from 'lucide-react-native';
-import {
-  FlatList,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { FlatList, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { monthHeading } from './month-calendar';
 import type {
@@ -17,12 +10,14 @@ import type {
 import { BackHeader, StatePage } from '@/navigation';
 import { EmptyState, ErrorState, LoadingState } from '@/shared/presentation';
 import {
-  colors,
+  makeStyles,
   radii,
   shadows,
   sizes,
   spacing,
+  type ColorPalette,
   typography,
+  useTheme,
 } from '@/shared/theme';
 
 const fallback = '/(authenticated)/(tabs)/profile';
@@ -36,10 +31,12 @@ const historyFilters: readonly { value: HistoryFilter; label: string }[] = [
   { value: 'WAITING_LIST', label: 'Lista de espera' },
 ];
 
-const statusChips: Record<
+const getStatusChips = (
+  colors: ColorPalette,
+): Record<
   ParticipantWorkshopStatus,
   { label: string; background: string; color: string }
-> = {
+> => ({
   COMPLETED: {
     label: 'Concluído',
     background: colors.positiveSoft,
@@ -65,7 +62,7 @@ const statusChips: Record<
     background: colors.brandSubtle,
     color: colors.accent,
   },
-};
+});
 
 export function ParticipantWorkshopScreen({
   emptyMessage,
@@ -92,6 +89,8 @@ export function ParticipantWorkshopScreen({
   selectedFilter: HistoryFilter;
   onSelectFilter(filter: HistoryFilter): void;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const frame = (node: React.ReactNode) => (
     <StatePage fallback={fallback} kind="back" title="Histórico de workshops">
       {node}
@@ -188,7 +187,7 @@ export function ParticipantWorkshopScreen({
           const showHeading =
             index === 0 || monthHeading(items[index - 1].startDate) !== heading;
           const chip = item.historyStatus
-            ? statusChips[item.historyStatus]
+            ? getStatusChips(colors)[item.historyStatus]
             : undefined;
           const Icon = item.historyStatus === 'CANCELLED' ? X : CalendarDays;
           return (
@@ -248,7 +247,7 @@ function formatWhen(item: ParticipantWorkshop) {
   return `${date} · ${hours}${minutes === '00' ? 'h' : `h${minutes}`}`;
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   page: { backgroundColor: colors.background, flex: 1 },
   list: {
     alignSelf: 'center',
@@ -368,4 +367,4 @@ const styles = StyleSheet.create({
     fontSize: typography.body,
     fontWeight: typography.bold,
   },
-});
+}));

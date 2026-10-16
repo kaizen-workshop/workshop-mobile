@@ -1,12 +1,13 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
-import { colors, radii, spacing, typography } from '@/shared/theme';
+import { makeStyles, radii, spacing, typography } from '@/shared/theme';
 
 export function StatusScreen({
   description,
   label,
   title,
 }: Readonly<{ description: string; label: string; title: string }>) {
+  const styles = useStyles();
   return (
     <View style={styles.page}>
       <Text accessibilityRole="header" style={styles.title}>
@@ -28,7 +29,7 @@ export function StatusScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   page: {
     backgroundColor: colors.background,
     flex: 1,
@@ -68,4 +69,4 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: spacing.md,
   },
-});
+}));

@@ -6,7 +6,6 @@ import {
   Pressable,
   RefreshControl,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -15,7 +14,9 @@ import { Image } from 'expo-image';
 
 import type { FeedCard } from '@/feed/domain';
 import { AppHeader, StatePage } from '@/navigation';
+import { haptic } from '@/shared/haptics';
 import {
+  AnimatedHeart,
   AppSymbol,
   EmptyState,
   ErrorState,
@@ -23,12 +24,13 @@ import {
   LoadingState,
 } from '@/shared/presentation';
 import {
-  colors,
+  makeStyles,
   radii,
   shadows,
   sizes,
   spacing,
   typography,
+  useTheme,
 } from '@/shared/theme';
 
 type Props = Readonly<{
@@ -56,12 +58,6 @@ const kindFilters: readonly { value: KindFilter; label: string }[] = [
 
 const symbols = {
   article: { ios: 'doc.text.fill', android: 'article', web: 'article' },
-  favorite: { ios: 'heart.fill', android: 'favorite', web: 'favorite' },
-  favoriteBorder: {
-    ios: 'heart',
-    android: 'favorite_border',
-    web: 'favorite_border',
-  },
   next: {
     ios: 'chevron.right',
     android: 'chevron_right',
@@ -79,6 +75,8 @@ function FeedItem({
   onPress?: () => void;
   onToggleLike?: () => void;
 }>) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const body = (
     <>
       {item.imageUrl ? (
@@ -93,7 +91,7 @@ function FeedItem({
       <View style={styles.cardHeader}>
         <View style={styles.kindBadge}>
           <AppSymbol
-            color={colors.brand}
+            color={colors.brandText}
             fallback={item.kind === 'workshop' ? 'W' : 'P'}
             name={item.kind === 'workshop' ? symbols.workshop : symbols.article}
             size={16}
@@ -144,18 +142,16 @@ function FeedItem({
             accessibilityRole="button"
             accessibilityState={{ selected: item.likedByMe }}
             hitSlop={6}
-            onPress={onToggleLike}
+            onPress={() => {
+              haptic(item.likedByMe ? 'light' : 'success');
+              onToggleLike();
+            }}
             style={({ pressed }) => [
               styles.likeButton,
               pressed && styles.pressed,
             ]}
           >
-            <AppSymbol
-              color={item.likedByMe ? colors.likeActive : colors.textMuted}
-              fallback={item.likedByMe ? '♥' : '♡'}
-              name={item.likedByMe ? symbols.favorite : symbols.favoriteBorder}
-              size={20}
-            />
+            <AnimatedHeart liked={Boolean(item.likedByMe)} size={20} />
             <Text
               style={[styles.likeText, item.likedByMe && styles.likeTextActive]}
             >
@@ -172,7 +168,7 @@ function FeedItem({
                 pressed && styles.pressed,
               ]}
             >
-              <MessageCircle color={colors.brand} size={18} />
+              <MessageCircle color={colors.brandText} size={18} />
               <Text style={styles.commentText}>Comentários</Text>
             </Pressable>
           ) : null}
@@ -182,7 +178,7 @@ function FeedItem({
           <View style={styles.openButton}>
             <Text style={styles.openText}>Ver workshop</Text>
             <AppSymbol
-              color={colors.brand}
+              color={colors.brandText}
               fallback="›"
               name={symbols.next}
               size={18}
@@ -208,6 +204,8 @@ export function FeedScreen({
   status,
   error,
 }: Props) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const [query, setQuery] = useState('');
   const [kindFilter, setKindFilter] = useState<KindFilter>('all');
   const visible = useMemo(() => {
@@ -325,7 +323,7 @@ export function FeedScreen({
             accessibilityLabel="Carregando mais itens"
             accessibilityLiveRegion="polite"
             accessibilityRole="progressbar"
-            color={colors.brand}
+            color={colors.brandText}
             style={styles.loadingMore}
           />
         ) : loadMoreError && onLoadMore ? (
@@ -374,7 +372,7 @@ function friendlyContext(value: string) {
   return `Publicado em ${new Intl.DateTimeFormat('pt-BR').format(date)}`;
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   heading: {
     color: colors.text,
     fontFamily: typography.familyBold,
@@ -471,7 +469,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xxs,
   },
   kind: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyBold,
     fontSize: typography.caption,
     fontWeight: typography.bold,
@@ -542,7 +540,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   commentText: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyBold,
     fontSize: typography.bodySmall,
     fontWeight: typography.bold,
@@ -554,7 +552,7 @@ const styles = StyleSheet.create({
     minHeight: sizes.touchTarget,
   },
   openText: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyMedium,
     fontSize: typography.bodySmall,
     fontWeight: typography.medium,
@@ -571,8 +569,8 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
   },
   paginationRetryText: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyMedium,
     fontWeight: typography.medium,
   },
-});
+}));

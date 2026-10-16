@@ -1,9 +1,13 @@
-export const colors = {
+export type ColorPalette = { [Key in keyof typeof lightColors]: string };
+
+export const lightColors = {
   brand: '#002096',
   brandPressed: '#00166E',
   brandSubtle: '#EEF1FF',
   brandSoft: '#C7D0F5',
   brandStrong: '#00124F',
+  /** Brand when used as text or icon colour on a surface (differs from `brand` in dark mode). */
+  brandText: '#002096',
   background: '#F5F6FA',
   surface: '#FFFFFF',
   surface2: '#F2F4F7',
@@ -27,7 +31,41 @@ export const colors = {
   accent: '#3D56D6',
   /** A liked heart is red; contrast 4.9:1 on white. */
   likeActive: '#D92D20',
-} as const;
+};
+
+export const darkColors: ColorPalette = {
+  brand: '#4A63E8',
+  brandPressed: '#3A50CC',
+  brandSubtle: '#1B2547',
+  brandSoft: '#2B3A78',
+  brandStrong: '#B7C3FF',
+  brandText: '#8FA3FF',
+  background: '#0B0F1A',
+  surface: '#151B2B',
+  surface2: '#1C2438',
+  surface3: '#262F47',
+  text: '#EEF1F8',
+  textMuted: '#A3ACC2',
+  border: '#334060',
+  disabled: '#6B7691',
+  placeholder: '#8B95AD',
+  danger: '#FF8A80',
+  dangerStrong: '#FF6B61',
+  dangerSoft: '#4A1D1D',
+  positive: '#4ADE9A',
+  positiveSoft: '#0F3324',
+  warning: '#F5D76E',
+  warningSoft: '#3D3410',
+  info: '#5CD3EE',
+  infoSoft: '#0E3540',
+  offline: '#F5D76E',
+  onBrand: '#FFFFFF',
+  accent: '#8FA3FF',
+  likeActive: '#FF5A4D',
+};
+
+/** Light palette. Static code and tests that are not theme-aware keep using this. */
+export const colors: ColorPalette = lightColors;
 
 export const spacing = {
   xxs: 4,

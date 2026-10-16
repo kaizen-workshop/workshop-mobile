@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { postStatusLabels, type ManagedPost } from './admin';
 import {
@@ -17,19 +17,27 @@ import { SchedulePanel } from './schedule-panel';
 import { formatScheduled } from './schedule';
 import { StatePage } from '@/navigation';
 import { ErrorState, LoadingState } from '@/shared/presentation';
-import { colors, spacing, typography } from '@/shared/theme';
+import {
+  makeStyles,
+  spacing,
+  type ColorPalette,
+  typography,
+  useTheme,
+} from '@/shared/theme';
 
 type Panel =
   | { kind: 'schedule'; post: ManagedPost }
   | { kind: 'archive'; post: ManagedPost }
   | undefined;
 
-const tones: Partial<
+const getTones = (
+  colors: ColorPalette,
+): Partial<
   Record<ManagedPost['status'], { background: string; color: string }>
-> = {
+> => ({
   PUBLISHED: { background: colors.positiveSoft, color: colors.positive },
   DRAFT: { background: colors.warningSoft, color: colors.warning },
-};
+});
 
 export function PostListScreen({
   busyId,
@@ -56,6 +64,8 @@ export function PostListScreen({
   posts: readonly ManagedPost[];
   status: 'loading' | 'error' | 'success';
 }>) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const [panel, setPanel] = useState<Panel>();
 
   if (status !== 'success')
@@ -110,7 +120,7 @@ export function PostListScreen({
         </Card>
       ) : (
         posts.map((post) => {
-          const tone = tones[post.status];
+          const tone = getTones(colors)[post.status];
           const busy = busyId === post.id;
           const confirmingArchive =
             panel?.kind === 'archive' && panel.post.id === post.id;
@@ -192,7 +202,7 @@ export function PostListScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   head: {
     alignItems: 'flex-start',
     flexDirection: 'row',
@@ -224,4 +234,4 @@ const styles = StyleSheet.create({
     fontFamily: typography.familyRegular,
     lineHeight: 22,
   },
-});
+}));

@@ -1,6 +1,6 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
-import { colors, spacing, typography } from '@/shared/theme';
+import { makeStyles, spacing, typography } from '@/shared/theme';
 
 export function PageHeader({
   description,
@@ -11,6 +11,7 @@ export function PageHeader({
   eyebrow?: string;
   title: string;
 }>) {
+  const styles = useStyles();
   return (
     <View style={styles.header}>
       {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
@@ -31,6 +32,7 @@ export function InlineNotice({
   message: string;
   tone?: 'info' | 'warning';
 }>) {
+  const styles = useStyles();
   return (
     <View
       accessibilityRole="alert"
@@ -49,12 +51,12 @@ export function InlineNotice({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   header: {
     marginBottom: spacing.lg,
   },
   eyebrow: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyBold,
     fontSize: typography.caption,
     fontWeight: typography.bold,
@@ -104,4 +106,4 @@ const styles = StyleSheet.create({
     fontSize: typography.bodySmall,
     lineHeight: 20,
   },
-});
+}));

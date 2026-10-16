@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { getEnvironment } from '@/core/config';
 import { createAuthenticatedHttpClient } from '@/core/http';
 import { createTokenStorage } from '@/core/secure-storage';
@@ -13,8 +13,9 @@ import {
 } from '@/navigation';
 import { createApiGroupGateway, type WorkshopGroup } from '@/group';
 import { ErrorState, LoadingState } from '@/shared/presentation';
-import { colors, radii, sizes, spacing, typography } from '@/shared/theme';
+import { makeStyles, radii, sizes, spacing, typography } from '@/shared/theme';
 export default function GroupRoute() {
+  const styles = useStyles();
   const params = useLocalSearchParams<{ id?: string }>();
   const id = params.id ?? getSelectedGroup()?.id ?? '';
   const gateway = useMemo(
@@ -108,7 +109,7 @@ export default function GroupRoute() {
     </View>
   );
 }
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   page: { backgroundColor: colors.background, flex: 1, padding: spacing.lg },
   title: {
     color: colors.text,
@@ -133,4 +134,4 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     minHeight: sizes.touchTarget,
   },
-});
+}));

@@ -6,7 +6,6 @@ import {
   ImageBackground,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   useWindowDimensions,
@@ -16,12 +15,13 @@ import {
 import { AppError, describeError } from '@/core/errors';
 import { useKeyboardVisible } from '@/shared/hooks';
 import {
-  colors,
+  makeStyles,
   radii,
   shadows,
   sizes,
   spacing,
   typography,
+  useTheme,
 } from '@/shared/theme';
 
 type Props = Readonly<{
@@ -35,6 +35,8 @@ export function LoginScreen({
   onForgotPassword,
   onSubmit,
 }: Props) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const { height: viewportHeight } = useWindowDimensions();
   const keyboardVisible = useKeyboardVisible();
   const [login, setLogin] = useState('');
@@ -251,7 +253,7 @@ function logDevelopmentError(error: unknown) {
   });
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   background: { flex: 1, width: '100%' },
   overlay: {
     backgroundColor: 'rgba(0, 4, 35, 0.28)',
@@ -293,7 +295,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   title: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyBold,
     fontSize: typography.title,
     fontWeight: typography.bold,
@@ -308,7 +310,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   label: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyBold,
     fontSize: typography.bodySmall,
     fontWeight: typography.medium,
@@ -373,7 +375,7 @@ const styles = StyleSheet.create({
     opacity: 0.65,
   },
   linkText: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyMedium,
     fontSize: typography.bodySmall,
     fontWeight: typography.medium,
@@ -408,4 +410,4 @@ const styles = StyleSheet.create({
     marginTop: spacing.xl,
     opacity: 0.9,
   },
-});
+}));

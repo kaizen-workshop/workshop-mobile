@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import type { Taxonomy } from './admin';
 import {
@@ -12,7 +12,7 @@ import {
   SecondaryButton,
   SectionTitle,
 } from './admin-ui';
-import { colors, spacing, typography } from '@/shared/theme';
+import { makeStyles, spacing, typography } from '@/shared/theme';
 
 export type TaxonomyKind = 'themes' | 'categories';
 
@@ -76,6 +76,7 @@ function Section({
   onCreate(kind: TaxonomyKind, name: string): Promise<boolean> | boolean;
   onDeactivate(kind: TaxonomyKind, item: Taxonomy): void;
 }>) {
+  const styles = useStyles();
   const [name, setName] = useState('');
   const [error, setError] = useState<string>();
   const [saving, setSaving] = useState(false);
@@ -156,7 +157,7 @@ function Section({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   confirm: { gap: spacing.xs },
   row: {
     alignItems: 'center',
@@ -180,4 +181,4 @@ const styles = StyleSheet.create({
     fontFamily: typography.familyRegular,
     fontSize: typography.bodySmall,
   },
-});
+}));

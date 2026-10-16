@@ -1,10 +1,10 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import type { EvaluationSummary, WorkshopEvaluation } from './admin';
 import { AdminPage, Card, Heading, SectionTitle } from './admin-ui';
 import { StatePage } from '@/navigation';
 import { ErrorState, LoadingState } from '@/shared/presentation';
-import { colors, radii, spacing, typography } from '@/shared/theme';
+import { makeStyles, radii, spacing, typography } from '@/shared/theme';
 
 export function formatAverage(value: number | null) {
   return value === null ? '—' : value.toFixed(1).replace('.', ',');
@@ -25,6 +25,7 @@ export function EvaluationsScreen({
   summary?: EvaluationSummary;
   title: string;
 }>) {
+  const styles = useStyles();
   if (status !== 'success' || !summary)
     return (
       <StatePage
@@ -108,10 +109,10 @@ export function EvaluationsScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   hero: { alignItems: 'center', gap: spacing.xxs, paddingVertical: spacing.sm },
   heroValue: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyBold,
     fontSize: 44,
     fontWeight: typography.bold,
@@ -167,4 +168,4 @@ const styles = StyleSheet.create({
     fontSize: typography.bodySmall,
     lineHeight: 20,
   },
-});
+}));

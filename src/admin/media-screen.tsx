@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import {
   AdminPage,
@@ -14,7 +14,7 @@ import {
   SectionTitle,
 } from './admin-ui';
 import { formatSize, type WorkshopFile } from './media';
-import { colors, radii, sizes, spacing, typography } from '@/shared/theme';
+import { makeStyles, radii, sizes, spacing, typography } from '@/shared/theme';
 import { useWorkshopImageSource } from '@/workshop/presentation/use-workshop-image-source';
 
 type Pending =
@@ -42,6 +42,7 @@ export function MediaScreen({
   onRemoveImage(): void;
   title: string;
 }>) {
+  const styles = useStyles();
   const [pending, setPending] = useState<Pending>();
   const { refreshImage, source } = useWorkshopImageSource(imageUrl);
 
@@ -161,7 +162,7 @@ export function MediaScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   preview: {
     backgroundColor: colors.surface2,
     borderRadius: radii.xl,
@@ -196,4 +197,4 @@ const styles = StyleSheet.create({
     fontWeight: typography.medium,
   },
   fileAction: { minWidth: sizes.touchTarget * 2 },
-});
+}));

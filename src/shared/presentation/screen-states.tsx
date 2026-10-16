@@ -1,14 +1,15 @@
 import type { ReactNode } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { describeError } from '@/core/errors';
-import { colors, radii, sizes, spacing, typography } from '@/shared/theme';
+import {
+  makeStyles,
+  radii,
+  sizes,
+  spacing,
+  typography,
+  useTheme,
+} from '@/shared/theme';
 import { AppSymbol } from './app-symbol';
 
 type RetryProps = Readonly<{
@@ -35,12 +36,14 @@ function StateLayout({
   icon: keyof typeof stateSymbols;
   title: string;
 }>) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <View style={styles.container}>
       <View style={styles.stateCard}>
         <View style={styles.iconCircle}>
           <AppSymbol
-            color={colors.brand}
+            color={colors.brandText}
             fallback="•"
             name={stateSymbols[icon]}
             size={28}
@@ -56,6 +59,7 @@ function StateLayout({
 }
 
 function RetryButton({ onRetry, retryLabel = 'Tentar novamente' }: RetryProps) {
+  const styles = useStyles();
   if (!onRetry) return null;
 
   return (
@@ -75,6 +79,8 @@ export function LoadingState({
 }: {
   message?: string;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <View
       accessibilityLabel={message}
@@ -83,7 +89,7 @@ export function LoadingState({
       style={styles.container}
     >
       <View style={styles.loadingIndicator}>
-        <ActivityIndicator color={colors.brand} size="large" />
+        <ActivityIndicator color={colors.brandText} size="large" />
       </View>
       <Text style={styles.message}>{message}</Text>
     </View>
@@ -104,6 +110,7 @@ export function ErrorState({
     overrides?: Parameters<typeof describeError>[1];
     title?: string;
   }>) {
+  const styles = useStyles();
   const described = describeError(error, overrides);
   const shownTitle = title ?? (error ? described.title : 'Algo deu errado');
   const shownMessage = error
@@ -130,6 +137,7 @@ export function EmptyState({
   onAction?: () => void;
   title?: string;
 }>) {
+  const styles = useStyles();
   return (
     <StateLayout icon="inbox" title={title}>
       {message ? <Text style={styles.message}>{message}</Text> : null}
@@ -143,6 +151,7 @@ export function OfflineState({
   onRetry,
   retryLabel,
 }: RetryProps & Readonly<{ hasCachedContent?: boolean }>) {
+  const styles = useStyles();
   const message = hasCachedContent
     ? 'Você está offline. Exibindo os dados salvos neste dispositivo.'
     : 'Você está offline e ainda não há dados salvos para exibir.';
@@ -157,7 +166,7 @@ export function OfflineState({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   alertWrapper: {
     flex: 1,
   },
@@ -224,4 +233,4 @@ const styles = StyleSheet.create({
     fontFamily: typography.familyBold,
     fontWeight: typography.bold,
   },
-});
+}));

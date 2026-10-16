@@ -8,25 +8,19 @@ import {
   Users,
 } from 'lucide-react-native';
 import { useState } from 'react';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import type { ProfileUpdate, UserProfile } from '@/profile/domain/profile';
 import { BackHeader, StatePage } from '@/navigation';
 import { ErrorState, LoadingState } from '@/shared/presentation';
 import {
-  colors,
+  makeStyles,
   radii,
   shadows,
   sizes,
   spacing,
   typography,
+  useTheme,
 } from '@/shared/theme';
 
 export type ProfileStats = Readonly<{
@@ -83,6 +77,7 @@ export function ProfileScreen(props: Props) {
 }
 
 function ProfileContent(props: Props & { profile: UserProfile }) {
+  const styles = useStyles();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(props.profile.name);
   const [phone, setPhone] = useState(props.profile.phone ?? '');
@@ -268,6 +263,7 @@ function ProfileContent(props: Props & { profile: UserProfile }) {
 }
 
 function Stat({ label, value }: Readonly<{ label: string; value: number }>) {
+  const styles = useStyles();
   return (
     <View
       accessible
@@ -291,6 +287,8 @@ function LinkRow({
   last?: boolean;
   onPress(): void;
 }>) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <Pressable
       accessibilityLabel={label}
@@ -313,7 +311,7 @@ function initial(name: string) {
   return (name.trim()[0] ?? '?').toLocaleUpperCase('pt-BR');
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   page: {
     alignSelf: 'center',
     gap: spacing.md,
@@ -503,4 +501,4 @@ const styles = StyleSheet.create({
     fontSize: typography.body,
     fontWeight: typography.medium,
   },
-});
+}));

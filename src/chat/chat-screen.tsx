@@ -4,7 +4,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -20,12 +19,13 @@ import {
   LoadingState,
 } from '@/shared/presentation';
 import {
-  colors,
+  makeStyles,
   radii,
   shadows,
   sizes,
   spacing,
   typography,
+  useTheme,
 } from '@/shared/theme';
 
 const sendSymbol = {
@@ -67,6 +67,8 @@ export function ChatScreen({
   onSend(content: string): Promise<boolean> | boolean;
   onDelete(message: ChatMessage): void;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const keyboardVisible = useKeyboardVisible();
   const [content, setContent] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
@@ -240,7 +242,7 @@ function formatTime(value: string) {
   }).format(date);
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   page: { backgroundColor: colors.background, flex: 1 },
   header: {
     alignSelf: 'center',
@@ -297,7 +299,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   delete: { color: colors.danger, marginTop: spacing.xs },
-  keep: { color: colors.brand, marginTop: spacing.xs },
+  keep: { color: colors.brandText, marginTop: spacing.xs },
   confirmDelete: { marginTop: spacing.xs },
   confirmText: {
     color: colors.text,
@@ -343,4 +345,4 @@ const styles = StyleSheet.create({
   sendPressed: { backgroundColor: colors.brandPressed },
   sendDisabled: { opacity: 0.55 },
   sendText: { color: colors.onBrand, fontFamily: typography.familyBold },
-});
+}));

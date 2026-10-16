@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import {
   statusLabels,
@@ -17,7 +17,15 @@ import {
 import { formatDate } from './workshop-form';
 import { StatePage } from '@/navigation';
 import { ErrorState, LoadingState } from '@/shared/presentation';
-import { colors, radii, shadows, spacing, typography } from '@/shared/theme';
+import {
+  makeStyles,
+  radii,
+  shadows,
+  spacing,
+  type ColorPalette,
+  typography,
+  useTheme,
+} from '@/shared/theme';
 
 type Filter = WorkshopStatus | 'ALL';
 
@@ -29,13 +37,13 @@ const filters: readonly { value: Filter; label: string }[] = [
   { value: 'CANCELLED', label: 'Cancelados' },
 ];
 
-const tones: Partial<
-  Record<WorkshopStatus, { background: string; color: string }>
-> = {
+const getTones = (
+  colors: ColorPalette,
+): Partial<Record<WorkshopStatus, { background: string; color: string }>> => ({
   PUBLISHED: { background: colors.positiveSoft, color: colors.positive },
   CANCELLED: { background: colors.dangerSoft, color: colors.danger },
   DRAFT: { background: colors.warningSoft, color: colors.warning },
-};
+});
 
 export function ManagedWorkshopListScreen({
   error,
@@ -56,6 +64,8 @@ export function ManagedWorkshopListScreen({
   onRetry(): void;
   status: 'loading' | 'error' | 'success';
 }>) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const [filter, setFilter] = useState<Filter>('ALL');
   const visible = useMemo(
     () => (filter === 'ALL' ? items : items.filter((i) => i.status === filter)),
@@ -100,7 +110,7 @@ export function ManagedWorkshopListScreen({
         </Card>
       ) : (
         visible.map((workshop) => {
-          const tone = tones[workshop.status];
+          const tone = getTones(colors)[workshop.status];
           return (
             <Pressable
               accessibilityLabel={`Gerenciar ${workshop.title}`}
@@ -144,7 +154,7 @@ export function ManagedWorkshopListScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   card: {
     ...shadows.card,
     backgroundColor: colors.surface,
@@ -178,8 +188,8 @@ const styles = StyleSheet.create({
   },
   more: { alignItems: 'center', minHeight: 48, justifyContent: 'center' },
   moreText: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyMedium,
     fontWeight: typography.medium,
   },
-});
+}));

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Pressable, Switch, Text, View } from 'react-native';
 
 import {
   AdminPage,
@@ -11,7 +11,7 @@ import {
   PrimaryButton,
   SecondaryButton,
 } from './admin-ui';
-import { colors, spacing, typography } from '@/shared/theme';
+import { makeStyles, spacing, typography, useTheme } from '@/shared/theme';
 
 export type PostFormValues = {
   title: string;
@@ -55,6 +55,8 @@ export function PostFormScreen({
   /** `publish` also publishes right after saving the draft. */
   onSave(values: PostFormValues, publish: boolean): void;
 }>) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const [values, setValues] = useState<PostFormValues>(
     initial ?? { title: '', content: '', highlight: false },
   );
@@ -134,7 +136,7 @@ export function PostFormScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   switchRow: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -154,4 +156,4 @@ const styles = StyleSheet.create({
     fontSize: typography.caption,
     lineHeight: 18,
   },
-});
+}));

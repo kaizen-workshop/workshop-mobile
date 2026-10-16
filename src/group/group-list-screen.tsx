@@ -1,13 +1,6 @@
 import { Search } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
-import {
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { FlatList, Pressable, Text, TextInput, View } from 'react-native';
 import type { WorkshopGroup } from './group';
 import { AppHeader, StatePage } from '@/navigation';
 import {
@@ -17,12 +10,13 @@ import {
   LoadingState,
 } from '@/shared/presentation';
 import {
-  colors,
+  makeStyles,
   radii,
   shadows,
   sizes,
   spacing,
   typography,
+  useTheme,
 } from '@/shared/theme';
 
 const symbols = {
@@ -57,6 +51,8 @@ export function GroupListScreen({
   onRetry(): void;
   onOpen(group: WorkshopGroup): void;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const [query, setQuery] = useState('');
   const visible = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase('pt-BR');
@@ -158,7 +154,7 @@ export function GroupListScreen({
     </View>
   );
 }
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   search: {
     alignItems: 'center',
     backgroundColor: colors.surface,
@@ -231,4 +227,4 @@ const styles = StyleSheet.create({
     marginTop: spacing.xxs,
   },
   statusActive: { color: colors.positive },
-});
+}));

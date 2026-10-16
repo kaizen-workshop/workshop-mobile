@@ -4,7 +4,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -20,12 +19,13 @@ import {
   LoadingState,
 } from '@/shared/presentation';
 import {
-  colors,
+  makeStyles,
   radii,
   shadows,
   sizes,
   spacing,
   typography,
+  useTheme,
 } from '@/shared/theme';
 export function CommentsScreen({
   items,
@@ -59,6 +59,8 @@ export function CommentsScreen({
   onEdit(comment: PostComment, content: string): Promise<boolean> | boolean;
   onDelete(comment: PostComment): Promise<void> | void;
 }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const keyboardVisible = useKeyboardVisible();
   const [content, setContent] = useState('');
   const [editingId, setEditingId] = useState<string>();
@@ -111,7 +113,7 @@ export function CommentsScreen({
             <View style={styles.commentHeader}>
               <View style={styles.avatar}>
                 <AppSymbol
-                  color={colors.brand}
+                  color={colors.brandText}
                   fallback="•"
                   name={{
                     ios: 'person.fill',
@@ -268,7 +270,7 @@ export function CommentsScreen({
     </KeyboardAvoidingView>
   );
 }
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   postContext: {
     backgroundColor: colors.brandSubtle,
     borderRadius: radii.xl,
@@ -348,7 +350,7 @@ const styles = StyleSheet.create({
     minHeight: sizes.touchTarget,
     paddingHorizontal: spacing.xs,
   },
-  action: { color: colors.brand, fontFamily: typography.familyMedium },
+  action: { color: colors.brandText, fontFamily: typography.familyMedium },
   delete: { color: colors.danger, fontFamily: typography.familyMedium },
   loadingMore: { color: colors.textMuted, padding: spacing.md },
   feedback: {
@@ -399,4 +401,4 @@ const styles = StyleSheet.create({
     fontFamily: typography.familyBold,
     fontWeight: typography.bold,
   },
-});
+}));

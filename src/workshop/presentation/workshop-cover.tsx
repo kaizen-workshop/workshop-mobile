@@ -8,15 +8,9 @@ import {
   ShieldCheck,
   Users,
 } from 'lucide-react-native';
-import {
-  StyleSheet,
-  Text,
-  View,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+import { Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { colors, typography } from '@/shared/theme';
+import { makeStyles, typography, useTheme } from '@/shared/theme';
 
 type Cover = Readonly<{ Icon: LucideIcon; background: string }>;
 
@@ -52,6 +46,8 @@ export function WorkshopCover({
   theme?: string;
   title: string;
 }>) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const { Icon, background } = coverFor(title, theme);
   return (
     <View
@@ -71,7 +67,7 @@ export function WorkshopCover({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   cover: {
     alignItems: 'center',
     gap: 8,
@@ -87,4 +83,4 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
-});
+}));

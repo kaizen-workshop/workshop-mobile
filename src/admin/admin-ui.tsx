@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   type TextInputProps,
@@ -12,12 +11,13 @@ import {
 
 import { BackHeader } from '@/navigation';
 import {
-  colors,
+  makeStyles,
   radii,
   shadows,
   sizes,
   spacing,
   typography,
+  useTheme,
 } from '@/shared/theme';
 
 export const adminEyebrow = 'ARWEG · Administrativo';
@@ -28,6 +28,7 @@ export function AdminPage({
   fallback = '/admin',
   title,
 }: Readonly<{ children: ReactNode; fallback?: string; title: string }>) {
+  const styles = useStyles();
   return (
     <ScrollView
       automaticallyAdjustKeyboardInsets
@@ -47,6 +48,7 @@ export function Heading({
   subtitle,
   title,
 }: Readonly<{ subtitle?: string; title: string }>) {
+  const styles = useStyles();
   return (
     <View style={styles.heading}>
       <Text accessibilityRole="header" style={styles.headingTitle}>
@@ -58,10 +60,12 @@ export function Heading({
 }
 
 export function Card({ children }: Readonly<{ children: ReactNode }>) {
+  const styles = useStyles();
   return <View style={styles.card}>{children}</View>;
 }
 
 export function SectionTitle({ children }: Readonly<{ children: string }>) {
+  const styles = useStyles();
   return (
     <Text accessibilityRole="header" style={styles.sectionTitle}>
       {children}
@@ -77,6 +81,8 @@ export function Field({
 }: Readonly<
   TextInputProps & { error?: string; hint?: string; label: string }
 >) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{label}</Text>
@@ -113,6 +119,7 @@ export function ChoiceChips<T extends string>({
   options: readonly { value: T; label: string }[];
   value: T | undefined;
 }>) {
+  const styles = useStyles();
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{label}</Text>
@@ -152,6 +159,8 @@ type ButtonProps = Readonly<{
 }>;
 
 export function PrimaryButton({ busy, disabled, label, onPress }: ButtonProps) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <Pressable
       accessibilityRole="button"
@@ -176,6 +185,7 @@ export function SecondaryButton({
   label,
   onPress,
 }: ButtonProps) {
+  const styles = useStyles();
   return (
     <Pressable
       accessibilityRole="button"
@@ -194,6 +204,8 @@ export function SecondaryButton({
 }
 
 export function DangerButton({ busy, disabled, label, onPress }: ButtonProps) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <Pressable
       accessibilityRole="button"
@@ -213,6 +225,7 @@ export function DangerButton({ busy, disabled, label, onPress }: ButtonProps) {
 }
 
 export function LinkButton({ label, onPress }: ButtonProps) {
+  const styles = useStyles();
   return (
     <Pressable
       accessibilityRole="button"
@@ -228,6 +241,8 @@ export function Notice({
   children,
   tone,
 }: Readonly<{ children: ReactNode; tone: 'danger' | 'success' | 'info' }>) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
     <View
       accessibilityRole="alert"
@@ -251,18 +266,27 @@ export function Notice({
 }
 
 export function StatusChip({
-  background = colors.brandSubtle,
-  color = colors.accent,
+  background,
+  color,
   label,
 }: Readonly<{ background?: string; color?: string; label: string }>) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   return (
-    <View style={[styles.statusChip, { backgroundColor: background }]}>
-      <Text style={[styles.statusChipText, { color }]}>{label}</Text>
+    <View
+      style={[
+        styles.statusChip,
+        { backgroundColor: background ?? colors.brandSubtle },
+      ]}
+    >
+      <Text style={[styles.statusChipText, { color: color ?? colors.accent }]}>
+        {label}
+      </Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   page: {
     backgroundColor: colors.background,
     flexGrow: 1,
@@ -398,7 +422,7 @@ const styles = StyleSheet.create({
     minHeight: sizes.touchTarget,
   },
   linkText: {
-    color: colors.brand,
+    color: colors.brandText,
     fontFamily: typography.familyMedium,
     fontSize: typography.bodySmall,
     fontWeight: typography.medium,
@@ -427,4 +451,4 @@ const styles = StyleSheet.create({
     fontSize: typography.caption,
     fontWeight: typography.medium,
   },
-});
+}));

@@ -1,7 +1,7 @@
 import { describeError } from '@/core/errors';
 import { useState } from 'react';
 import { Check } from 'lucide-react-native';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, Text, View } from 'react-native';
 
 import type { ThemeOption } from '@/preferences/domain';
 import { coverFor } from '@/workshop/presentation/workshop-cover';
@@ -12,12 +12,13 @@ import {
   PageHeader,
 } from '@/shared/presentation';
 import {
-  colors,
+  makeStyles,
   radii,
   shadows,
   sizes,
   spacing,
   typography,
+  useTheme,
 } from '@/shared/theme';
 
 type Props = Readonly<{
@@ -45,6 +46,8 @@ export function PreferencesScreen({
   themes,
   title = 'Escolha seus interesses',
 }: Props) {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -130,7 +133,7 @@ export function PreferencesScreen({
                   size={24}
                 />
                 {selected ? (
-                  <Check color={colors.brand} size={18} strokeWidth={3} />
+                  <Check color={colors.brandText} size={18} strokeWidth={3} />
                 ) : null}
               </View>
               <Text style={styles.optionTitle}>{item.name}</Text>
@@ -173,7 +176,7 @@ export function PreferencesScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   page: {
     backgroundColor: colors.background,
     flex: 1,
@@ -269,4 +272,4 @@ const styles = StyleSheet.create({
     fontFamily: typography.familyBold,
     fontWeight: typography.bold,
   },
-});
+}));

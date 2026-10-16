@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "kaizenworkshop",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "android": {
       "package": "br.com.weg.kaizenworkshop",
       "predictiveBackGestureEnabled": false

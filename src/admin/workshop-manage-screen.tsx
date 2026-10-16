@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import {
   availableTransitions,
@@ -23,7 +23,7 @@ import {
 import { formatScheduled } from './schedule';
 import { SchedulePanel } from './schedule-panel';
 import { formatDate } from './workshop-form';
-import { colors, spacing, typography } from '@/shared/theme';
+import { makeStyles, spacing, typography } from '@/shared/theme';
 
 const actionLabels: Record<WorkshopTransition, string> = {
   publish: 'Publicar workshop',
@@ -80,6 +80,7 @@ export function WorkshopManageScreen({
   onTransition(action: WorkshopTransition): void;
   workshop: ManagedWorkshop;
 }>) {
+  const styles = useStyles();
   const [pending, setPending] = useState<WorkshopTransition | null>(null);
   const [scheduling, setScheduling] = useState(false);
   const transitions = availableTransitions(workshop.status);
@@ -208,6 +209,7 @@ export function WorkshopManageScreen({
 }
 
 function Row({ label, value }: Readonly<{ label: string; value: string }>) {
+  const styles = useStyles();
   return (
     <View style={styles.row}>
       <Text style={styles.rowLabel}>{label}</Text>
@@ -216,7 +218,7 @@ function Row({ label, value }: Readonly<{ label: string; value: string }>) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   body: {
     color: colors.textMuted,
     fontFamily: typography.familyRegular,
@@ -243,4 +245,4 @@ const styles = StyleSheet.create({
     fontSize: typography.bodySmall,
     fontWeight: typography.medium,
   },
-});
+}));

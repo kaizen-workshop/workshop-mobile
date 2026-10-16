@@ -6,7 +6,7 @@ import {
   Inter_700Bold,
   useFonts,
 } from '@expo-google-fonts/inter';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -22,9 +22,11 @@ import {
   unregisterPushDevice,
 } from '@/notification/data';
 import {
-  colors,
   installWebFocusStyle,
   installWebViewportFit,
+  makeStyles,
+  useTheme,
+  ThemeProvider,
 } from '@/shared/theme';
 
 const variant = getAppVariant();
@@ -51,6 +53,8 @@ const cleanupPushDevice = () =>
   unregisterPushDevice(notificationGateway, pushDeviceStorage);
 
 function SessionRoutes() {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const { isRestoring, state } = useAuth();
 
   if (isRestoring) {
@@ -60,7 +64,7 @@ function SessionRoutes() {
         accessibilityRole="progressbar"
         style={styles.loading}
       >
-        <ActivityIndicator color={colors.brand} size="large" />
+        <ActivityIndicator color={colors.brandText} size="large" />
       </View>
     );
   }
@@ -84,7 +88,9 @@ function SessionRoutes() {
   );
 }
 
-export default function RootLayout() {
+function RootContent() {
+  const styles = useStyles();
+  const { colors } = useTheme();
   useEffect(() => {
     installWebFocusStyle();
     installWebViewportFit();
@@ -102,7 +108,7 @@ export default function RootLayout() {
         accessibilityRole="progressbar"
         style={styles.loading}
       >
-        <ActivityIndicator color={colors.brand} size="large" />
+        <ActivityIndicator color={colors.brandText} size="large" />
       </View>
     );
   }
@@ -128,7 +134,15 @@ export default function RootLayout() {
   );
 }
 
-const styles = StyleSheet.create({
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <RootContent />
+    </ThemeProvider>
+  );
+}
+
+const useStyles = makeStyles((colors) => ({
   root: {
     flex: 1,
   },
@@ -142,4 +156,4 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
-});
+}));
