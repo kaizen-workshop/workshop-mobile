@@ -25,7 +25,29 @@ export function createChatRealtimeClient({
   let stopped = true;
   let reconnectAttempt = 0;
   let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
+  let heartbeatTimer: ReturnType<typeof setInterval> | undefined;
+  let watchdogTimer: ReturnType<typeof setTimeout> | undefined;
   let connectedOnce = false;
+
+  const clearHeartbeat = () => {
+    if (heartbeatTimer) clearInterval(heartbeatTimer);
+    if (watchdogTimer) clearTimeout(watchdogTimer);
+    heartbeatTimer = undefined;
+    watchdogTimer = undefined;
+  };
+  const armWatchdog = (current: WebSocketLike) => {
+    if (watchdogTimer) clearTimeout(watchdogTimer);
+    watchdogTimer = setTimeout(() => {
+      if (!stopped && socket === current) current.close();
+    }, 20_000);
+  };
+  const startHeartbeat = (current: WebSocketLike) => {
+    clearHeartbeat();
+    heartbeatTimer = setInterval(() => {
+      if (!stopped && socket === current) current.send('\n');
+    }, 10_000);
+    armWatchdog(current);
+  };
 
   const connect = async () => {
     if (stopped) return;
@@ -43,9 +65,11 @@ export function createChatRealtimeClient({
       );
     };
     next.onmessage = (event) => {
+      armWatchdog(next);
       for (const incoming of parseFrames(String(event.data))) {
         if (incoming.command === 'CONNECTED') {
           reconnectAttempt = 0;
+          startHeartbeat(next);
           next.send(
             frame('SUBSCRIBE', {
               id: `group-${groupId}`,
@@ -68,6 +92,7 @@ export function createChatRealtimeClient({
     };
     next.onerror = () => undefined;
     next.onclose = () => {
+      clearHeartbeat();
       if (socket === next) socket = undefined;
       if (!stopped) scheduleReconnect();
     };
@@ -78,7 +103,7 @@ export function createChatRealtimeClient({
     const delay = Math.min(30_000, 1_000 * 2 ** reconnectAttempt++);
     reconnectTimer = setTimeout(() => {
       reconnectTimer = undefined;
-      void connect();
+      void connect().catch(scheduleReconnect);
     }, delay);
   };
 
@@ -86,10 +111,11 @@ export function createChatRealtimeClient({
     start() {
       if (!stopped) return;
       stopped = false;
-      void connect();
+      void connect().catch(scheduleReconnect);
     },
     stop() {
       stopped = true;
+      clearHeartbeat();
       if (reconnectTimer) clearTimeout(reconnectTimer);
       reconnectTimer = undefined;
       socket?.close();
