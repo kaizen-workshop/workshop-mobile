@@ -1,5 +1,10 @@
 # workshop_mobile
 
+## ProteÃ§Ã£o de release
+
+Configure no GitHub revisÃ£o obrigatÃ³ria, o check `CI / quality` e bloqueio de
+push direto em `develop` e `main`. A promoÃ§Ã£o segue `feature â†’ develop â†’ main`.
+
 ## Autenticação
 
 `EXPO_PUBLIC_APP_AUTH_MODE=api` usa os contratos atuais da `workshop_api` para login,
