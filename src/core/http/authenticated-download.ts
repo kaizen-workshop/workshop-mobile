@@ -40,7 +40,8 @@ async function downloadOnWeb({ url, accessToken, filename }: DownloadRequest) {
   document.body.appendChild(link);
   link.click();
   link.remove();
-  setTimeout(() => URL.revokeObjectURL(objectUrl), 10_000);
+  const timer = setTimeout(() => URL.revokeObjectURL(objectUrl), 10_000);
+  (timer as unknown as { unref?: () => void }).unref?.();
 }
 
 async function downloadOnDevice({

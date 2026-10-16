@@ -120,7 +120,12 @@ async function downloadOnWeb(
   document.body.appendChild(link);
   link.click();
   link.remove();
-  setTimeout(() => URL.revokeObjectURL(objectUrl), 10_000);
+  scheduleObjectUrlRevoke(objectUrl);
+}
+
+function scheduleObjectUrlRevoke(objectUrl: string) {
+  const timer = setTimeout(() => URL.revokeObjectURL(objectUrl), 10_000);
+  (timer as unknown as { unref?: () => void }).unref?.();
 }
 
 function safeExtension(filename: string) {
