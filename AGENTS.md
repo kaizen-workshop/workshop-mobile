@@ -8,7 +8,7 @@ use a hierarquia visual, o layout e os estados mostrados como referência de
 UI. Elas não substituem `TASKS.md`, requisitos funcionais ou o contrato
 OpenAPI; divergências intencionais devem ser registradas.
 
-> Decisão de stack: Expo SDK 57, React Native 0.86, React 19 e TypeScript
+> Decisão de stack: Expo SDK 58, React Native 0.88, React 19 e TypeScript
 > estrito. Expo Router navega; `fetch` encapsulado atende HTTP; AsyncStorage
 > atende apenas cache não sensível; Expo SecureStore armazena somente
 > access/refresh token; WebSocket nativo e Expo Notifications serão usados

@@ -103,17 +103,22 @@ export function useTheme() {
   return useContext(ThemeContext);
 }
 
-type NamedStyles = Record<string, ViewStyle | TextStyle | ImageStyle>;
+type NamedStyles<T> = {
+  [P in keyof T]: ViewStyle | TextStyle | ImageStyle;
+};
 
 /**
  * Builds a themed `StyleSheet`. Call the returned hook inside a component:
  * `const useStyles = makeStyles((colors) => ({ ... }))`.
  */
-export function makeStyles<T extends NamedStyles>(
+export function makeStyles<T extends NamedStyles<T>>(
   factory: (colors: ColorPalette) => T,
 ) {
   return function useStyles() {
     const { colors } = useTheme();
-    return useMemo(() => StyleSheet.create(factory(colors)), [colors]);
+    return useMemo(
+      () => StyleSheet.create(factory(colors) as never) as T,
+      [colors],
+    );
   };
 }
