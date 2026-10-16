@@ -116,7 +116,7 @@ export function ChoiceChips<T extends string>({
 }: Readonly<{
   label: string;
   onChange(value: T): void;
-  options: readonly { value: T; label: string }[];
+  options: readonly { value: T; label: string; disabled?: boolean }[];
   value: T | undefined;
 }>) {
   const styles = useStyles();
@@ -129,12 +129,17 @@ export function ChoiceChips<T extends string>({
           return (
             <Pressable
               accessibilityRole="radio"
-              accessibilityState={{ checked: selected }}
+              accessibilityState={{
+                checked: selected,
+                disabled: option.disabled,
+              }}
+              disabled={option.disabled}
               key={option.value}
               onPress={() => onChange(option.value)}
               style={({ pressed }) => [
                 styles.chip,
                 selected && styles.chipSelected,
+                option.disabled && styles.chipDisabled,
                 pressed && styles.pressed,
               ]}
             >
@@ -376,6 +381,7 @@ const useStyles = makeStyles((colors) => ({
     fontSize: typography.bodySmall,
   },
   chipTextSelected: { color: colors.onBrand },
+  chipDisabled: { opacity: 0.4 },
   pressed: { opacity: 0.72 },
   button: {
     alignItems: 'center',
