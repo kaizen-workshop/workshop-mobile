@@ -15,6 +15,7 @@ type FileSystemAdapter = Readonly<{
     fileUri: string,
     options: { headers: Record<string, string> },
   ): Promise<{ uri: string; status: number; mimeType: string | null }>;
+  deleteAsync?(fileUri: string, options?: { idempotent?: boolean }): Promise<void>;
 }>;
 
 type SharingAdapter = Readonly<{
@@ -59,26 +60,30 @@ export function createWorkshopAttachmentOpener(
       const extension = safeExtension(attachment.name);
       const fileUri = `${fileSystem.cacheDirectory}workshop-${encodeURIComponent(attachment.id)}${extension}`;
       const url = `${config.apiUrl}/workshops/${encodeURIComponent(workshopId)}/attachments/${encodeURIComponent(attachment.id)}/content`;
-      let result = await fileSystem.downloadAsync(url, fileUri, {
-        headers: { Authorization: `Bearer ${tokens.accessToken}` },
-      });
-      if (result.status === 401) {
-        tokens = await refreshSession();
-        result = await fileSystem.downloadAsync(url, fileUri, {
+      try {
+        let result = await fileSystem.downloadAsync(url, fileUri, {
           headers: { Authorization: `Bearer ${tokens.accessToken}` },
         });
-      }
-      if (result.status < 200 || result.status >= 300)
-        throw new AppError({ category: 'unknown', status: result.status });
+        if (result.status === 401) {
+          tokens = await refreshSession();
+          result = await fileSystem.downloadAsync(url, fileUri, {
+            headers: { Authorization: `Bearer ${tokens.accessToken}` },
+          });
+        }
+        if (result.status < 200 || result.status >= 300)
+          throw new AppError({ category: 'unknown', status: result.status });
 
-      await sharing.shareAsync(result.uri, {
-        ...(attachment.contentType
-          ? { mimeType: attachment.contentType }
-          : result.mimeType
-            ? { mimeType: result.mimeType }
-            : {}),
-        dialogTitle: `Abrir ${attachment.name}`,
-      });
+        await sharing.shareAsync(result.uri, {
+          ...(attachment.contentType
+            ? { mimeType: attachment.contentType }
+            : result.mimeType
+              ? { mimeType: result.mimeType }
+              : {}),
+          dialogTitle: `Abrir ${attachment.name}`,
+        });
+      } finally {
+        await fileSystem.deleteAsync?.(fileUri, { idempotent: true });
+      }
     },
   };
 }
