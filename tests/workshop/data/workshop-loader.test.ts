@@ -16,6 +16,8 @@ function createCacheDouble(
     readDetails: jest.fn(async () => null),
     saveDetails: jest.fn(async () => undefined),
     clear: jest.fn(async () => undefined),
+    removeList: jest.fn(async () => undefined),
+    removeDetails: jest.fn(async () => undefined),
     ...overrides,
   };
 }
@@ -62,11 +64,17 @@ it.each(['unauthorized', 'forbidden', 'not_found'] as const)(
   async (category) => {
     const remoteError = new AppError({ category });
     const cache = createCacheDouble({
-      readList: jest.fn(async () => ({ data: [{ id: 'cached', title: 'Cached' }], updatedAt: 1 })),
+      readList: jest.fn(async () => ({
+        data: [{ id: 'cached', title: 'Cached' }],
+        updatedAt: 1,
+      })),
     });
 
     await expect(
-      loadWorkshopList({ cache, loadRemote: async () => Promise.reject(remoteError) }),
+      loadWorkshopList({
+        cache,
+        loadRemote: async () => Promise.reject(remoteError),
+      }),
     ).rejects.toBe(remoteError);
     expect(cache.readList).not.toHaveBeenCalled();
   },
@@ -82,7 +90,8 @@ it('returns saved details when the remote read fails', async () => {
     loadWorkshopDetails({
       id: 'one',
       cache,
-      loadRemote: async () => Promise.reject(new AppError({ category: 'network' })),
+      loadRemote: async () =>
+        Promise.reject(new AppError({ category: 'network' })),
     }),
   ).resolves.toEqual({
     data: cached,

@@ -12,6 +12,7 @@ function createCacheDouble(overrides: Partial<FeedCache> = {}): FeedCache {
     read: jest.fn(async () => null),
     save: jest.fn(async () => undefined),
     clear: jest.fn(async () => undefined),
+    remove: jest.fn(async () => undefined),
     ...overrides,
   };
 }
@@ -35,7 +36,8 @@ it('returns the saved feed when the remote read fails', async () => {
   await expect(
     loadFeed({
       cache,
-      loadRemote: async () => Promise.reject(new AppError({ category: 'timeout' })),
+      loadRemote: async () =>
+        Promise.reject(new AppError({ category: 'timeout' })),
     }),
   ).resolves.toEqual({ items, source: 'cache', updatedAt: 4_000 });
 });
@@ -43,9 +45,14 @@ it('returns the saved feed when the remote read fails', async () => {
 it('does not return saved feed after authorization fails', async () => {
   const remoteError = new AppError({ category: 'unauthorized' });
   const cache = createCacheDouble({
-    read: jest.fn(async () => ({ data: [{ id: 'saved', kind: 'post' as const, title: 'Post' }], updatedAt: 1 })),
+    read: jest.fn(async () => ({
+      data: [{ id: 'saved', kind: 'post' as const, title: 'Post' }],
+      updatedAt: 1,
+    })),
   });
-  await expect(loadFeed({ cache, loadRemote: async () => Promise.reject(remoteError) })).rejects.toBe(remoteError);
+  await expect(
+    loadFeed({ cache, loadRemote: async () => Promise.reject(remoteError) }),
+  ).rejects.toBe(remoteError);
   expect(cache.read).not.toHaveBeenCalled();
 });
 

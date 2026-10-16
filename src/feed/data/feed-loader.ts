@@ -29,7 +29,11 @@ export async function loadFeed({
 
     return { items, source: 'network', updatedAt };
   } catch (remoteError) {
-    if (!isOfflineFallbackError(remoteError)) throw remoteError;
+    if (!isOfflineFallbackError(remoteError)) {
+      if (shouldInvalidateCache(remoteError))
+        await cache.remove().catch(() => undefined);
+      throw remoteError;
+    }
     try {
       const cached = await cache.read();
       if (cached)
@@ -44,6 +48,13 @@ export async function loadFeed({
 
     throw remoteError;
   }
+}
+
+function shouldInvalidateCache(error: unknown) {
+  return (
+    error instanceof AppError &&
+    ['unauthorized', 'forbidden', 'not_found'].includes(error.category)
+  );
 }
 
 function isOfflineFallbackError(error: unknown) {

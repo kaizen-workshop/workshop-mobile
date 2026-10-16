@@ -16,6 +16,8 @@ export type WorkshopCache = Readonly<{
   readDetails(id: string): Promise<CacheEntry<WorkshopDetails> | null>;
   saveDetails(workshop: WorkshopDetails, updatedAt?: number): Promise<void>;
   clear(): Promise<void>;
+  removeList(): Promise<void>;
+  removeDetails(id: string): Promise<void>;
 }>;
 
 function requiredValue(value: string, message: string) {
@@ -76,6 +78,14 @@ export function createWorkshopCache({
 
     clear() {
       return cache.clearNamespace();
+    },
+    removeList() {
+      return cache.remove('list');
+    },
+    removeDetails(id) {
+      return cache.remove(
+        `details.${encodeURIComponent(requiredValue(id, 'Workshop id is required.'))}`,
+      );
     },
   };
 }
