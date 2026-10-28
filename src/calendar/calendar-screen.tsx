@@ -140,10 +140,16 @@ export function CalendarScreen({
         </View>
 
         <View style={styles.legend}>
-          <View style={styles.legendDot} />
-          <Text style={styles.legendText}>
-            Dia selecionado · {selectedShort}
-          </Text>
+          <View style={styles.legendItem}>
+            <View style={styles.legendSelected} />
+            <Text style={styles.legendText}>
+              Dia selecionado · {selectedShort}
+            </Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={styles.legendDot} />
+            <Text style={styles.legendText}>Dia com workshop</Text>
+          </View>
         </View>
       </View>
 
@@ -262,13 +268,25 @@ const useStyles = makeStyles((colors) => ({
     width: 4,
   },
   legend: {
+    columnGap: spacing.md,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: spacing.xs,
+    rowGap: spacing.xxs,
+  },
+  legendItem: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: spacing.xs,
-    marginTop: spacing.xs,
+  },
+  legendSelected: {
+    backgroundColor: colors.brand,
+    borderRadius: radii.sm,
+    height: 10,
+    width: 10,
   },
   legendDot: {
-    backgroundColor: colors.brand,
+    backgroundColor: colors.accent,
     borderRadius: radii.full,
     height: 6,
     width: 6,

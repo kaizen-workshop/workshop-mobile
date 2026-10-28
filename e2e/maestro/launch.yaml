@@ -1,0 +1,26 @@
+# Opens the development build against Metro (port 8083, as in the README) from a signed-out app.
+# 10.0.2.2 is the host machine as seen from the Android emulator.
+appId: br.com.weg.kaizenworkshop
+---
+- launchApp:
+    clearState: true
+    stopApp: true
+# The link is ignored when it arrives during the cold start, so wait for the launcher first.
+- extendedWaitUntil:
+    visible: 'New development server'
+    timeout: 60000
+- openLink: exp+kaizenworkshop://expo-development-client/?url=http%3A%2F%2F10.0.2.2%3A8083
+# Fallback: the dev-client onboarding sheet covers the app on the first launch after a clear.
+- runFlow:
+    when:
+      visible: 'Continue'
+    commands:
+      - tapOn: 'Continue'
+# The onboarding sheet leads into the dev menu once the bundle loads; close it.
+- extendedWaitUntil:
+    visible: 'Go home'
+    timeout: 90000
+- pressKey: Back
+- extendedWaitUntil:
+    visible: 'Usuário ou e-mail'
+    timeout: 90000

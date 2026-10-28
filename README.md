@@ -1,9 +1,9 @@
 # workshop_mobile
 
-## ProteÃ§Ã£o de release
+## Proteção de release
 
-Configure no GitHub revisÃ£o obrigatÃ³ria, o check `CI / quality` e bloqueio de
-push direto em `develop` e `main`. A promoÃ§Ã£o segue `feature â†’ develop â†’ main`.
+Configure no GitHub revisão obrigatória, o check `CI / quality` e bloqueio de
+push direto em `develop` e `main`. A promoção segue `feature → develop → main`.
 
 ## Autenticação
 
@@ -24,6 +24,21 @@ validação online.
 No build Web de desenvolvimento, tokens permanecem somente em memória porque
 `expo-secure-store` não possui implementação para navegador. Recarregar a página
 encerra essa sessão; Android e iOS continuam usando o armazenamento seguro nativo.
+
+## Rodar no emulador Android (Windows)
+
+O app usa `expo-dev-client`; o Expo Go não serve. Gere o development build uma vez:
+
+```text
+npx expo run:android
+```
+
+Requer Android SDK (`ANDROID_HOME`) e JDK 17+. No Windows o CMake falha com
+`ninja: error: mkdir ... No such file or directory` quando o caminho do projeto
+passa de 260 caracteres (por exemplo, dentro de `Desktop\...`). Clone ou copie o
+projeto para um caminho curto, como `C:\kw`, antes de compilar. Depois do primeiro
+build, `npx expo start` basta. `10.0.2.2` no `EXPO_PUBLIC_API_URL` é o host da máquina
+visto pelo emulador; em aparelho físico use o IP da máquina na rede.
 
 ## Stack oficial
 

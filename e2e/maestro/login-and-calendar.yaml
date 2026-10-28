@@ -1,0 +1,15 @@
+appId: br.com.weg.kaizenworkshop
+---
+- runFlow: launch.yaml
+- tapOn: 'Usuário ou e-mail'
+- inputText: 'demo.ana'
+- tapOn: 'Senha'
+- inputText: 'Workshop@2026!'
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: 'Abrir menu'
+    timeout: 30000
+- tapOn: 'Abrir menu'
+- tapOn: 'Calendário'
+- assertVisible: 'Calendário'
+- assertVisible: 'Dia com workshop'

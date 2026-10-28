@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { type ComponentRef, useRef, useState } from 'react';
 import { Image } from 'expo-image';
 import { Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react-native';
 import {
@@ -45,6 +45,7 @@ export function LoginScreen({
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState<'login' | 'password' | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const passwordInput = useRef<ComponentRef<typeof TextInput>>(null);
 
   const submit = async () => {
     if (loading) return;
@@ -119,12 +120,15 @@ export function LoginScreen({
                 accessibilityLabel="Usuário ou e-mail"
                 autoCapitalize="none"
                 autoComplete="username"
+                autoCorrect={false}
                 onBlur={() => setFocused(null)}
                 onChangeText={setLogin}
                 onFocus={() => setFocused('login')}
+                onSubmitEditing={() => passwordInput.current?.focus()}
                 placeholder="seu usuário ou e-mail"
                 placeholderTextColor={colors.placeholder}
                 returnKeyType="next"
+                submitBehavior="submit"
                 style={styles.input}
                 value={login}
               />
@@ -144,12 +148,14 @@ export function LoginScreen({
               <TextInput
                 accessibilityLabel="Senha"
                 autoComplete="current-password"
+                autoCorrect={false}
                 onBlur={() => setFocused(null)}
                 onChangeText={setPassword}
                 onFocus={() => setFocused('password')}
                 onSubmitEditing={() => void submit()}
                 placeholder="Digite sua senha"
                 placeholderTextColor={colors.placeholder}
+                ref={passwordInput}
                 returnKeyType="done"
                 secureTextEntry={!visible}
                 style={styles.input}

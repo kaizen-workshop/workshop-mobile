@@ -111,6 +111,8 @@ function ProfileContent(props: Props & { profile: UserProfile }) {
             <Text style={styles.label}>Nome</Text>
             <TextInput
               accessibilityLabel="Nome"
+              autoComplete="name"
+              returnKeyType="next"
               onChangeText={setName}
               style={styles.input}
               value={name}
@@ -118,16 +120,21 @@ function ProfileContent(props: Props & { profile: UserProfile }) {
             <Text style={styles.label}>Telefone</Text>
             <TextInput
               accessibilityLabel="Telefone"
+              autoComplete="tel"
               keyboardType="phone-pad"
               onChangeText={setPhone}
               style={styles.input}
               value={phone}
             />
-            <Text style={styles.label}>Referência da imagem</Text>
+            <Text style={styles.label}>Foto de perfil (opcional)</Text>
             <TextInput
-              accessibilityLabel="Referência da imagem de perfil"
+              accessibilityHint="Cole o link de uma imagem. Deixe em branco para usar a inicial do nome."
+              accessibilityLabel="Link da foto de perfil"
               autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
               onChangeText={setProfileImage}
+              placeholder="https://exemplo.com/foto.jpg"
               style={styles.input}
               value={profileImage}
             />
