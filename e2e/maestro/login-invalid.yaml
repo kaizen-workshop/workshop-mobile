@@ -1,0 +1,9 @@
+appId: br.com.weg.kaizenworkshop
+---
+- runFlow: launch.yaml
+- tapOn: 'Usuário ou e-mail'
+- inputText: 'demo.ana'
+- tapOn: 'Senha'
+- inputText: 'senha-errada'
+- pressKey: Enter
+- assertVisible: 'Usuário/e-mail ou senha inválidos.*'
